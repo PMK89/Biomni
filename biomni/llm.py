@@ -13,7 +13,7 @@ SourceType = Literal["OpenAI", "AzureOpenAI", "Anthropic", "Ollama", "Gemini", "
 
 def get_llm(
     model: str = "claude-3-5-sonnet-20241022",
-    temperature: float = 0.7,
+    temperature: float = 1.0,
     stop_sequences: list[str] | None = None,
     source: SourceType | None = None,
     base_url: str | None = None,
@@ -41,12 +41,16 @@ def get_llm(
         elif model[:7] == "gemini-":
             source = "Gemini"
         elif base_url is not None:
-            source = "Custom"
+            if 'azure' in base_url:
+                source = "AzureOpenAI"
+            else:
+                source = "Custom"
         elif "/" in model or any(
             name in model.lower() for name in ["llama", "mistral", "qwen", "gemma", "phi", "dolphin", "orca", "vicuna"]
         ):
             source = "Ollama"
         else:
+            print(base_url)
             raise ValueError("Unable to determine model source. Please specify 'source' parameter.")
 
     # Create appropriate model based on source

@@ -74,6 +74,16 @@ data_lake_dict = {
     "Virus-Host_PPI_P-HIPSTER_2020.parquet": "Virus-host protein-protein interactions from P-HIPSTER.",
     "txgnn_name_mapping.pkl": "Name mapping for TXGNN.",
     "txgnn_prediction.pkl": "Prediction data for TXGNN.",
+    # osp suite data
+    "final_knowledge_base.md": "Knowledge base for the osp suite. Open Systems Pharmacology Suite",
+    "MoBi.md": "Codebase from the MoBi project.",
+    "Suite.md": "Codebase from the OSP Suite. Open Systems Pharmacology Suite.",
+    "PKSim.md": "Codebase from the PKSim project.",
+    "OSPSuite-R.md": "Codebase from the OSPSuite-R project.",
+    "OSP-PBPK-Model-Library.md": "Open Systems Pharmacology PBPK-Model-Library.",
+    "OSP-Qualification-Reports.md": "Open Systems Pharmacology Qualification Reports.",
+    "osp_forum_0.md": "Open Systems Pharmacology Forum.",
+    "pbpk_modeling.pdf": "Physiologically based pharmacokinetic (PBPK) modeling and simulation -- Sheila Annie Peters --2021"
 }
 
 # Updated library_content as a dictionary with detailed descriptions
