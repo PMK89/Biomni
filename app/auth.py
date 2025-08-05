@@ -32,7 +32,14 @@ async def login(request: Request):
         SCOPE,
         redirect_uri=request.url_for("authorized")
     )
-    request.session["flow"] = flow
+    # Convert URL objects to strings to make them JSON serializable
+    flow_serializable = {}
+    for key, value in flow.items():
+        if hasattr(value, '__str__'):
+            flow_serializable[key] = str(value)
+        else:
+            flow_serializable[key] = value
+    request.session["flow"] = flow_serializable
     # Redirect the user to the Microsoft login page
     return RedirectResponse(url=flow["auth_uri"])
 
