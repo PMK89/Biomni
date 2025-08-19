@@ -169,6 +169,7 @@ celerybeat.pid
 *.sage.py
 
 # data lake
+*biomni_data_test
 *data_lake*
 
 # Environments

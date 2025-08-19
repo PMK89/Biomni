@@ -1,5 +1,8 @@
 import asyncio
 import os
+import time
+import threading
+import contextlib
 import gradio as gr
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -25,119 +28,228 @@ app.include_router(auth.router)
 # The agent's data path is relative to the project root where uvicorn is run.
 agent = None
 try:
-    # Only initialize the agent if the required Azure credentials are provided.
-    if settings.OPENAI_ENDPOINT and settings.OPENAI_API_KEY:
-        # The underlying Azure client expects specific environment variables.
-        os.environ["AZURE_OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-        os.environ["AZURE_OPENAI_ENDPOINT"] = settings.OPENAI_ENDPOINT
+    # Prefer OpenAI GPT-5 by default; requires OPENAI_API_KEY
+    if settings.OPENAI_API_KEY:
+        os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
         agent = A1(
-            llm="o3", 
+            llm="gpt-5",
             path="./biomni/data",
-            base_url=settings.OPENAI_ENDPOINT,
-            api_key=settings.OPENAI_API_KEY
         )
     else:
-        print("Azure OpenAI credentials not found. Agent not initialized.")
+        print("OpenAI API key not found. Agent not initialized.")
 except Exception as e:
     print(f"Error initializing Biomni agent: {e}")
     agent = None
 
 # --- Gradio Chat Interface ---
 def create_chat_interface():
-    """Creates the Gradio chat interface."""
-    
-    async def chat_function(message: str, history: list, model: str, uploaded_file):
-        """Handles the chat interaction with the Biomni agent."""
+    """Creates the Gradio chat interface with a modern layout.
+
+    - Primary chat shows only <solution> content.
+    - Secondary "Thinking" chat shows logs and non-solution content.
+    - Feedback removed.
+    - File upload robustly wired to agent.add_data({file_path: description}).
+    """
+
+    def _resolve_upload_path_and_name(uploaded_file):
+        """Return (file_path, original_name) from gr.File value variants."""
+        if uploaded_file is None:
+            return None, None
+        # gr.File may return a tempfile object or a dict or a str
+        path = getattr(uploaded_file, "name", None) or getattr(uploaded_file, "path", None)
+        orig = getattr(uploaded_file, "orig_name", None)
+        if not path and isinstance(uploaded_file, dict):
+            path = uploaded_file.get("name") or uploaded_file.get("path")
+            orig = uploaded_file.get("orig_name") or uploaded_file.get("name")
+        if isinstance(uploaded_file, str) and not path:
+            path = uploaded_file
+        if path and not orig:
+            orig = os.path.basename(path)
+        return path, orig
+
+    async def chat_function(message: str, sol_hist: list, think_hist: list, uploaded_file):
+        """Handles the chat interaction with the Biomni agent.
+
+        Streams agent logs into the Thinking panel with a live timer and spinner,
+        and clears the input field immediately after submission.
+        """
+        # Ensure histories exist
+        sol_hist = sol_hist or []
+        think_hist = think_hist or []
+
         if not agent:
-            history.append({"role": "user", "content": message})
-            history.append({"role": "assistant", "content": "Biomni agent is not initialized. Please check server logs."})
-            yield history
+            sol_hist.append({"role": "user", "content": message})
+            sol_hist.append({"role": "assistant", "content": "Biomni agent is not initialized. Please check server logs."})
+            think_hist.append({"role": "assistant", "content": "Agent unavailable. Provide OPENAI credentials in .env and restart."})
+            yield sol_hist, think_hist, "", ""
             return
 
-        history.append({"role": "user", "content": message})
+        # Add user message to both chats
+        sol_hist.append({"role": "user", "content": message})
+        think_hist.append({"role": "user", "content": message})
         prompt = message
 
+        # Handle optional file upload robustly
         if uploaded_file is not None:
             try:
-                file_path = uploaded_file.name
-                file_name = os.path.basename(file_path)
-
-                # Use the agent's add_data method to handle the file.
-                # The agent is expected to process the file from the given path.
-                agent.add_data({file_path: file_name})
-
-                # Inform the agent in the prompt that a file has been provided.
-                prompt += f"\n\n(User has uploaded a file: '{file_name}')"
-
+                file_path, original_name = _resolve_upload_path_and_name(uploaded_file)
+                description = original_name or os.path.basename(file_path)
+                agent.add_data({file_path: description})
+                prompt += f"\n\n(User has uploaded a file: '{description}')"
             except Exception as e:
-                error_message = f"Error processing file '{file_name}': {e}"
-                history.append({"role": "assistant", "content": error_message})
-                yield history
+                err = f"Error processing uploaded file: {e}"
+                think_hist.append({"role": "assistant", "content": err})
+                yield sol_hist, think_hist, "", ""
                 return
 
+        # Placeholder assistant messages to keep UI responsive
+        sol_hist.append({"role": "assistant", "content": ""})
+        think_hist.append({"role": "assistant", "content": "Thinking..."})
 
-
-        full_response = ""
-        history.append({"role": "assistant", "content": full_response})
+        # Start live status (timer + spinner)
+        start_time = time.time()
+        spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        frame = 0
 
         try:
-            # agent.go() is a blocking call that returns the final log and content.
-            log, final_content = agent.go(prompt)
+            # Prepare a live console tee to mirror terminal output to the UI
+            agent._live_console = []
+            _lock = threading.Lock()
 
+            class _Tee:
+                def __init__(self, orig, sink_list, lock):
+                    self.orig = orig
+                    self.sink = sink_list
+                    self.lock = lock
+                def write(self, data):
+                    try:
+                        self.orig.write(data)
+                        # split on newlines but keep partials
+                        for line in str(data).splitlines():
+                            if line:
+                                with self.lock:
+                                    self.sink.append(line)
+                    except Exception:
+                        pass
+                def flush(self):
+                    try:
+                        self.orig.flush()
+                    except Exception:
+                        pass
+
+            loop = asyncio.get_running_loop()
+            def _run_agent_with_tee():
+                import sys
+                orig_out, orig_err = sys.stdout, sys.stderr
+                tee_out = _Tee(orig_out, agent._live_console, _lock)
+                tee_err = _Tee(orig_err, agent._live_console, _lock)
+                with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
+                    return agent.go(prompt)
+
+            # Run the agent in a background thread so we can stream logs
+            future = loop.run_in_executor(None, _run_agent_with_tee)
+
+            # While running, stream logs into the Thinking panel with timer
+            while not future.done():
+                elapsed = time.time() - start_time
+                # Build thinking text from current logs
+                log_now = getattr(agent, "log", [])
+                console_now = getattr(agent, "_live_console", [])
+                combined = []
+                if isinstance(log_now, list):
+                    combined.extend(log_now)
+                elif log_now:
+                    combined.append(str(log_now))
+                if isinstance(console_now, list):
+                    combined.extend(console_now)
+                elif console_now:
+                    combined.append(str(console_now))
+                log_text = "\n".join(combined)
+                status_text = f"{spinner_frames[frame % len(spinner_frames)]} Processing… {elapsed:.1f}s"
+                frame += 1
+                think_hist[-1]["content"] = log_text.strip() if log_text else ""
+                # yield updates and clear the textbox immediately
+                yield sol_hist, think_hist, status_text, ""
+                await asyncio.sleep(0.5)
+
+            # Completed
+            log, final_content = await future
+
+            # Parse <solution> content
+            start_tag = "<solution>"
+            end_tag = "</solution>"
             solution = ""
-            # The final_content string contains the full response with tags.
-            if "<solution>" in final_content:
-                # Extract the content between the <solution> tags.
-                start_tag = "<solution>"
-                end_tag = "</solution>"
-                start_index = final_content.find(start_tag)
-                end_index = final_content.find(end_tag)
-                
-                if start_index != -1 and end_index != -1:
-                    solution = final_content[start_index + len(start_tag):end_index].strip()
-                else: # Fallback for cases with only a start tag.
-                    solution = final_content.split("<solution>")[-1].strip()
+            non_solution = final_content or ""
+            if final_content and start_tag in final_content:
+                s = final_content.find(start_tag)
+                e = final_content.find(end_tag, s + len(start_tag))
+                if s != -1 and e != -1:
+                    solution = final_content[s + len(start_tag):e].strip()
+                    non_solution = (final_content[:s] + final_content[e + len(end_tag):]).strip()
+                else:
+                    solution = final_content.split(start_tag)[-1].strip()
+                    non_solution = ""
             else:
-                # If no solution tag is found, use the final content as a fallback.
-                solution = final_content.strip()
+                solution = (final_content or "").strip()
+                non_solution = ""
 
-            history[-1]["content"] = solution
-            yield history
+            # Update chats
+            sol_hist[-1]["content"] = solution
+            # Ensure the thinking log is a string
+            log_text = "\n".join(log) if isinstance(log, list) else (log or "")
+            thinking_text = log_text.strip()
+            if non_solution:
+                thinking_text = (thinking_text + "\n\n" + non_solution).strip() if thinking_text else non_solution
+            think_hist[-1]["content"] = thinking_text if thinking_text else ""
+
+            total = time.time() - start_time
+            done_status = f"✅ Done in {total:.1f}s"
+            yield sol_hist, think_hist, done_status, ""
 
         except Exception as e:
             error_message = f"An error occurred during agent execution: {str(e)}"
-            history[-1]["content"] = error_message
-            yield history
+            sol_hist[-1]["content"] = error_message
+            think_hist[-1]["content"] = error_message
+            yield sol_hist, think_hist, "", ""
 
     # Define the Gradio UI layout
-    with gr.Blocks(theme=gr.themes.Soft(), title="Biomni") as demo:
-        gr.Markdown("## Biomni Biomedical AI Agent")
-        
+    with gr.Blocks(
+        theme=gr.themes.Soft(
+            primary_hue="indigo",
+            neutral_hue="slate",
+        ),
+        title="Biomni",
+        css="""
+        .gradio-container {max-width: 1400px}
+        .panel {background: #0f172a10; border-radius: 12px; padding: 8px}
+        .chat-title {font-size: 1.2rem; font-weight: 600; margin: 8px 0}
+        """,
+    ) as demo:
+        gr.Markdown("### Biomni Biomedical AI Agent")
+
         with gr.Row():
-            with gr.Column(scale=4):
-                chatbot = gr.Chatbot(label="Chat", height=600, type='messages')
-                with gr.Row():
-                    textbox = gr.Textbox(
-                        container=False,
-                        scale=7,
-                        placeholder="Enter your message or query...",
-                        show_label=False,
-                    )
-            with gr.Column(scale=1):
-                model_selector = gr.Dropdown(
-                    ["o3"], # Only allow compliant Azure OpenAI models
-                    label="Select Model",
-                    value="o3"
+            # Left: Solution + Thinking
+            with gr.Column(scale=5):
+                gr.Markdown("**Solution**", elem_classes=["chat-title"])
+                solution_chat = gr.Chatbot(label=None, height=460, type='messages', elem_classes=["panel"])
+                gr.Markdown("**Thinking**", elem_classes=["chat-title"])
+                thinking_chat = gr.Chatbot(label=None, height=240, type='messages', elem_classes=["panel"])
+                status_md = gr.Markdown("", elem_classes=["chat-title"])  # timer + spinner
+                textbox = gr.Textbox(
+                    container=True,
+                    placeholder="Ask a biomedical question or describe a task...",
+                    show_label=False,
                 )
-                file_upload = gr.File(label="Upload File")
-                feedback_box = gr.Textbox(label="Feedback", placeholder="Enter your feedback here...", lines=4)
-                feedback_btn = gr.Button("Submit Feedback")
+            # Right: Controls
+            with gr.Column(scale=2, min_width=260):
+                with gr.Group(elem_classes=["panel"]):
+                    file_upload = gr.File(label="Upload file", file_count="single")
 
         # Connect the UI components to the chat function
         textbox.submit(
-            chat_function, 
-            [textbox, chatbot, model_selector, file_upload], 
-            chatbot
+            chat_function,
+            [textbox, solution_chat, thinking_chat, file_upload],
+            [solution_chat, thinking_chat, status_md, textbox],
         )
 
     return demo

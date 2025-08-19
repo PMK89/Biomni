@@ -1,9 +1,12 @@
 import glob
+import shutil
 import inspect
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any, Literal, TypedDict
+import hashlib
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -69,8 +72,16 @@ class A1:
             print(f"Created directory: {path}")
 
         # --- Begin custom folder/file checks ---
-        benchmark_dir = os.path.join(path, "biomni_data", "benchmark")
-        data_lake_dir = os.path.join(path, "biomni_data", "data_lake")
+        # Allow overriding the data lake directory via environment variable.
+        # If BIOMNI_DATA_LAKE_PATH is set, use it as the data lake path directly.
+        lake_override = os.getenv("BIOMNI_DATA_LAKE_PATH")
+        if lake_override and isinstance(lake_override, str) and lake_override.strip():
+            data_lake_dir = lake_override
+            base_dir = os.path.dirname(data_lake_dir)
+            benchmark_dir = os.path.join(base_dir, "benchmark")
+        else:
+            benchmark_dir = os.path.join(path, "biomni_data", "benchmark")
+            data_lake_dir = os.path.join(path, "biomni_data", "data_lake")
 
         # Create the biomni_data directory structure
         os.makedirs(benchmark_dir, exist_ok=True)
@@ -103,7 +114,12 @@ class A1:
                 folder="benchmark",
             )
 
-        self.path = os.path.join(path, "biomni_data")
+        # Set self.path so that add_data uses the correct data lake folder.
+        # When overridden, self.path is the parent of the data_lake folder; otherwise it is '<path>/biomni_data'.
+        if lake_override and isinstance(lake_override, str) and lake_override.strip():
+            self.path = os.path.dirname(data_lake_dir)
+        else:
+            self.path = os.path.join(path, "biomni_data")
         module2api = read_module2api()
 
         self.llm = get_llm(
@@ -562,6 +578,63 @@ class A1:
 
         return removed
 
+    def _invoke_with_rate_limit_retry(self, messages: list[BaseMessage], max_retries: int = 1):
+        """Invoke the LLM with a retry if a rate limit error occurs.
+
+        Retries after 60 seconds when encountering a RateLimitError (HTTP 429) or
+        when the error message suggests to "retry after 60 seconds".
+
+        Args:
+            messages: Messages to send to the LLM.
+            max_retries: Number of retries to attempt after the initial failure.
+
+        Returns:
+            The LLM response on success.
+
+        Raises:
+            The last encountered exception if retries are exhausted or the error is not rate-limit related.
+        """
+        attempts = 0
+        while True:
+            try:
+                return self.llm.invoke(messages)
+            except Exception as e:
+                msg = str(e)
+                is_rate_limit = (
+                    e.__class__.__name__ == "RateLimitError"
+                    or "status code: 429" in msg.lower()
+                    or "token rate limit" in msg.lower()
+                    or "retry after 60 seconds" in msg.lower()
+                )
+                if is_rate_limit and attempts < max_retries:
+                    attempts += 1
+                    print(f"Rate limit encountered (attempt {attempts}/{max_retries}). Waiting 60 seconds before retry...")
+                    time.sleep(60)
+                    continue
+                raise
+
+    def _hash_file(self, path: str, chunk_size: int = 8 * 1024 * 1024) -> str:
+        """Compute SHA-256 hash of a file in chunks."""
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                h.update(chunk)
+        return h.hexdigest()
+
+    def _files_are_identical(self, path1: str, path2: str) -> bool:
+        """Return True if both files exist and have identical size and SHA-256 hash."""
+        try:
+            if not (os.path.isfile(path1) and os.path.isfile(path2)):
+                return False
+            if os.path.getsize(path1) != os.path.getsize(path2):
+                return False
+            return self._hash_file(path1) == self._hash_file(path2)
+        except Exception:
+            return False
+
     def add_data(self, data):
         """Add new data to the data lake.
 
@@ -585,19 +658,71 @@ class A1:
                     print("Warning: Skipping invalid data entry - file_path and description must be strings")
                     continue
 
-                # Extract filename from path for storage
-                filename = os.path.basename(file_path) if "/" in file_path else file_path
+                # Prefer the original filename if provided via description; fallback to basename of file_path
+                # This avoids saving with a random temp name from the uploader which can break retrieval by name.
+                candidate_name = (description or "").strip()
+                if candidate_name and os.path.basename(candidate_name) == candidate_name and "." in candidate_name:
+                    filename = candidate_name
+                else:
+                    filename = os.path.basename(file_path) if "/" in file_path else file_path
 
-                # Store the data with both the full path and description
-                self._custom_data[filename] = {
-                    "path": file_path,
+                # Determine data lake destination and ensure directory exists
+                data_lake_dir = os.path.join(self.path, "data_lake")
+                os.makedirs(data_lake_dir, exist_ok=True)
+                dest_path = os.path.join(data_lake_dir, filename)
+
+                # If a file with the same name exists, check hashes.
+                # - If identical, reuse existing file (no copy).
+                # - If different, create a unique suffixed name.
+                identical_preexisting = False
+                if os.path.exists(dest_path):
+                    if self._files_are_identical(file_path, dest_path):
+                        identical_preexisting = True
+                    else:
+                        base_name, ext = os.path.splitext(filename)
+                        suffix = 1
+                        while True:
+                            alt_name = f"{base_name}_{suffix}{ext}"
+                            alt_path = os.path.join(data_lake_dir, alt_name)
+                            if not os.path.exists(alt_path):
+                                dest_path = alt_path
+                                break
+                            suffix += 1
+
+                # Try to copy the file into the data lake for agent accessibility
+                copied = False
+                if os.path.isfile(file_path) and not identical_preexisting:
+                    try:
+                        # Copy only if missing or different content
+                        if not os.path.exists(dest_path) or not self._files_are_identical(file_path, dest_path):
+                            shutil.copy2(file_path, dest_path)
+                            copied = True
+                    except Exception as copy_err:
+                        print(f"Warning: Failed to copy '{file_path}' to data lake: {copy_err}")
+                else:
+                    print(f"Warning: Source file not found: '{file_path}'. It won't be available in the data lake.")
+
+                # Store the data with destination path (if copied) and original source path
+                stored_name = os.path.basename(dest_path) if os.path.exists(dest_path) else filename
+                stored_path = dest_path if os.path.exists(dest_path) else file_path
+                self._custom_data[stored_name] = {
+                    "path": stored_path,
+                    "source_path": file_path,
                     "description": description,
                 }
 
                 # Also add to the data_lake_dict for consistency
-                self.data_lake_dict[filename] = description
+                # Ensure data_lake_dict is initialized
+                if not hasattr(self, "data_lake_dict") or self.data_lake_dict is None:
+                    self.data_lake_dict = {}
+                self.data_lake_dict[stored_name] = description
 
-                print(f"Added data item '{filename}': {description}")
+                if identical_preexisting:
+                    print(f"Added data item '{stored_name}': {description} (already exists; identical content)")
+                elif copied:
+                    print(f"Added data item '{filename}': {description} (copied to data lake)")
+                else:
+                    print(f"Added data item '{filename}': {description}")
             self.configure()
             print(f"Successfully added {len(data)} data item(s) to the data lake")
             return True
@@ -693,6 +818,9 @@ class A1:
                 }
 
                 # Also add to the library_content_dict for consistency
+                # Ensure library_content_dict is initialized
+                if not hasattr(self, "library_content_dict") or self.library_content_dict is None:
+                    self.library_content_dict = {}
                 self.library_content_dict[software_name] = description
 
                 print(f"Added software '{software_name}': {description}")
@@ -1133,9 +1261,19 @@ Each library is listed with its description to help you understand its functiona
         data_lake_items = [x.split("/")[-1] for x in data_lake_content]
 
         # Store data_lake_dict as instance variable for use in retrieval
-        self.data_lake_dict = data_lake_dict
-        # Store library_content_dict directly without library_content
-        self.library_content_dict = library_content_dict
+        # Initialize/merge instance dictionaries without overwriting custom entries
+        if not hasattr(self, "data_lake_dict") or self.data_lake_dict is None:
+            self.data_lake_dict = dict(data_lake_dict)
+        else:
+            # Merge in any new defaults while preserving custom entries
+            for k, v in data_lake_dict.items():
+                self.data_lake_dict.setdefault(k, v)
+        # Store library_content_dict, preserving any custom software already added
+        if not hasattr(self, "library_content_dict") or self.library_content_dict is None:
+            self.library_content_dict = dict(library_content_dict)
+        else:
+            for k, v in library_content_dict.items():
+                self.library_content_dict.setdefault(k, v)
 
         # Prepare tool descriptions
         tool_desc = {i: [x for x in j if x["name"] != "run_python_repl"] for i, j in self.module2api.items()}
@@ -1195,7 +1333,7 @@ Each library is listed with its description to help you understand its functiona
         # Define the nodes
         def generate(state: AgentState) -> AgentState:
             messages = [SystemMessage(content=self.system_prompt)] + state["messages"]
-            response = self.llm.invoke(messages)
+            response = self._invoke_with_rate_limit_retry(messages, max_retries=1)
 
             # Parse the response
             msg = str(response.content)
@@ -1339,7 +1477,9 @@ Each library is listed with its description to help you understand its functiona
                 Think hard what are missing to solve the task.
                 No question asked, just feedbacks.
                 """
-                feedback = self.llm.invoke(messages + [HumanMessage(content=feedback_prompt)])
+                feedback = self._invoke_with_rate_limit_retry(
+                    messages + [HumanMessage(content=feedback_prompt)], max_retries=1
+                )
 
                 # Add feedback as a new message
                 state["messages"].append(

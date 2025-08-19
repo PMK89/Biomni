@@ -53,9 +53,25 @@ def get_llm(
             print(base_url)
             raise ValueError("Unable to determine model source. Please specify 'source' parameter.")
 
+    # Identify reasoning models (GPT-5 series and O-series) which have special param support
+    model_l = model.lower()
+    is_reasoning = model_l.startswith("gpt-5") or model_l.startswith("o")
+
     # Create appropriate model based on source
     if source == "OpenAI":
-        return ChatOpenAI(model=model, temperature=temperature, stop_sequences=stop_sequences)
+        # Reasoning models: use max_completion_tokens; do not send 'stop' or classic 'max_tokens'
+        if is_reasoning:
+            return ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                model_kwargs={"max_completion_tokens": 8192},
+            )
+        # Non-reasoning models: 'stop' is supported
+        include_stop = bool(stop_sequences)
+        if include_stop:
+            return ChatOpenAI(model=model, temperature=temperature, stop_sequences=stop_sequences)
+        else:
+            return ChatOpenAI(model=model, temperature=temperature)
     elif source == "AzureOpenAI":
         API_VERSION = "2024-12-01-preview"
         return AzureChatOpenAI(
@@ -83,9 +99,21 @@ def get_llm(
             temperature=temperature,
         )
     elif source == "Custom":
-        # Custom LLM serving such as SGLang. Must expose an openai compatible API.
+        # Custom LLM serving such as SGLang. Must expose an OpenAI-compatible API.
         assert base_url is not None, "base_url must be provided for customly served LLMs"
-        llm = ChatOpenAI(model=model, temperature=temperature, max_tokens=8192, stop_sequences=stop_sequences)
+        if is_reasoning:
+            # Avoid 'stop' and 'max_tokens'; use max_completion_tokens for reasoning models
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                model_kwargs={"max_completion_tokens": 8192},
+            )
+        else:
+            include_stop = bool(stop_sequences)
+            if include_stop:
+                llm = ChatOpenAI(model=model, temperature=temperature, max_tokens=8192, stop_sequences=stop_sequences)
+            else:
+                llm = ChatOpenAI(model=model, temperature=temperature, max_tokens=8192)
         llm.client = openai.Client(base_url=base_url, api_key=api_key).chat.completions
         return llm
     else:

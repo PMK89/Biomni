@@ -12,11 +12,10 @@ class Settings(BaseSettings):
     # Using a default, insecure key as a temporary workaround.
     SESSION_SECRET: str = "a_default_insecure_secret_key_for_development_only"
 
-    # Microsoft Entra ID (Azure AD) settings - These are placeholders!
-    # Please provide real values in your .env file for authentication to work.
-    CLIENT_ID: str = "placeholder_client_id"
-    CLIENT_SECRET: str = "placeholder_client_secret"
-    TENANT_ID: str = "placeholder_tenant_id"
+    # Microsoft Entra ID (Azure AD) settings
+    CLIENT_ID: str
+    CLIENT_SECRET: str
+    TENANT_ID: str
 
     # Optional OpenAI settings
     OPENAI_API_TYPE: Optional[str] = None

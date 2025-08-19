@@ -1,0 +1,1189 @@
+
+
+--- Page 1 ---
+FR: PR25 -010 Confidential Project Report               Page 1 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 02.00 
+ Published: 06.03.2025    
+ 
+ 
+Internal   
+ 
+ 
+ 
+ 
+ 
+Sponsor   Vendor (Author)  
+Dr. Stephanie  Melching -Kollmuss   Pavel Balazki  
+BASF SE  
+APD/ET - Li 444  
+Speyerer Str. 2  
+67117 Limburgerhof  
+Germany   ESQlabs  GmbH  
+Am Sportplatz 7  
+26683 Saterland  
+Germany  
+ 
+ 
+ 
+  
+Confidential Project Report   
+06 March 2025   
+Version 02.00 
+Cinmethylin PBK Modelling  
+Pavel Balazki , Dr. Vanessa Baier   
+ 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 2 ---
+FR: PR25 -010 Confidential Project  Report               Page 2 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Sponsor Information   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Dr. Pavel Balazki  
+ 
+ 
+Internal  I SPONSOR  INFORMATION  
+Document Control  
+Sponsor:  BASF SE  
+Sponsor Representative:  Dr. Stephanie Melching -Kollmuss  
+Dissemination level:  Confidential  
+Scope : The research report documents  in detail the used data, methods and assumptions, 
+and results  that have been generated after executing the analysis plan within the 
+scope of the contractual agreement (work order ) and  discusses these and the model 
+development and analysis rationale within the context of the project aim.  
+II APPROVALS  AND QUALITY ASSURANCE  
+The signatures below certify that this document has been reviewed and accepted. It demonstrates 
+that the signatories are aware of all the requirements contained herein and are committed to 
+ensuring their provision.  
+Role  Responsibility  Name / Signature  Date  
+Lead Scientist  Approval   
+Pavel Balazki  Signed on  
+Project Owner  Lead Contributor  
+Pavel Balazki  Signed on  
+Project Supporter  Support  
+Dr. Vanessa Baier  Signed on  
+Sponsor  Approval  
+Dr. Stephanie Melching -Kollmuss  Signed on  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+06-03-2025
+06-03-2025
+06-03-2025
+06-03-2025
+
+
+--- Page 3 ---
+FR: PR25 -010 Confidential Project Report               Page 3 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 02.00 
+ Published: 06.03.2025    
+ 
+ 
+Internal  III TABLE OF CONTENTS  
+I Sponsor  Information  ................................ ................................ ................................ ................................ ........ 2 
+II Approvals  and Quality Assurance  ................................ ................................ ................................ ................  2 
+III Table of Contents  ................................ ................................ ................................ ................................ .............  3 
+IV List of Figures  ................................ ................................ ................................ ................................ .....................  6 
+V List of Tables  ................................ ................................ ................................ ................................ .......................  7 
+1 Executive Summary  ................................ ................................ ................................ ................................ ..........  9 
+2 Project Background  ................................ ................................ ................................ ................................ ........ 10 
+3 Analysis Objectives  ................................ ................................ ................................ ................................ ......... 10 
+4 Scientific Background  ................................ ................................ ................................ ................................ ...... 11 
+5 Data ................................ ................................ ................................ ................................ ................................ ..... 11 
+5.1 In-Vitro & PhysChem Data  ................................ ................................ ................................ ...................  11 
+5.2 In vivo and in vitro Data for Kinetics Model Development  ................................ ........................  12 
+5.3 In vivo and in vitro Data for Effect Model Development  ................................ ............................  14 
+6 Methods ................................ ................................ ................................ ................................ .............................  15 
+6.1 Software and General Concepts  ................................ ................................ ................................ ........ 15 
+6.2 PBK Model Development for Cinmethylin in rats and humans  ................................ ................  15 
+6.3 Cinmethylin T4 -UGT induction  ................................ ................................ ................................ ..........  18 
+7 Results  ................................ ................................ ................................ ................................ ................................  20 
+7.1 Cinmethylin exposure (Study CA 5.1.1/16)  ................................ ................................ .......................  21 
+7.2 UGT induction  ................................ ................................ ................................ ................................ ......... 22 
+8 Predictions of Human Exposure  ................................ ................................ ................................ .................  29 
+8.1 Simulated scenarios  ................................ ................................ ................................ ..............................  29 
+8.2 Predicted Effect on Thyroid Hormone Levels  ................................ ................................ ................  29 
+9 Discussion  ................................ ................................ ................................ ................................ ..........................  30 
+10 Conclusion  ................................ ................................ ................................ ................................ ........................  31 
+11 References ................................ ................................ ................................ ................................ .........................  31 
+V Appendix A: PBPK -QSP Best Practices  ................................ ................................ ................................ ...... 33 
+V.1 Methods  ................................ ................................ ................................ ................................ ...................  33 
+VI Appendix B: TH Plasma Protein Binding  ................................ ................................ ................................ ..44 
+VI.1 Background information  ................................ ................................ ................................ ...................... 44 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 4 ---
+FR: PR25 -010 Confidential Project  Report               Page 4 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Table of Contents   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Dr. Pavel Balazki  
+ 
+ 
+Internal  VI.2 Modeling of plasma proteins  ................................ ................................ ................................ ............. 44 
+VI.3 3 Binding of T3 and T4 to plasma proteins  ................................ ................................ ....................  45 
+VI.4 Assumptions and limitations  ................................ ................................ ................................ ...............  47 
+VI.5 References  ................................ ................................ ................................ ................................ ...............  48 
+VII Appendix C: Thyroid PB -QST Platform - T3 physiology  ................................ ................................ ...... 49 
+VII.1 Distribution  ................................ ................................ ................................ ................................ ..............  49 
+VII.2 Clearance  ................................ ................................ ................................ ................................ .................  56 
+VII.3 Pituitary gland concentrations  ................................ ................................ ................................ ...........  58 
+VII.4 Oral absorption  ................................ ................................ ................................ ................................ ...... 60 
+VII.5 Synthesis  ................................ ................................ ................................ ................................ ...................  61 
+VII.6 Assumptions and limitations  ................................ ................................ ................................ ...............  63 
+VII.7 References  ................................ ................................ ................................ ................................ ...............  64 
+VIII Appendix D: Thyroid PB -QST Platform - T4 physiology ................................ ................................ ...... 66 
+VIII.1  Distribution  ................................ ................................ ................................ ................................ ..............  66 
+VIII.2  Clearance  ................................ ................................ ................................ ................................ .................  70 
+VIII.3  Pituitary gland concentrations  ................................ ................................ ................................ ...........  72 
+VIII.4  Oral absorption  ................................ ................................ ................................ ................................ ...... 73 
+VIII.5  Synthesis  ................................ ................................ ................................ ................................ ...................  73 
+VIII.6  Assumptions and limitations  ................................ ................................ ................................ ...............  76 
+VIII.7  References  ................................ ................................ ................................ ................................ ...............  76 
+IX Appendix E: Thyroid PB -QST Platform – TSH physiology  ................................ ................................ ... 78 
+IX.1 Distribution  ................................ ................................ ................................ ................................ ..............  78 
+IX.2 Clearance  ................................ ................................ ................................ ................................ .................  78 
+IX.3 Synthesis  ................................ ................................ ................................ ................................ ...................  79 
+IX.4 Assumptions and limitations  ................................ ................................ ................................ ...............  90 
+IX.5 References  ................................ ................................ ................................ ................................ ...............  90 
+X Appendix F: Thyroid PB -QST Platform - Phenobarbital  ................................ ................................ ...... 92 
+X.1 Oral absorption  ................................ ................................ ................................ ................................ ...... 92 
+X.2 Distribution  ................................ ................................ ................................ ................................ ..............  92 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 5 ---
+FR: PR25 -010 Confidential Project  Report               Page 5 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Table of Contents   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Dr. Pavel Balazki  
+ 
+ 
+Internal  X.3 Clearance  ................................ ................................ ................................ ................................ .................  93 
+X.4 PK simulation results  ................................ ................................ ................................ .............................  94 
+X.5 UGT induction  ................................ ................................ ................................ ................................ ......... 96 
+X.6 Assumptions and limitations  ................................ ................................ ................................ .............  103 
+X.7 References  ................................ ................................ ................................ ................................ .............  103 
+XI Appendix G: Species -specific Parameter Values  ................................ ................................ ..................  105 
+ 
+ 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 6 ---
+FR: PR25 -010 Confidential Project Report               Page 6 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 02.00 
+ Published: 06.03.2025    
+ 
+Executive Summary   ©ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  IV LIST OF FIGURES  
+Figure 1 Cinmethylin concentrations in venous blood plasma, liver, and feces following a single 
+administration of 350mg/kg. Lines represent simulated cinmethylin residuals.  ................................ ..... 22 
+Figure 2: In vitro GT induction as fold changes from control, Study 23T0066/14X720.  .......................  23 
+Figure 3: In vitro GT induction, Study 23T0066/14X720.  ................................ ................................ ...............  24 
+Figure 4: In vitro UGT induction as absolute changes in activity, Study 23T0066/14X720.  .................  25 
+Figure 5 Relative UGT activity (observed and simulated) in rats after cinmethylin exposure.  ............  26 
+Figure 6 TH concentrations in the control group from Study 99C0066/14C162  ................................ .... 27 
+Figure 7 TH concentrations in the 200 ppm group from Study 99C0066/14C162  ................................  28 
+Figure 8: Architecture of the OSP suite  ................................ ................................ ................................ .............  33 
+Figure 9: Representation of the generic structure of a whole -body PBPK model.  ................................  34 
+Figure 10: Representation of the general building blocks that can be part of a PBPK model  ...........  35 
+Figure 11: Predict, Learn, and Confirm cycle in PBPK model development  ................................ .............  36 
+Figure 12: PBPK model development for i.v. an p.o. administration: General PBPK workflow for data 
+integration and model evaluation.  ................................ ................................ ................................ ......................  38 
+Figure 13: Optimal procedure to achieve QSP model results of highest quality, adapted from 
+(Friedrich 2016)  ................................ ................................ ................................ ................................ ..........................  41 
+Figure 14 iv administration of 8.6e -5 mg T3 in humans. Data from Pilo et al. (1990)  ...........................  53 
+Figure 15 iv administration of 1.51 ng/kg body weight T3 in rats.  ................................ ..............................  54 
+Figure 16 iv administration of 26 ng / 100 g bw T3 in rats.  ................................ ................................ ..........  55 
+Figure 17 iv administration of 70 ng / 100 g bw T3 in rats.  ................................ ................................ ..........  56 
+Figure 18 Schematic representation of the two -compartmental hormone secretion model  .............  61 
+Figure 19 iv administration of 1.7e -4 mg T4 in humans.  ................................ ................................ ...............  69 
+Figure 20 iv administration of 1.2 ng  ................................ ................................ ................................ ..................  70 
+Figure 21 iv administration of 800 ng / 100 g bw T4 in rats.  ................................ ................................ ........ 73 
+Figure 22 TSH potentiation of T3 and T4 synthesis. Red vertical lines mark the range of predicted 
+TSH concentrations in healthy humans (taking circadian fluctuations into account).  ..........................  75 
+Figure 23 iv administration of 70 ng / 100 g bw T3 in rats. ................................ ................................ ..........  81 
+Figure 24 iv administration of 800 ng/kg bw T4 in thyroidectomized rats.  ................................ ............  82 
+Figure 25 iv administration of 70 ng/kg bw T3 in thyroidectomized rats.  ................................ ...............  83 
+Figure 26 Circadian potentiation of TSH synthesis in humans.  ................................ ................................ ... 84 
+Figure 27 po administration of 75 µg T3 in humans. ................................ ................................ .....................  85 
+Figure 28 po administration of 400 µg T4 in humans at 24 hours.  ................................ ...........................  87 
+Figure 29: po administration of 600 µg T4 in humans at 24 hours.  ................................ ..........................  89 
+Figure 30 Comparison of simulation results with observed data after iv administration of 30mg/kg 
+bw and 50mg/kg bw phenobarbital in rats. PB cencenrations are reported for venous blood (VB) 
+and liver tissue.  ................................ ................................ ................................ ................................ .........................  94 
+Figure 31 Comparison of simulation results with observed data after iv administration of 2.6mg/kg 
+bw and po administration of 2.9 mg/kg bw PB in humans.  ................................ ................................ ........ 95 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 7 ---
+FR: PR25 -010 Confidential Project  Report               Page 7 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Executive Summary   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  Figure 32 Comparison of simulation results with observed data after iv administration of iv 
+administration of 130 mg PB in humans.  ................................ ................................ ................................ ...........  96 
+Figure 33 Comparison of observed and simulated concentrations of tracer T4 after iv administration 
+in untreated rats and animals treated with 80mg/kg bw/day phenobarbital for four days.  ..............  97 
+Figure 34 Comparison of observed and simulated concentrations of tracer T4 after iv administration 
+in untreated rats and animals treated with 100mg/kg bw/day phenobarbital for five days.  ..............  98 
+Figure 35 Comparison of observed and simulated concentrations of tracer T4 after iv administration 
+in untreated rats and animals treated with 100mg/kg bw/day phenobarbital for three weeks.  ....... 99 
+Figure 36 Simulation of the effect of 15 days PB treatment with 179 mg/kg bw/day on the basal TH 
+concentrations.  ................................ ................................ ................................ ................................ .......................  102 
+ 
+V LIST OF TABLES  
+Table 1: Compound properties for the cinmethylin (parent) used as input parameters for the PBPK 
+model.  ................................ ................................ ................................ ................................ ................................ ..........  11 
+Table 2: Overview of in vivo PK studies on Cinmethylin  ................................ ................................ ...............  12 
+Table 3 Overview of in vivo and in vitro PD studies on Cinmethylin  ................................ ........................  14 
+Table 4 Parameters used for in vitro -in vivo extrapolation of cinmethylin clearance  ..........................  17 
+Table 5 Exemplary data for liver and plasma concentrations of cinmethylin and the calculations 
+applied to derive the parent compound concentrations  ................................ ................................ .............  18 
+Table 6 Physico -chemical parameters of cinmethylin  ................................ ................................ ...................  20 
+Table 7 Metabolism -related parameters used in PBK model of cinmethylin  ................................ ..........  21 
+Table 8: Parameters describing UGT induction  ................................ ................................ ...............................  22 
+Table 9 Comparison of simulated and observed % changes in TH concentrations at day 29. Study 
+99C0066/14C162. ................................ ................................ ................................ ................................ ......................  28 
+Table 10: Simulated effects of exposure to cinmethylin on TH concentrations in humans.  ................  29 
+Table 11 Physicho -chemical properties of T3 as used in the model.  ................................ .........................  51 
+Table 12 Parameters describing the active trans -endothelial transport of T3.  ................................ ....... 52 
+Table 13 Parameters describing the clearance of T3  ................................ ................................ .....................  58 
+Table 14 Fractional contribution of different clearance processes to the total clearance of T3.  ....... 58 
+Table 15 Parameters of active transport of T3  ................................ ................................ ................................ . 60 
+Table 16 parameter values describing metabolization of T3 in pituitary cell space  ..............................  60 
+Table 17 Parameter values describing the binding of T3 to nuclear T3R  ................................ .................  60 
+Table 18 Model parameters of T3 model  ................................ ................................ ................................ ..........  63 
+Table 19 Simulated basal concentrations of the thyroid hormones.  ................................ .........................  63 
+Table 20 Physicho -chemical properties of T4 as used in the model. ................................ ........................  67 
+Table 21 Parameter values describing active transport of T4 across endothelial and cellular barrier
+................................ ................................ ................................ ................................ ................................ .......................  68 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 8 ---
+FR: PR25 -010 Confidential Project  Report               Page 8 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Executive Summary   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  Table 22 Model parameters of T4 model  ................................ ................................ ................................ ......... 71 
+Table 23 Fractional contribution of different clearance processes to the total clearance of T4.  ...... 72 
+Table 24 Parameter values describing the expression of the T4 transporter and DIO in pituitary gland
+................................ ................................ ................................ ................................ ................................ .......................  72 
+Table 25 Parameter values used in T4 model ................................ ................................ ................................ .. 75 
+Table 26 Simulated basal concentrations of the thyroid hormones.  ................................ .........................  76 
+Table 27 Parameter values used in TSH model  ................................ ................................ ...............................  79 
+Table 28 Final parameter values of human TSH model  ................................ ................................ ................  89 
+Table 29 Simulated basal concentrations of the thyroid hormones.  ................................ .........................  89 
+Table 30 Physico -chemical parameters of phenobarbital  ................................ ................................ ............  93 
+Table 31 Parameter values used in phenobarbital PBPK model  ................................ ................................ . 93 
+Table 32 Clearance parameters used in phenobarbital model ................................ ................................ ... 94 
+Table 33 Parameters of UGT induction by phenobarbital  ................................ ................................ ............  96 
+Table 34 Effect of PB treatment on circulating TH levels.  ................................ ................................ ...........  100 
+ 
+  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 9 ---
+FR: PR25 -010 Confidential Project  Report               Page 9 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Executive Summary   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  1 EXECUTIVE SUMMARY  
+A physiologically -based kinetic (PBK) model of cinmethylin in rat species has been developed using 
+available physico -chemical (PhysChem) and in vitro data and has been applied to predict the effect 
+of human exposure to cinmethylin on thyroid hormone levels in humans.  
+The model describes the kinetics of the parent compound cinmethylin, using available PhysChem 
+data and cinmethylin degradation kinetics measured in vitro in rat hepatocytes. The model 
+adequately describes concentrations of cinmethylin in rat plasma and liv er tissue at doses of 15 
+mg/kg bw and 350 mg/kg, with predicted concentrations being within the two -fold deviation from 
+measured. No differentiation between male and female rats was modeled, as the available TK data 
+does not show a consistent sex differenc e, and the reported in vitro metabolization data was 
+obtained for the mix of male and female hepatocytes. A detailed description of the PBK model is 
+provided in Sections 5.1, 5.2, 6.2, and 7.1. 
+The applicability of the Thyroid Hormones (TH) Quantitative Systems Toxicology (QST) for the 
+prediction of the effect of UGT inducers on TH levels in rats and humans is shown in the example 
+of phenobarbital. Using in vitro measured induction values (Emax a nd EC50), the model can predict 
+decreased T4 and T3 concentrations and increased TSH concentrations in rats, with predicted 
+changes being within the reported range. In accordance with the observed data, the model predicts 
+no change in T4 and T3 concentrati ons and only a minor increase in TSH concentrations in humans 
+after 14 days of administration of 100 mg phenobarbital daily. A detailed description of the 
+phenobarbital model is provided in X Appendix F . Therefore, the model was applied to predict the 
+effect of exposure to cinmethylin using Emax and EC50 values derived from in vitro induction 
+experiments. The same parameter values were applied for rats and humans, as there were no clear 
+differences in the observed fold -increases of T4 -GT activity. The model adequately describes in vitro 
+and in vivo UGT induction and the effect on TH concentrations in rats at high doses of cinmethylin. 
+A detailed description of the prediction of UGT induction by cinmethylin in rats is provided in 
+Sections 5.3, 6.3, and 7.2. 
+Finally, the model has been applied to predict the effect of exposure to cinmethylin on TH levels in 
+humans. As cinmethylin is a pesticide with no intended application in humans, the exposure 
+scenarios were designed to represent the worst -case exposure. The following scenarios were 
+simulated:  
+1. 350 mg/kg bw administered with diet over 28 days : The human exposure to cinmethylin 
+was simulated applying the same body -weight normalized dose as in the rat study. The 
+dose was administered with the diet over 28 days, simulated as a constant intragastric 
+infusion.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 10 ---
+FR: PR25 -010 Confidential Project  Report               Page 10 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Project Background   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  2. 350 mg/kg once daily for 28 days : The same daily exposure as in scenario 1) was simulated 
+as acute administration of 350 mg/kg bw cinmethylin once daily for 28 days.  
+3. 100 mg once daily for 28 days : The human exposure to cinmethylin was simulated under 
+the assumption of a once -daily acute exposure to 100 mg cinmethylin.  
+The model predicts no effect  on the T3 and T4 concentrations and only a minor increase of TSH 
+levels in the human body for any of the exposure scenarios. The simulated exposure to 350 mg/kg 
+predicts liver tissue concentrations of cinmethylin above 100 µM, which is above the highest 
+exposure applied in vitro and is unlikely to be achieved in real -life situations. It can be therefore 
+concluded that based on simulation results, cinmethylin's potency to induce TH changes in humans 
+is comparable or lower than th at of phenobarbital.  Details are described in Section 8. 
+2 PROJECT BACKGROUND  
+BASF SE (BASF)  is the manufacturer of  the compound Cinmethylin (C -SD95481, BAS 684 H) . 
+Cinmethylin is a herbicide developed for the selective pre -emergence control of many annual grass 
+weeds in a wide range of temperate and tropical crops ( PubChem, n.d. ).  A physiologically -based 
+kinetic  (PBK)  model of cinmethylin has been developed  by ESQlabs  to perform simulation -based 
+analys es of exposure in rat and humans and the induction of T4 -UGT activity and its effect on thyroid 
+hormone homeostasis . 
+3 ANALYSIS OBJECTIVES  
+The analysis cover s the following research questions : 
+1. Implementation of a PBK model for cinmethylin in rats  and simulation of expo sure 
+2. Model -based e xtrapolation of cinmethylin exposure to humans  
+3. Integration  of cinmethylin PBK model with the existing thyroid hormones (TH) Quantit ative 
+Systems Toxicology (QST)  model  
+4. Simulation of T4 -UGT induction by cinmethylin in rats  
+5. Prediction of the effect of exposure to cinmethylin  on TH levels in humans  
+  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 11 ---
+FR: PR25 -010 Confidential Project  Report               Page 11 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Scientific Background   © ESQlabs  GmbH, all rights reserved  
+In-Vitro & PhysChem Data     Last saved by: Pavel Balazki  
+ 
+Internal  4 SCIENTIFIC BACKGROUND  
+In in vivo studies, c inmethylin  was shown to reduce T4 and increase TSH concentrations in rats.  
+Therefore, cinmethylin  is considered a thyroid disruptor in rats.  In vivo and in vitro data exist to show 
+that cinmethylin is a liver enzyme inducer. A model -based integrative analysis was performed to 
+investigate the potential of  cinmethylin’s to disrupt TH homeostasis in humans. Physiologically -
+based models of both cinmethylin kinetics and thyroid hormone hom eostasis have been developed 
+to simulate cinmethylin effects on T3, T4 and TSH concentrations in rats and humans.  
+5 DATA  
+5.1 IN-VITRO & PHYSCHEM DATA 
+The compound properties  of cinmethylin  relevant to PBK modeling are summarized in  Table 1. 
+Table 1: Compound properties for the cinmethylin  (parent)  used as input parameters for the PBPK model.  
+PARAMETER  Value  Value used 
+in model  Reference (comment)  
+MW (g/mol)  274.4  274.4   
+Lipophilicity 
+logPo/w 4.5@pH  5.8 at 
+20C 4.5 DAR report p28f  
+pKa n.a. none  No pKa could be determined in physiological 
+range.  DAR report p28f  
+Solubility  1 
+[mg/mL ] (Water)  0.063@ pH4.1 , 
+0.058 @pH7.0 ,  
+0.062 @pH9.0  
+at 20C   DAR report p28 f 
+Solubility  2 
+[mg/mL ] 
+(organic 
+solvents ) > 500   DAR report p28f  
+Solubility  2 
+[mg/mL ] 
+(DMSO ) <12.2  1 BAS 684 H MCA Section 5 p1214  
+With a value of 1 mg/ml, oral absorption is not 
+limited up to the highest simulated dose of 
+350 mg/kg bw.  
+furat % n.a. 0.95 Assumed to be highly unbound  
+fuhuman % n.a. 0.95 Assumed to be highly unbound   
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 12 ---
+FR: PR25 -010 Confidential Project  Report               Page 12 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Data  © ESQlabs  GmbH, all rights reserved  
+In vivo and in vitro Data for Kinetics Model Development     Last saved by: Pavel Balazki  
+ 
+Internal  Intestinal 
+permeability  
+[cm/min] 0.0054   0.0054   Calculated by PK -Sim based on physico -
+chemistry  
+MW – molecular weight; fu – fraction unbound in plasma; n.a. not applicable  
+5.2 IN VIVO AND IN VITRO DATA FOR KINETICS MODEL DEVELOPMENT  
+This section gives an overview of the available data on cinmethylin kinetics and in vitro 
+metabolization studies . 
+Table 2: Overview of in vivo PK studies on Cinmethylin  
+StudyID  Dose  Data Male/f
+emale  Source  
+CA 
+5.1.1/1 -
+2-3 SD po 15 mg/kg 
+(stomach intubation)  Total radioactivity:  
+Excretion in feces, urine, and whole blood 
+concentrations. Tissue distribution.  
+Parent compound:  
+- % excretion in feces after 48h  
+- % of administered in unbound fraction of 
+plasma after 1h  5/5 BAS 684 H 
+MCA 
+Section 5  
+CA 
+5.1.1/4 -
+5-6 SD po 450 mg/kg 
+(stomach intubation)  Total radioactivity:  
+Excretion in feces, urine, and issue 
+distribution.  
+Parent compound:  
+- % excretion in feces after 48h  5/5 BAS 684 H 
+MCA 
+Section 5, 
+pf45f  
+CA 
+5.1.1./8  MD po 15 mg/kg 
+QD 14x (stomach 
+intubation)  Parent compound:  
+% excretion in feces after 48h  5/5 BAS 684 H 
+MCA 
+Section 5, 
+p73f 
+CA 
+5.1.1/16  SD po 15mg/kg  
+SD po 350 mg/kg  Liver tissue concentration of parent after 1 
+and 4 hours  
+Parent in plasma.  3 total  BAS 684 H 
+MCA 
+Section 5, 
+p158f  
+CA 
+5.1.2/1  in vitro hepatocyte 
+incubation  Degradation profile in rats and humans   BAS 684 H 
+MCA 
+Section 5, 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 13 ---
+FR: PR25 -010 Confidential Project  Report               Page 13 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Data  © ESQlabs  GmbH, all rights reserved  
+In vivo and in vitro Data for Kinetics Model Development     Last saved by: Pavel Balazki  
+ 
+Internal  p183f, 
+Table 5.1.2 -
+1 
+CA 5.5/1  Diet over 12 or 24 
+months at dose 
+levels of 0, 200, 
+1000, 5000 ppm (0, 
+11, 59, 317 mg/kg 
+bw/day for females, 
+Page 641)  Plasma concentrations at the highest dose   BAS 684 H 
+MCA 
+Section 5, 
+Table 5.5-
+6, page 
+642 
+ 
+  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 14 ---
+FR: PR25 -010 Confidential Project  Report               Page 14 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Data  © ESQlabs  GmbH, all rights reserved  
+In vivo and in vitro Data for Effect Model Development     Last saved by: Pavel Balazki  
+ 
+Internal  5.3 IN VIVO AND IN VITRO DATA FOR EFFECT MODEL DEVELOPMENT  
+This section gives an overview of the available data on the effect of cinmethylin on T4 -GT activity 
+and TH levels.  
+Table 3 Overview of in vivo and in vitro PD studies on Cinmethylin  
+StudyID  Dose  Data Male/  
+female  Source  
+23T0066
+/14X720  in vitro, SD,1, 3, 10, 30, 
+(100) µM  T4-UGT activity  
+• mean basal 
+activity  
+• mean activity 
+reference 
+compounds (BNF, 
+RIF, PB; one dose 
+each)  
+• mean activity BAS 
+684 H  
+• [pmol/min/mg cell 
+protein]  rat: 
+6/6 
+human
+: 3-6/6 2024/20157
+36 
+Section 
+8.3.2, p34ff  
+99C006
+6/14C16
+2 MD (dietary intake 14d 
+and 28d),  
+0, 200, 1000, 5000 ppm 
+(two groups each)  
+14d, males (groups 11, 
+21, 31): 0, 14.1, 70.1, 
+357.1 mg/kg bw/d  
+28d, males (groups 10, 
+20, 30): 0, 12.6, 65.2, 
+317.1 mg/kg bw/d  
+14d, females (groups 11, 
+21, 31): 0, 14.9, 75.6, 
+382.8 mg/kg bw/d  in vivo thyroid 
+hormones in blood:  
+• T4 (total)1 
+• T3 (total)1 
+• TSH 
+• change to 
+control  
+T4 GT activity (liver 
+microsomes)  
+• absolute 
+values 
+[AU/min/mg]  
+• change to 
+control [%]  
+UGT1A6 1A7 mRNA:  10/10  2020/210025
+2 
+2021/200661
+3 (Amnd 1)  
+2023/20527
+35 (Amnd 2)  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 15 ---
+FR: PR25 -010 Confidential Project  Report               Page 15 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Methods   © ESQlabs  GmbH, all rights reserved  
+PBK Model Development for Cinmethylin in rats and humans     Last saved by: Pavel Balazki  
+ 
+Internal  28d, females (groups 
+10, 20, 30): 0, 14.6, 70.7, 
+352.9 mg/kg bw/d  
++liver microsomes  
++mRNA liver samples  • TSH 
+• change to 
+control  
+UGT1A6 1A7 mRNA:  
+• fold change 
+5000ppm vs 
+0ppm group [ -] 
+1 assumption that the reported TH concentrations represent the total fraction in plasma.  
+ 
+6 METHODS  
+6.1 SOFTWARE AND GENERAL CONCEPTS  
+The PBPK models were implemented using the Open Systems Pharmacology Suite (OSPS or OSP -
+Suite) PBPK and QSP software tools PK -Sim and MoBi (version 12). For model applications and 
+generations of final figures, esqlabsR (version 5.2), R (distribution 4.1) and RStudio (version 2023.09) 
+was used in the analysis for pre - and post -processing of data and model simulation output.  
+The general principles of physiologically -based modeling and the applied software are described in 
+V Appendix A . 
+The TH QST model used for the predictions of TH homeostasis is described in VI Appendix B , VII 
+Appendix C , VIII Appendix D , and IX Append ix E. 
+The phenobarbital (PB) PB QST model used as the qualification of the applicability of the TH QST 
+platform to predict the effects of UGT inducers is described in X Appendix F . 
+The list of all species -specific parameter versions is given in XI Appendix G . 
+6.2 PBK  MODEL DEVELOPMENT FOR CINMETHYLIN IN RATS AND HUMANS  
+Cinmethylin is rapidly metabolized, and most of the performed kinetics  studies report total 
+radioactivity data only. Parent concentration data are available for oral single dose administrations 
+of 15 mg/kg bw and 350 mg/kg bw as % of administered dose. Separate values are available for 
+male and female rats and two different cinmethylin labels (phenyl and cyclohexane).  
+This model only considers the parent metabolite and is built using only PK data for the parent.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 16 ---
+FR: PR25 -010 Confidential Project  Report               Page 16 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Methods   © ESQlabs  GmbH, all rights reserved  
+PBK Model Development for Cinmethylin in rats and humans     Last saved by: Pavel Balazki  
+ 
+Internal  6.2.1 Oral absorption  
+Cinmethylin is rapidly absorbed after oral administration, with 78 -99% of administered radioactivity 
+being recovered in urine and bile after single and repeated oral dose (rat studies) (BAS 684 H MCA 
+Section 5, page 7, also Table 5.1.1 -73). 
+The reported systemic bioavailability of 70% is calculated from AUC ratio after iv and po 
+administrations for the total radioactivity:  
+“Dose corrected ratios of the AUCs after oral (15 mg/kg bw) and i.v. dosing (1 mg/kg bw) are 66% 
+and 73% for males and females, respectively. Since the AUC values are based on radioactivity 
+equivalents in plasma, and metabolic profiles in plasma are not taken into consideration, these 
+numbers do not reflect oral bioavailability, but tentatively, these data demonstrate a high absorption 
+of the test item after oral dosing.” - BAS 684 H MCA Section 5, Page 134.  
+The parent compound’s bioavailability is not reported. However, it can be assumed that the 
+absorption of orally administered cinmethylin is close to 100%, as only a minor fraction (between 2 
+and 7%) of the parent compound was recovered in feces.  
+Reported Aqueous solubility is 0.063, 0.058, and 0.062 mg/ml at 20C, pH 4.1, 7.0, and 9.0, 
+respectively. Solubility in organic solvents is much higher with >500 mg/ml (details can be found on 
+p. 28f). In DMSO, the solubility is below 12.2 mg/ml (BAS 684 H MCA Section 5 p1214). For modeling 
+purposes, the value of 1 mg/ml has been applied. With this value, oral absorption is not limited up 
+to the highest simulated dose of 350 mg/kg bw.  
+Specific intestinal permeability is calculated by PK -Sim based on the compound’s molecular weight 
+and lipophilicity.  
+6.2.2 Tissue distribution  
+Distribution into tissues is described by the partitioning coefficient calculation method 
+“Berezhkovskiy” and the cellular permeabilities calculation method “PK -Sim standard.” The 
+partitioning calculation methods were selected  by comparing the predicted tissue -to-plasma ratio 
+with observed plasma and liver tissue concentrations.  
+6.2.2.1  Plasma protein binding  
+No plasma protein binding is reported for cinmethylin. BAS 684 H MCA Section 5, Table 5.1.1 -14 
+reports the fractionation and distribution of cinmethylin equivalent residues in the blood samples, 
+including the contribution of the parent compound (6.3% of whole blood radioactivity in the 
+unbound plasma fraction). BAS 684 H MCA Section 5, Table 5.1.1 -93 reports th e proportion (% of 
+the administered dose) of the parent compound in plasma (0.01% of the total administered dose).  
+An attempt was made to calculate fraction unbound using these data. From the data in Table 5.1.1 -
+14, it can be calculated that 6.3% / 71.6 % (radioactivity in total plasma of whole blood radioactivity) 
+= 8.8% of total plasma radioactivity  was associated with unbound  parent compound. From the data 
+in Table 5.1.1 -93, it can be calculated that 0.01% (parent of the total administered dose) / 0.49% 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 17 ---
+FR: PR25 -010 Confidential Project  Report               Page 17 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Methods   © ESQlabs  GmbH, all rights reserved  
+PBK Model Development for Cinmethylin in rats and humans     Last saved by: Pavel Balazki  
+ 
+Internal  (total radioactivity of the total administered dose) = 2.04% of total plasma radioactivity  were 
+associated with the total (bound and unbound) parent compound. The data appears to be 
+inconsistent. However, it indicates that cinmethylin is likely primarily present in the unbound form in 
+plasma. We, therefore, assume that cinmethylin is mostly unbound in plasma and apply an arb itrary 
+value of 95% unbound. This assumption is supported by the extremely fast metabolization, which 
+requires a fast distribution of t he compound from plasma into tissues.  
+6.2.3 Metabolization  
+Metabolism is similar across all species (human, rat, dog, rabbit). Degradation time profiles 
+measured in vitro in human and rat hepatocytes are summarized in BAS 684 H MCA Section 5, 
+p183f, Table 5.1.2 -1 and Table 5.1.2 -2. 
+Clearance of cinmethylin is implemented as unspecific liver plasma clearance, with the clearance 
+rate constant being derived from the in vitro data. Following in vitro -in vivo extrapolation specifics 
+(required for the use of in vitro data in PK -Sim) have b een applied:  
+Table 4 Parameters used for in vitro -in vivo extrapolation of cinmethylin clearance  
+Parameter  Values rat  Value human  Source  
+Number of cells/g 
+liver  117* 10^6 cells/g  139*10^6 cells/g  PK-Sim 
+Number of 
+cells/incubation  2 x 10^6 viable cells 
+per mL  2 x 10^6 viable cells 
+per mL  BAS 684 H MCA 
+Section 5, p176  
+Fraction unbound 
+(assay)  0.95  0.95  assumed the same 
+as in the model  
+Fraction 
+intracellular (liver)  0.722  0.667  PK-Sim 
+Residual fraction 
+[%/% AR]  • 8.79/79.95 = 
+10.99 (phenyl 
+label after 
+10min)  
+• 26.9/82.49 = 
+32.61 
+(cyclohexane 
+label, after 
+10min)  • 22.84/84.72 = 
+26.96 (phenyl 
+label, after 
+60min)  
+• 26.69/88.65 = 
+30.11 
+(cyclohexane 
+label, after 
+60min)  BAS 684 H MCA 
+Section 5, p183f  
+ 
+6.2.4 Radioactive Residual data usage  
+Following distribution information could be extracted from BAS 684 H MCA Section 5, Tables 5.1.1 -
+79 (p146), 5.1.1 -89 (liver tissue), and 5.1.1 -93 (plasma) (female animals). Tables 5.1.1 -89 and 5.1.1 -93 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 18 ---
+FR: PR25 -010 Confidential Project  Report               Page 18 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Methods   © ESQlabs  GmbH, all rights reserved  
+Cinmethylin T4 -UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal  present % of the administered dose of total identified and characterized  metabolites and parent 
+compound. By dividing the latter by the former, the concentration of the parent compound in the 
+respective matrix can be calculated. The data have been used for model development and 
+evaluation.  
+ 
+Table 5 Exemplary data for liver and plasma concentrations of cinmethylin and the calculations applied to derive the parent 
+compound concentrations  
+Matrix  Dose 
+[mg/
+kg 
+bw] Time post -
+dose [h]  Total radioactivity [mg/kg] 
+(% total dose)  Parent compound 
+[mg/kg] (% total dose)  
+Liver  15 1 30.21 (8.4)  = 30.21 * 0.29 / 8.4 = 1.04 
+(0.29)  
+Plasma  15 1 5.66 (0.49)  = 5.66 * 0.01 / 0.49 = 
+0.115 (0.01)  
+Liver  350 4 206.8 (2.03)  = 206.8 * 0.29 / 2.03 = 
+29.54 (0.27)  
+Plasma  350 4 71.1 (0.47)  = 71.1 * 0.01 / 0.47 = 1.51 
+(0.01)  
+ 
+6.2.5 Species extrapolation  
+For simulations of rat exposure  a standard rat individual with physiology as defined in the PK -Sim 
+database ( https://docs.open -systems -pharmacology.org/working -with-pk-sim/pk -sim-
+documentation/pk -sim-creating -individuals#animal -species ) has been used . For simulations of 
+human exposure, a standard European ( ICRP, 2002 ), male, 30 years old, as defined in the PK -Sim 
+database ( https://docs.open -systems -pharmacology.org/working -with-pk-sim/pk -sim-
+documentation/pk -sim-creating -individuals#human ) has been used.  
+6.3 CINMETHYLIN T4-UGT  INDUCTION  
+6.3.1 Reported evidence  
+mRNA induction data were not used for modeling, as mRNA expression does not necessarily 
+correlate with enzyme activity. Therefore, only T4 -UGT activity data were used.  
+“The pattern observed for UGT induction in rat hepatocytes (UGT2B in both genders) differed from 
+the one found in human hepatocytes (UGT1A1 and UGT1A4 in both genders). The mRNA pattern 
+was confirmed at activity level with CYP3A being the predominantly ind uced Phase I liver enzyme 
+in both species, followed by CYP2B, with a more pronounced effect in rat than in human. BAS 684 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 19 ---
+FR: PR25 -010 Confidential Project  Report               Page 19 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Methods   © ESQlabs  GmbH, all rights reserved  
+Cinmethylin T4 -UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal  H was able to increase T4 -UGT activity in rat hepatocytes when compared to controls while no 
+biologically relevant changes in T4 -UGT activity were seen in human hepatocytes. ” - BAS 684 H 
+MCA Section 5, Page 1099.  
+6.3.1.1  Study 23T0066/14X720 - in vitro T4 -UGT activity assays  
+When compared to the reference UGT inducer phenobarbital (PB), cimethylin had a comparable 
+maximal effect on T4 -UGT activity in female rat hepatocytes (1.58 - vs. 1.56-fold), and a slightly lower 
+effect in male rat hepatocytes (1.7 - vs. 2.03-fold). The effect in female human hepatocytes was 
+comparable to the effect of PB (1.56 - vs. 1.48-fold), while the effect in male human hepatocytes was 
+slightly higher than the effect of PB (1.78 - vs. 1.5-fold). Overall, the fold induction of T4 -UGT activity 
+by cinmethylin was comparable in rat and human hepatocytes, while the absolute effect was much 
+higher in rat hepatocytes (due to the much higher basal T4 -UGT activity). The maximal effect of 
+cinmethylin is comparable to the maximal effect of PB in rat and human hepatocytes.  
+6.3.1.2  Study 99C0066/14C162 - in vivo effect  
+“The most thyroid hormone mean values in males and females receiving BAS 684 H up to 28 days 
+were within respective HCD ranges. The only exceptions were the increased T3 values in low and 
+mid dose females on day 22 that were considered incidental in nature  due to lack of statistical 
+significance and dose -response relationship (a comparison of day 8 and day 15 T3 mean values with 
+HCDs is not possible as corresponding T3 HCDs for -4, 8 and 15 days are not available), and 
+decreased T4 value in low and mid dose  females on day -4 that was clearly incidental as occurring 
+prior treatment start as well as decreased T4 values in all treated females on day 8, that were 
+however, lacking statistical significance and a dose -response relationship and thus, considered 
+incidental in nature. In males, the T4 value in high dose animals on day 8 was slightly below the 
+corresponding HCD for 8 -13 week old males, but again without statistical significance and otherwise 
+within the slightly broader HCD of 14 -23 week males.  
+However, due to consistent occurrence, significantly decreased T3 (day 8 and day 29) and T4 levels 
+(beginning at study day 15) in top dose males of up to 18% and 16%, respectively, were considered 
+to be treatment related  although still within the respective HCDs. Additionally, albeit within 
+respective HCD ranges, the increased TSH levels in top dose males by more than 20% from study 
+day 15 onwards were considered treatment related . 
+All other statistically significant T3, T4 and TSH changes occurred only transiently at some study 
+days, lacking any consistency and thus, were considered incidental in nature and not treatment 
+related ”. 
+“Mean T4 -UDP-GT activity was slightly, albeit not clearly dose -dependently induced in males of all 
+treatment groups but was not affected in females after a 14 -day exposure. However, following a 
+prolonged exposure for 28 days, T4 -UDP-GT activity was statist ically significantly increased in high 
+dose females as well, although less pronounced than in males after 14 -day exposure. The effect of 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 20 ---
+FR: PR25 -010 Confidential Project  Report               Page 20 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+Cinmethylin T4 -UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal  the high dose males after 14 -day treatment and of the high dose females after 28 -day treatment 
+was correlated to dose and thus, was assessed as treatment related”.  
+BAS 684 H MCA Section 5, Table 5.8.2 -25 (p1147f) reports T4 -UGT activity in rats after 14 and 28 
+days of treatment. The activity is expressed in AU/min/mg protein.  
+6.3.1.3  Comparison with Phenobarbital (PB)  
+The observed effect of PB on T4 -UGT activity in vitro reported in ( Baze et al. 2024 ) was slightly 
+higher than the effect reported in 23T0066/14X720 but still comparable. At 1000 µM, PB increased 
+T4-UGT activity by 2.2 -fold in rat hepatocytes and by 1.7 -fold in human hepatocytes. Maximal effect 
+(3.7-fold) in rat hepatocytes was observed a t 30000 µM, but incubation of human hepatocytes with 
+PB concentrations above 1000 µM resulted in cytotoxicity.  
+Cinmethylin was tested up to concentrations of 1000 µM and did not show a clear saturation of the 
+induction effect. However, at doses above 30 µM, rat female hepatocytes show a drop of UGT 
+activity (less than control), and human hepatocytes showed signs of  cytotoxicity. It is therefore safe 
+to assume the induction effect of 1.7 measured at concentrations of 30 µM is close to the maximal 
+effect of cinmethylin, as higher exposure would result in cytotoxicity rather than TH perturbation.  
+6.3.2 Effect modelling  
+UGT induction is modeled as an increase of UGT levels due to increased protein synthesis rate. The 
+effect is described by the equation  
+𝐸𝑚𝑎𝑥×𝐶𝐼𝑛𝑑
+𝐶𝐼𝑛𝑑+𝐸𝐶50 
+where 𝐸𝑚𝑎𝑥 is the maximal effect, 𝐶𝐼𝑛𝑑 is the intracellular concentration of the inducer (cinmethylin), 
+and 𝐸𝐶50 is the concentration of the inducer at which the effect is half -maximal.  
+7 RESULTS  
+A PBK model for cinmethylin was developed using physico -chemical information and in vitro 
+residual data in rats.  The following physico -chemical parameter values are applied in the models:  
+Table 6 Physico -chemical parameters of cinmethylin  
+Parameter  Value  Unit 
+Lipophilicity  4.5 Log Units  
+Molecular weight  274.4  g/mol  
+Aqueous solubility  1 mg/ml  
+Fraction unbound in plasma  95 % 
+GFR fraction  0 % 
+In vitro incubation time  10 min 
+In vitro residual fraction  32 % 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 21 ---
+FR: PR25 -010 Confidential Project  Report               Page 21 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+Cinmethylin exposure (Study CA 5.1.1/16)     Last saved by: Pavel Balazki  
+ 
+Internal   
+The following parameter values describing cinmethylin metabolization are applied in the PBK 
+model s: 
+Table 7 Metabolism -related parameters used in PBK model of cinmethylin  
+PARAMETER  Value  Rat Value 
+Human  Reference (comment)  
+GFR fraction [%]  0 0 Assumed due to very low urinary recovery  
+In vitro 
+incubation time  
+[min] 10 60  
+In vitro residual 
+fraction  [%] 32 30.11  
+7.1 CINMETHYLIN EXPOSURE (STUDY CA 5.1.1/16 ) 
+Simulated concentrations of cinmethylin are in good agreement with the reported residuals in 
+plasma and liver (all within 2 -fold range). For the low dose of 15mg/kg, plasma concentrations are 
+reproduced by the model while the liver concentrations are slightly overpredicted. For the high dose 
+(350mg/kg), plasma concentrations are overpredicted while liver concentration is slightly 
+underpredicted. Since fractions of unch anged parent excreted to urine were very low, renal 
+clearance was assumed to be negligible. Fraction of dose excreted to feces is not captured by the 
+model.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 22 ---
+FR: PR25 -010 Confidential Project  Report               Page 22 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 1 Cinmethylin concentrations in venous blood plasma, liver, and feces following a single administration of 350mg/kg. 
+Lines represent simulated cinmethylin residuals.  Symbols represent residuals in male (plus = phenyl, diamond = cyclohexane) 
+and female (triangle = phenyl, diamond = cyclohexane) recovered from studies with phenyl or cyclohexane labels.  
+Capturing of fraction excreted of the 350mg/kg bw dose was possible by reducing the solubility of 
+the compound. However, the resulted in a plateau in the plasma concentration and was discar ded 
+due to the lack of experimental data (plasma concentrations or measurements of solubility in the GI 
+tract).  
+7.2 UGT  INDUCTION  
+Parameters 𝐸𝑚𝑎𝑥 and 𝐸𝐶50 have been selected to describe the in vitro induction (Study 
+23T0066/14X720) and in vivo induction (Study 99C0066/14C162) data. The following parameter 
+values are applied in the model:  
+Table 8: Parameters de scribing UGT induction  
+Parameter  Value  Unit 
+Emax 1  
+EC50 10 µmol/l  
+ 
+7.2.1 Study 23T0066/14X720 - in vitro T4 -UGT activity assays  
+The following figures present the measured in vitro UGT induction and the simulated values.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 23 ---
+FR: PR25 -010 Confidential Project  Report               Page 23 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 2: In vitro GT induction as fold changes from control, Study 23T0066/14X720.  Dashed line - induction values 
+calculated by the model  
+ 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 24 ---
+FR: PR25 -010 Confidential Project  Report               Page 24 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 3: In vitro GT induction, Study 23T0066/14X720.  - Panel a: In vitro measured T4 -GT activity in rat and human 
+hepatocytes. Horizontal lines represent the baseline activity of the respective group. - Panel b: simulated T4 -GT activity 
+as T4 metabolization ra te 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 25 ---
+FR: PR25 -010 Confidential Project  Report               Page 25 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 4: In vitro UGT induction as absolute changes in activity, Study 23T0066/14X720.  - Panel a: Delta in in vitro 
+measured T4 -GT activity in rat and human hepatocytes. Horizontal line represent the baseline. - Panel b: simulated 
+change in T4 -GT activity as T4  
+7.2.2 Study 99C0066/14C162  - Relative UGT activity  
+ 
+Comparison of the simulated and observed relative UGT activity is shown in the figure below. The 
+model adequately describes the observed UGT induction in rats.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 26 ---
+FR: PR25 -010 Confidential Project  Report               Page 26 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 5 Relative UGT activity (observed and simulated) in rats after cinmethylin exposure.  
+ 
+7.2.2.1  Study 99C0066/14C162 -  In vivo TH concentrations  
+Exposure of rats to 0, 200, 1000, and 5000ppm for 28 days have been simulated. No distinction 
+between male and female rats was implemented.  
+Simulated concenntrations of the hormones T3, T4, and TSH are in good agreement with the 
+concentrations reported for the control group.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 27 ---
+FR: PR25 -010 Confidential Project  Report               Page 27 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 6 TH concentrations in the control group from Study 99C0066/14C162  
+ 
+TH concentrations in control group show vary between the study days, with T3 concentrations 
+decreasing over time in both sex groups, and a less consistent increase in TSH levels. These changes 
+are clearly not treatment -related. As the model cannot capture these fluctuations, simulated 
+treatment effect will be compared with the reported % change from the control group ( 𝛥% in Table 
+5.8.2-24) instead of absolute TH values. TH concentrations simulated by the mean model are 
+multiplied by the reported 𝛥% for th e comparison.  
+Simulations of the three treatment groups and comparison with observed data (normalized to 
+control group) are shown below.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 28 ---
+FR: PR25 -010 Confidential Project  Report               Page 28 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Results   © ESQlabs  GmbH, all rights reserved  
+UGT induction     Last saved by: Pavel Balazki  
+ 
+Internal   
+Figure 7 TH concentrations in the 200 ppm group from Study 99C0066/14C162  
+The following table shows comparison of simulated and observed % changes in TH concentrations.  
+Table 9 Comparison of simulated and observed % changes in TH concentrations at day 29. Study 99C0066/14C162.  
+Highlighted in red are observed changes considered to be treatment related. Columns in light blue show simulated 
+changes.  
+Dose  T3 
+female  T3 
+male  T3 
+simulated  T4 
+female  T4 
+male  T4 
+simulated  TSH 
+female  TSH 
+male  TSH 
+simulated  
+0 ppm  0.0 0.0 0 0.0 0.0 0 0.0 0.0 0 
+200 
+ppm  0.5 -3.9 -1.7 8.1 -3.4 -1.3 -4.7 1.1 3.6 
+1000 
+ppm  11.2  -4.4 -6.2 21.3  -5.4 -5 6.6 5.0 14.1  
+5000 
+ppm  -8.5 -16.2  -12.8  3.0 -13.2  -10.4  36.5  38.1  32.9  
+ 
+The model adequately describes the observed decrease of T4 and T3 and increase of TSH 
+concentrations in males at the highest dose level. At the lower dose level (1000 ppm), the model 
+slightly overestimates the changes in TSH concentrations, while the decrease of T3 and T4 are in 
+line with the observed changes.  
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 29 ---
+FR: PR25 -010 Confidential Project  Report               Page 29 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Predictions of Human Exposure   © ESQlabs  GmbH, all rights reserved  
+Predicted Effect on Thyroid Hormone Levels     Last saved by: Pavel Balazki  
+ 
+Internal  8 PREDICTIONS OF HUMAN EXPOSURE  
+For the predictions of cinmethylin exposure in humans, the same assumptions were made as 
+for the rat. All compound -related parameters were kept identical except for the clearance 
+that was informed by the in vitro experiments (see Table 7). 
+8.1 SIMULATED SCENARIOS  
+As cinmethylin is a pesticide with no intended application in humans, the exposure 
+scenarios were designed to represent the worst -case exposure. The following scenarios 
+were simulated:  
+1) 350 mg/kg bw administered with diet over 28 days : The human exposure to cinmethylin 
+was simulated applying the same body -weight normalized dose as in the rat study. The 
+dose was administered with the diet over 28 days, simulated as a constant intragastric 
+infusion.  
+2) 350 mg/kg once daily for 28 days : The same daily exposure as in scenario 1) was simulated 
+as acute administration of 350 mg/kg bw cinmethylin once daily for 28 days.  
+3) 100 mg once daily for 28 days : The human exposure to cinmethylin was simulated under 
+the assumption of a once -daily acute exposure to 100 mg cinmethylin.  
+8.2 PREDICTED EFFECT ON THYROID HORMONE LEVELS  
+The following table shows the predicted TH concentrations as % of the untreated scenario 
+(reference) and compared with reported TH changes after treatmen t with phenobarbital 
+(Ohnhaus et al. 1981 ). 
+Table 10: Simulated effects of exposure to cinmethylin on TH concentrations in humans. The values are given as % of the 
+reference scenario. PB 100 mg: reported data for once daily administration of 100 mg phenobarbital  for a period of 14 days . 
+Data from (Ohnhaus et al. 1981).  
+Scenario  T3 T4 TSH 
+Reference  100.00000  100.00000  100.0000  
+350mgkg_diet  99.07612  98.82344  115.5681  
+350mgkg_acute  99.25468  98.58300  110.0192  
+100mg  99.40993  98.87638  109.6287  
+PB 100 mg  106 105 116.0000  
+The model predicts no effect  on the T3 and T4 concentrations and only a minor increase of TSH 
+levels in the human body for any of the exposure scenarios. The simulated exposure to 350 mg/kg 
+predicts liver tissue concentrations of cinmethylin above 100 µM, which is above the highest 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F
+
+
+--- Page 30 ---
+FR: PR25 -010 Confidential Project  Report               Page 30 of 111 
+Sponsor: BASF  SE Cinmethylin PBK Modelling  Version 0 2.00 
+ Published: 06.03.2025    
+ 
+ 
+Discussion   © ESQlabs  GmbH, all rights reserved  
+Predicted Effect on Thyroid Hormone Levels     Last saved by: Pavel Balazki  
+ 
+Internal  exposure applied in vitro and is unlikely to be achieved in real -life situations. It can be therefore 
+concluded that based on simulation results, cinmethylin’s potency to induce TH changes in humans 
+is comparable or lower than that of phenobarbital.  
+ 
+9 DISCUSSION  
+A physiologically -based kinetic (PBK) model of Cinmethylin in rat species has been developed using 
+available physico -chemical (PhysChem) and in vitro data and has been applied to predict the effect 
+of human exposure to cinmethylin on thyroid hormone levels  in humans.  
+The model describes the kinetics of the parent compound cinmethylin, using available PhysChem 
+data and cinmethylin degradation kinetics measured in vitro in rat hepatocytes. The model 
+adequately describes concentrations of cinmethylin in rat plasma and liv er tissue at doses 15 mg/kg 
+bw and 350 mg/kg, with predicted concentrations being within the two -fold deviation from 
+measured. No differentiation between male and female rats was modeled, as the available TK data 
+does not show a consistent sex difference, and the reported in vitro metabolization data was 
+obtained for the mix of male and female hepatocytes.  
+The applicability of the Thyroid Hormones (TH) Quantitative Systems Toxicology (QST) platform (VI 
+Appendix B , VII Appendix C , VIII Appendix D , and IX Appendix E ) for the prediction of the effect of 
+UGT inducers on TH levels in rats and humans is shown in the example of phenobarbital ( X Appendix 
+F). Using in vitro measured induction values (Emax and EC50), the model can predict decreased T4 
+and T3 concentrations and increased TSH concentrations in rats, with predicted changes being 
+within the reported range. In accordance with the observed data, the  model predicts no change in 
+T4 and T3 concentrations and only a minor increase in TSH concentrations in humans after 14 days 
+of administration of 100 mg phenobarbital daily.  
+Therefore, the model was applied to predict the effect of exposure to cinmethylin using Emax and 
+EC50 values derived from in vitro induction experiments. The same parameter values were applied 
+for rats and humans, as there were no clear differences in the observed fold -increases of T4 -GT 
+activity. The model adequately describes in vitro and in vivo UGT induction and the effect on TH 
+concentrations in rats at high doses.  
+Finally, the model has been applied to predict the effect of exposure to cinmethylin on TH levels in 
+humans. The model predicts no effect  on the T3 and T4 concentrations and only a minor increase 
+of TSH levels in the human body for any of the exposure scenarios. The simulated exposure of 350 
+mg/kg predicts liver tissue concentrations of cinmethylin above 100 µM, which is above the highest 
+exposure applied in vitro and is unlikely to be achieved in real -life situations. It can be therefore 
+Docusign Envelope ID: 7CB22146-B965-43C0-98A3-AB896BB7928F

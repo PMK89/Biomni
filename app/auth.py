@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, PlainTextResponse
 
 from .config import settings
 
-REDIRECT_PATH = "/getAToken"  # This is the path part of the redirect URI
+REDIRECT_PATH = "/getAToken"  # Original redirect path - ensure this matches Azure Portal
 SCOPE = ["User.Read"]
 
 router = APIRouter()
@@ -27,41 +27,62 @@ def _get_msal_app_and_authority():
 @router.get("/login")
 async def login(request: Request):
     msal_app, _ = _get_msal_app_and_authority()
-    # Store the authentication flow details in the session
+    redirect_uri = str(request.url_for("authorized"))
+    print(f"DEBUG: Using redirect URI: {redirect_uri}")
     flow = msal_app.initiate_auth_code_flow(
         SCOPE,
-        redirect_uri=request.url_for("authorized")
+        redirect_uri=redirect_uri
     )
-    # Convert URL objects to strings to make them JSON serializable
-    flow_serializable = {}
-    for key, value in flow.items():
-        if hasattr(value, '__str__'):
-            flow_serializable[key] = str(value)
-        else:
-            flow_serializable[key] = value
-    request.session["flow"] = flow_serializable
-    # Redirect the user to the Microsoft login page
+    request.session["flow"] = flow
     return RedirectResponse(url=flow["auth_uri"])
 
 @router.get(REDIRECT_PATH, name="authorized")
 async def authorized(request: Request):
     msal_app, _ = _get_msal_app_and_authority()
-    try:
-        # Retrieve the flow from the session and acquire the token
-        flow = request.session.pop("flow", {})
-        result = msal_app.acquire_token_by_auth_code_flow(
-            flow, dict(request.query_params)
+    
+    print(f"DEBUG: Authorized endpoint called with query params: {dict(request.query_params)}")
+    print(f"DEBUG: Session keys: {list(request.session.keys())}")
+    
+    # Debug: Check if we have a flow in session
+    flow = request.session.pop("flow", None)
+    if not flow:
+        print("DEBUG: No flow found in session")
+        return PlainTextResponse(
+            "Authentication error: No session flow found. Please clear cookies and try again.",
+            status_code=400
         )
+    
+    print(f"DEBUG: Found flow in session: {type(flow)}")
+    
+    try:
+        query_params = dict(request.query_params)
+        print(f"DEBUG: Processing auth code flow with params: {list(query_params.keys())}")
+        
+        result = msal_app.acquire_token_by_auth_code_flow(flow, query_params)
 
         if "error" in result:
-            return PlainTextResponse(f"Login failure: {result.get('error_description')}", status_code=400)
+            error_desc = result.get('error_description', 'Unknown error')
+            print(f"DEBUG: MSAL error: {result.get('error')} - {error_desc}")
+            return PlainTextResponse(f"Login failure: {error_desc}", status_code=400)
 
-        # Store the user details and token in the session
-        request.session["user"] = result
+        print("DEBUG: Authentication successful")
+        # Store only minimal user claims to avoid oversized session cookies.
+        # Do NOT store full tokens in the client-side session cookie.
+        claims = result.get("id_token_claims", {}) if isinstance(result, dict) else {}
+        user_min = {
+            "name": claims.get("name") or claims.get("preferred_username") or "User",
+            "oid": claims.get("oid"),
+            "tid": claims.get("tid"),
+            "preferred_username": claims.get("preferred_username"),
+        }
+        request.session["user"] = user_min
         return RedirectResponse(url=request.url_for("root"))
-    except ValueError:
-        # If something goes wrong, redirect to the login page
-        return RedirectResponse(url=request.url_for("login"))
+    except Exception as e:
+        print(f"DEBUG: Exception in authorized: {str(e)}")
+        return PlainTextResponse(
+            f"Authentication error: {str(e)}. Please check Azure AD configuration.",
+            status_code=400
+        )
 
 @router.get("/logout")
 async def logout(request: Request):
