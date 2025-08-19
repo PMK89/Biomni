@@ -210,6 +210,30 @@ Experience Biomni through our no-code web interface at **[biomni.stanford.edu](h
 
 [![Watch the video](https://img.youtube.com/vi/E0BRvl23hLs/maxresdefault.jpg)](https://youtu.be/E0BRvl23hLs)
 
+#### Run the web interface locally
+- Install dependencies: `pip install -r app/requirements.txt`
+- Copy `.env.example` to `.env` at the repo root and set:
+  - `SESSION_SECRET`
+  - `CLIENT_ID`, `CLIENT_SECRET`, `TENANT_ID` (Microsoft Entra ID app registration)
+  - Optional: `OPENAI_API_KEY`, `OPENAI_ENDPOINT` (needed for the agent to respond)
+  - Optional: `BIOMNI_DATA_LAKE_PATH` to override where the data lake is stored on disk
+- In Azure Portal, add a Redirect URI to your app: `http://localhost:8000/getAToken`
+- Start the server:
+  ```bash
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  ```
+- Open http://localhost:8000, sign in with Microsoft, then click "Go to Chat" (or visit `/gradio`).
+- Tip: Without OpenAI credentials, the UI loads but the agent won't be initialized.
+
+##### Data lake location
+- By default (when running the above `uvicorn` command from the repo root), Biomni stores the data lake at:
+  - `./biomni/data/biomni_data/data_lake`
+- You can override this location by setting an absolute path in your `.env`:
+  ```env
+  BIOMNI_DATA_LAKE_PATH=/absolute/path/to/biomni_data/data_lake
+  ```
+  The app will use this directory directly. A sibling `benchmark/` folder will also be created next to it if needed.
+
 ## Release schedule
 
 - [ ] 8 Real-world research task benchmark/leaderboard release
