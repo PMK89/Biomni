@@ -603,12 +603,6 @@ description = [
                 "name": "max_results",
                 "type": "int",
             },
-            {
-                "default": False,
-                "description": "Whether to return detailed results",
-                "name": "verbose",
-                "type": "bool",
-            },
         ],
         "required_parameters": [
             {
@@ -690,50 +684,6 @@ description = [
             {
                 "default": None,
                 "description": "Natural language query about genomic data",
-                "name": "prompt",
-                "type": "str",
-            }
-        ],
-    },
-    {
-        "description": "Query the OpenTargets Genetics API using natural language or a direct GraphQL query.",
-        "name": "query_opentarget_genetics",
-        "optional_parameters": [
-            {
-                "default": None,
-                "description": "Direct GraphQL query string",
-                "name": "query",
-                "type": "str",
-            },
-            {
-                "default": None,
-                "description": "Variables for the GraphQL query",
-                "name": "variables",
-                "type": "dict",
-            },
-            {
-                "default": None,
-                "description": "Anthropic API key. If None, will use ANTHROPIC_API_KEY env variable",
-                "name": "api_key",
-                "type": "str",
-            },
-            {
-                "default": "claude-3-5-haiku-20241022",
-                "description": "Anthropic model to use for natural language processing",
-                "name": "model",
-                "type": "str",
-            },
-            {
-                "default": True,
-                "description": "Whether to return detailed API response information",
-                "name": "verbose",
-                "type": "bool",
-            },
-        ],
-        "required_parameters": [
-            {
-                "default": None,
-                "description": "Natural language query about genetic targets and variants",
                 "name": "prompt",
                 "type": "str",
             }
@@ -931,6 +881,68 @@ description = [
                 "name": "program",
                 "type": "str",
             },
+        ],
+    },
+    {
+        "description": "Query ClinicalTrials.gov for studies using natural language, direct endpoint, or structured parameters.",
+        "name": "query_clinicaltrials",
+        "optional_parameters": [
+            {
+                "name": "endpoint",
+                "type": "str",
+                "description": "Direct API path or full URL to ClinicalTrials.gov endpoint",
+                "default": None,
+            },
+            {"name": "term", "type": "str", "description": "Free-text search term", "default": None},
+            {
+                "name": "status",
+                "type": "str",
+                "description": "Overall recruitment status filter, e.g., RECRUITING",
+                "default": None,
+            },
+            {"name": "condition", "type": "str", "description": "Condition/disease filter", "default": None},
+            {"name": "intervention", "type": "str", "description": "Intervention filter", "default": None},
+            {
+                "name": "location",
+                "type": "str",
+                "description": "Location filter (country, city, etc.)",
+                "default": None,
+            },
+            {
+                "name": "phase",
+                "type": "str",
+                "description": "Trial phase filter (e.g., PHASE1, PHASE2, PHASE3)",
+                "default": None,
+            },
+            {"name": "page_size", "type": "int", "description": "Items per page (1-100)", "default": 10},
+            {"name": "max_pages", "type": "int", "description": "Max pages to fetch for pagination", "default": 1},
+            {"name": "page_token", "type": "str", "description": "Start page token for pagination", "default": None},
+            {
+                "name": "api_key",
+                "type": "str",
+                "description": "LLM API key for prompt-to-params translation (optional)",
+                "default": None,
+            },
+            {
+                "name": "model",
+                "type": "str",
+                "description": "LLM model name for prompt translation",
+                "default": "claude-3-5-haiku-20241022",
+            },
+            {
+                "name": "verbose",
+                "type": "bool",
+                "description": "Whether to return detailed response structure",
+                "default": True,
+            },
+        ],
+        "required_parameters": [
+            {
+                "name": "prompt",
+                "type": "str",
+                "description": "Natural language query about clinical trials (if no endpoint/params provided)",
+                "default": None,
+            }
         ],
     },
     {
