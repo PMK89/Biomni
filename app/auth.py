@@ -93,8 +93,11 @@ async def logout(request: Request):
     return RedirectResponse(url=logout_uri)
 
 
-async def get_current_user(request: Request):
-    """Dependency to get the current user from the session."""
+def get_current_user(request: Request):
+    """Dependency to get the current user from the session.
+    Implemented as a synchronous function because Gradio's auth_dependency
+    expects a regular callable, not a coroutine.
+    """
     user = request.session.get("user")
     if not user:
         # In a real app, you might raise an HTTPException here

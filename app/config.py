@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     OPENAI_ENDPOINT: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
 
+    # Biomni base data directory (parent of biomni_data). Defaults to ./biomni/data
+    BIOMNI_BASE_PATH: str = "./biomni/data"
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(project_dir, '.env'),
         env_file_encoding='utf-8',

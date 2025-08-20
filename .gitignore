@@ -172,6 +172,7 @@ celerybeat.pid
 # data lake
 *biomni_data_test
 *data_lake*
+*biomni/data*
 
 # Environments
 .env

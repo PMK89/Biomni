@@ -3,6 +3,8 @@ import os
 import time
 import threading
 import contextlib
+import shutil
+import re
 import gradio as gr
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -10,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from biomni.agent.a1 import A1
 from . import auth
 from .config import settings
-from pypdf import PdfReader
+from .upload import router as upload_router
 
 app = FastAPI()
 
@@ -23,6 +25,7 @@ app.add_middleware(
 
 # Mount the authentication routes (e.g., /login, /callback, /logout)
 app.include_router(auth.router)
+app.include_router(upload_router)
 
 # Initialize the Biomni agent once when the application starts.
 # The agent's data path is relative to the project root where uvicorn is run.
@@ -33,7 +36,7 @@ try:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
         agent = A1(
             llm="gpt-5",
-            path="./biomni/data",
+            path=settings.BIOMNI_BASE_PATH,
         )
     else:
         print("OpenAI API key not found. Agent not initialized.")
@@ -89,13 +92,31 @@ def create_chat_interface():
         think_hist.append({"role": "user", "content": message})
         prompt = message
 
-        # Handle optional file upload robustly
+        # Handle optional file upload and persist to BIOMNI_BASE_PATH
         if uploaded_file is not None:
             try:
                 file_path, original_name = _resolve_upload_path_and_name(uploaded_file)
                 description = original_name or os.path.basename(file_path)
-                agent.add_data({file_path: description})
-                prompt += f"\n\n(User has uploaded a file: '{description}')"
+
+                # Determine destination directory from settings and ensure it exists
+                dest_dir = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+                os.makedirs(dest_dir, exist_ok=True)
+
+                # Build a safe destination path and avoid collisions
+                base_name = description
+                name, ext = os.path.splitext(base_name)
+                dest_path = os.path.join(dest_dir, base_name)
+                idx = 1
+                while os.path.exists(dest_path):
+                    dest_path = os.path.join(dest_dir, f"{name}_{idx}{ext}")
+                    idx += 1
+
+                # Copy the uploaded file to the persistent location
+                shutil.copy2(file_path, dest_path)
+
+                abs_path = os.path.abspath(dest_path)
+                agent.add_data({abs_path: description})
+                prompt += f"\n\n(User has uploaded a file saved at: '{abs_path}')"
             except Exception as e:
                 err = f"Error processing uploaded file: {e}"
                 think_hist.append({"role": "assistant", "content": err})
@@ -112,8 +133,21 @@ def create_chat_interface():
         frame = 0
 
         try:
+            # Helper to detect and parse rate limit waits
+            def _is_rate_limit(err: Exception) -> bool:
+                t = str(err).lower()
+                return ("429" in t) or ("rate limit" in t) or ("throttl" in t)
+
+            def _parse_retry_after(err: Exception) -> int | None:
+                m = re.search(r"retry\s+after\s+(\d+)", str(err), re.IGNORECASE)
+                if m:
+                    try:
+                        return int(m.group(1))
+                    except Exception:
+                        return None
+                return None
+
             # Prepare a live console tee to mirror terminal output to the UI
-            agent._live_console = []
             _lock = threading.Lock()
 
             class _Tee:
@@ -124,7 +158,6 @@ def create_chat_interface():
                 def write(self, data):
                     try:
                         self.orig.write(data)
-                        # split on newlines but keep partials
                         for line in str(data).splitlines():
                             if line:
                                 with self.lock:
@@ -138,42 +171,62 @@ def create_chat_interface():
                         pass
 
             loop = asyncio.get_running_loop()
+
             def _run_agent_with_tee():
                 import sys
+                agent._live_console = []
                 orig_out, orig_err = sys.stdout, sys.stderr
                 tee_out = _Tee(orig_out, agent._live_console, _lock)
                 tee_err = _Tee(orig_err, agent._live_console, _lock)
                 with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
                     return agent.go(prompt)
 
-            # Run the agent in a background thread so we can stream logs
-            future = loop.run_in_executor(None, _run_agent_with_tee)
+            max_attempts = 3
+            attempt = 1
+            backoff = 10
+            while True:
+                # Run the agent in a background thread so we can stream logs
+                future = loop.run_in_executor(None, _run_agent_with_tee)
 
-            # While running, stream logs into the Thinking panel with timer
-            while not future.done():
-                elapsed = time.time() - start_time
-                # Build thinking text from current logs
-                log_now = getattr(agent, "log", [])
-                console_now = getattr(agent, "_live_console", [])
-                combined = []
-                if isinstance(log_now, list):
-                    combined.extend(log_now)
-                elif log_now:
-                    combined.append(str(log_now))
-                if isinstance(console_now, list):
-                    combined.extend(console_now)
-                elif console_now:
-                    combined.append(str(console_now))
-                log_text = "\n".join(combined)
-                status_text = f"{spinner_frames[frame % len(spinner_frames)]} Processing… {elapsed:.1f}s"
-                frame += 1
-                think_hist[-1]["content"] = log_text.strip() if log_text else ""
-                # yield updates and clear the textbox immediately
-                yield sol_hist, think_hist, status_text, ""
-                await asyncio.sleep(0.5)
+                # While running, stream logs into the Thinking panel with timer
+                while not future.done():
+                    elapsed = time.time() - start_time
+                    log_now = getattr(agent, "log", [])
+                    console_now = getattr(agent, "_live_console", [])
+                    combined = []
+                    if isinstance(log_now, list):
+                        combined.extend(log_now)
+                    elif log_now:
+                        combined.append(str(log_now))
+                    if isinstance(console_now, list):
+                        combined.extend(console_now)
+                    elif console_now:
+                        combined.append(str(console_now))
+                    log_text = "\n".join(combined)
+                    status_text = f"{spinner_frames[frame % len(spinner_frames)]} Processing… {elapsed:.1f}s"
+                    frame += 1
+                    think_hist[-1]["content"] = log_text.strip() if log_text else ""
+                    yield sol_hist, think_hist, status_text, ""
+                    await asyncio.sleep(0.5)
 
-            # Completed
-            log, final_content = await future
+                try:
+                    # Completed
+                    log, final_content = await future
+                    break  # success
+                except Exception as exec_err:  # Handle 429 at UI level with wait + retry
+                    if _is_rate_limit(exec_err) and attempt < max_attempts:
+                        wait_s = _parse_retry_after(exec_err) or min(backoff, 120)
+                        backoff = min(int(backoff * 1.8) + 1, 120)
+                        # Stream a countdown to the UI while waiting
+                        for remaining in range(wait_s, 0, -1):
+                            status_text = f"⏳ Rate limited. Retrying in {remaining}s…"
+                            think_hist[-1]["content"] = (think_hist[-1]["content"] or "")
+                            yield sol_hist, think_hist, status_text, ""
+                            await asyncio.sleep(1)
+                        attempt += 1
+                        continue
+                    else:
+                        raise
 
             # Parse <solution> content
             start_tag = "<solution>"
