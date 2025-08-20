@@ -10,7 +10,7 @@ ALLOWED_SOURCES: set[str] = set(SourceType.__args__)
 
 def get_llm(
     model: str = "claude-3-5-sonnet-20241022",
-    temperature: float = 0.7,
+    temperature: float = 1.0,
     stop_sequences: list[str] | None = None,
     source: SourceType | None = None,
     base_url: str | None = None,

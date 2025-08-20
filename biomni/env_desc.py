@@ -6,6 +6,19 @@ data_lake_dict = {
     "broad_repurposing_hub_molecule_with_smiles.parquet": "Molecules from Broad Institute's Drug Repurposing Hub with SMILES annotations.",
     "broad_repurposing_hub_phase_moa_target_info.parquet": "Drug phases, mechanisms of action, and target information from Broad Institute.",
     "co-fractionation.parquet": "Protein-protein interactions from co-fractionation experiments.",
+    "Cosmic_Breakpoints_v101_GRCh38.csv": "Genomic breakpoints associated with cancers from COSMIC database.",
+    "Cosmic_CancerGeneCensusHallmarksOfCancer_v101_GRCh38.parquet": "Hallmarks of cancer genes from COSMIC.",
+    "Cosmic_CancerGeneCensus_v101_GRCh38.parquet": "Census of cancer-related genes from COSMIC.",
+    "Cosmic_ClassificationPaper_v101_GRCh38.parquet": "Cancer classifications and annotations from COSMIC.",
+    "Cosmic_Classification_v101_GRCh38.parquet": "Classification of cancer types from COSMIC.",
+    "Cosmic_CompleteCNA_v101_GRCh38.tsv.gz": "Complete copy number alterations data from COSMIC.",
+    "Cosmic_CompleteDifferentialMethylation_v101_GRCh38.tsv.gz": "Differential methylation patterns from COSMIC.",
+    "Cosmic_CompleteGeneExpression_v101_GRCh38.tsv.gz": "Gene expression data across cancers from COSMIC.",
+    "Cosmic_Fusion_v101_GRCh38.csv": "Gene fusion events from COSMIC.",
+    "Cosmic_Genes_v101_GRCh38.parquet": "List of genes associated with cancer from COSMIC.",
+    "Cosmic_GenomeScreensMutant_v101_GRCh38.tsv.gz": "Genome screening mutations from COSMIC.",
+    "Cosmic_MutantCensus_v101_GRCh38.csv": "Catalog of cancer-related mutations from COSMIC.",
+    "Cosmic_ResistanceMutations_v101_GRCh38.parquet": "Resistance mutations related to therapeutic interventions from COSMIC.",
     "czi_census_datasets_v4.parquet": "Datasets from the Chan Zuckerberg Initiative's Cell Census.",
     "DepMap_CRISPRGeneDependency.csv": "Gene dependency probability estimates for cancer cell lines, including all DepMap models.",
     "DepMap_CRISPRGeneEffect.csv": "Genome-wide CRISPR gene effect estimates for cancer cell lines, including all DepMap models.",
@@ -76,6 +89,16 @@ data_lake_dict = {
     "Virus-Host_PPI_P-HIPSTER_2020.parquet": "Virus-host protein-protein interactions from P-HIPSTER.",
     "txgnn_name_mapping.pkl": "Name mapping for TXGNN.",
     "txgnn_prediction.pkl": "Prediction data for TXGNN.",
+    # osp suite data
+    "final_knowledge_base.md": "Knowledge base for the osp suite. Open Systems Pharmacology Suite",
+    "MoBi.md": "Codebase from the MoBi project.",
+    "Suite.md": "Codebase from the OSP Suite. Open Systems Pharmacology Suite.",
+    "PKSim.md": "Codebase from the PKSim project.",
+    "OSPSuite-R.md": "Codebase from the OSPSuite-R project.",
+    "OSP-PBPK-Model-Library.md": "Open Systems Pharmacology PBPK-Model-Library.",
+    "OSP-Qualification-Reports.md": "Open Systems Pharmacology Qualification Reports.",
+    "osp_forum_0.md": "Open Systems Pharmacology Forum.",
+    "pbpk_modeling.pdf": "Physiologically based pharmacokinetic (PBPK) modeling and simulation -- Sheila Annie Peters --2021"
 }
 
 # Updated library_content as a dictionary with detailed descriptions
@@ -104,7 +127,6 @@ library_content_dict = {
     "pyfaidx": "[Python Package] A Python package for efficient random access to FASTA files.",
     "pyranges": "[Python Package] A Python package for interval manipulation with a pandas-like interface.",
     "pybedtools": "[Python Package] A Python wrapper for Aaron Quinlan's BEDTools programs.",
-    # "panhumanpy": "A Python package for hierarchical, cross-tissue cell type annotation of human single-cell RNA-seq data",
     # Structural Biology & Drug Discovery (Python)
     "rdkit": "[Python Package] A collection of cheminformatics and machine learning tools for working with chemical structures and drug discovery.",
     "deeppurpose": "[Python Package] A deep learning library for drug-target interaction prediction and virtual screening.",
