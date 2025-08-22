@@ -1,24 +1,117 @@
 import os
-from typing import TYPE_CHECKING, Literal, Optional
-
-import openai
+import re
+import time
+from typing import Literal, Optional, Any, Callable
 from langchain_core.language_models.chat_models import BaseChatModel
 
-if TYPE_CHECKING:
-    from biomni.config import BiomniConfig
-
 SourceType = Literal["OpenAI", "AzureOpenAI", "Anthropic", "Ollama", "Gemini", "Bedrock", "Groq", "Custom"]
-ALLOWED_SOURCES: set[str] = set(SourceType.__args__)
 
+
+def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatModel:
+    """Wrap llm.invoke with robust 429-aware retry logic (respects Retry-After).
+
+    - Honors HTTP 429 Retry-After header when available.
+    - Parses 'retry after <seconds>' phrases in error messages.
+    - Uses exponential backoff (cap ~120s) when header/hint not present.
+    """
+
+    original_invoke: Callable[..., Any] = llm.invoke
+    original_ainvoke: Callable[..., Any] | None = getattr(llm, "ainvoke", None)
+
+    def _parse_retry_after(e: Exception) -> int | None:
+        # Try OpenAI-style rate limit error
+        try:
+            import openai as _openai
+            if isinstance(e, getattr(_openai, "RateLimitError", tuple())):
+                resp = getattr(e, "response", None)
+                if resp is not None:
+                    # OpenAI v1 style
+                    headers = getattr(resp, "headers", {}) or {}
+                    ra = headers.get("Retry-After") or headers.get("retry-after")
+                    if ra:
+                        try:
+                            return int(ra)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+        # Azure/Generic: parse from message
+        m = re.search(r"retry\s+after\s+(\d+)", str(e), re.IGNORECASE)
+        if m:
+            try:
+                return int(m.group(1))
+            except Exception:
+                return None
+        return None
+
+    def _is_rate_limit(e: Exception) -> bool:
+        text = str(e).lower()
+        if "429" in text or "rate limit" in text or "throttl" in text:
+            return True
+        # Try to match OpenAI RateLimitError class
+        try:
+            import openai as _openai
+            if isinstance(e, getattr(_openai, "RateLimitError", tuple())):
+                return True
+        except Exception:
+            pass
+        # HTTPX/requests style status_code
+        status = getattr(e, "status_code", None) or getattr(getattr(e, "response", None), "status_code", None)
+        return status == 429
+
+    def _retry_invoke(*args: Any, **kwargs: Any):
+        delay = 5
+        attempt = 0
+        last_err = None
+        while attempt < max_attempts:
+            try:
+                return original_invoke(*args, **kwargs)
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                if not _is_rate_limit(e):
+                    raise
+                wait = _parse_retry_after(e)
+                if wait is None:
+                    wait = min(delay, 120)
+                    delay = min(int(delay * 1.8) + 1, 120)
+                time.sleep(max(wait, 1))
+                attempt += 1
+        # Exhausted retries
+        raise last_err
+
+    # Monkey-patch invoke with retrying version
+    setattr(llm, "invoke", _retry_invoke)
+    if original_ainvoke is not None:
+        async def _retry_ainvoke(*args: Any, **kwargs: Any):  # type: ignore
+            delay = 5
+            attempt = 0
+            last_err = None
+            while attempt < max_attempts:
+                try:
+                    return await original_ainvoke(*args, **kwargs)  # type: ignore
+                except Exception as e:  # noqa: BLE001
+                    last_err = e
+                    if not _is_rate_limit(e):
+                        raise
+                    wait = _parse_retry_after(e)
+                    if wait is None:
+                        wait = min(delay, 120)
+                        delay = min(int(delay * 1.8) + 1, 120)
+                    # Async sleep
+                    await __import__("asyncio").sleep(max(wait, 1))
+                    attempt += 1
+            raise last_err
+        setattr(llm, "ainvoke", _retry_ainvoke)
+    return llm
 
 def get_llm(
-    model: str | None = None,
-    temperature: float | None = None,
+    model: str = "claude-3-5-sonnet-20241022",
+    temperature: float = 1.0,
     stop_sequences: list[str] | None = None,
     source: SourceType | None = None,
     base_url: str | None = None,
-    api_key: str | None = None,
-    config: Optional["BiomniConfig"] = None,
+    api_key: str = "EMPTY",
 ) -> BaseChatModel:
     """
     Get a language model instance based on the specified model name and source.
@@ -31,70 +124,47 @@ def get_llm(
                       If None, will attempt to auto-detect from model name
         base_url (str): The base URL for custom model serving (e.g., "http://localhost:8000/v1"), default is None
         api_key (str): The API key for the custom llm
-        config (BiomniConfig): Optional configuration object. If provided, unspecified parameters will use config values
     """
-    # Use config values for any unspecified parameters
-    if config is not None:
-        if model is None:
-            model = config.llm_model
-        if temperature is None:
-            temperature = config.temperature
-        if source is None:
-            source = config.source
-        if base_url is None:
-            base_url = config.base_url
-        if api_key is None:
-            api_key = config.api_key or "EMPTY"
-
-    # Use defaults if still not specified
-    if model is None:
-        model = "claude-3-5-sonnet-20241022"
-    if temperature is None:
-        temperature = 0.7
-    if api_key is None:
-        api_key = "EMPTY"
     # Auto-detect source from model name if not specified
     if source is None:
-        env_source = os.getenv("LLM_SOURCE")
-        if env_source in ALLOWED_SOURCES:
-            source = env_source
+        if model[:7] == "claude-":
+            source = "Anthropic"
+        elif model.startswith(("gpt-", "gpt/")):
+            source = "OpenAI"
+        elif model.startswith("azure-"):
+            source = "AzureOpenAI"
+        elif model[:7] == "gemini-":
+            source = "Gemini"
+        elif "groq" in model.lower():
+            source = "Groq"
+        elif base_url is not None:
+            source = "Custom"
+        elif "/" in model or any(
+            name in model.lower()
+            for name in [
+                "llama",
+                "mistral",
+                "qwen",
+                "gemma",
+                "phi",
+                "dolphin",
+                "orca",
+                "vicuna",
+                "deepseek",
+                "gpt-oss",
+            ]
+        ):
+            source = "Ollama"
+        elif model.startswith(
+            ("anthropic.claude-", "amazon.titan-", "meta.llama-", "mistral.", "cohere.", "ai21.", "us.")
+        ):
+            source = "Bedrock"
         else:
-            if model[:7] == "claude-":
-                source = "Anthropic"
-            elif model[:4] == "gpt-":
-                source = "OpenAI"
-            elif model.startswith("azure-"):
-                source = "AzureOpenAI"
-            elif model[:7] == "gemini-":
-                source = "Gemini"
-            elif "groq" in model.lower():
-                source = "Groq"
-            elif base_url is not None:
-                source = "Custom"
-            elif "/" in model or any(
-                name in model.lower()
-                for name in [
-                    "llama",
-                    "mistral",
-                    "qwen",
-                    "gemma",
-                    "phi",
-                    "dolphin",
-                    "orca",
-                    "vicuna",
-                    "deepseek",
-                    "gpt-oss",
-                ]
-            ):
-                source = "Ollama"
-            elif model.startswith(
-                ("anthropic.claude-", "amazon.titan-", "meta.llama-", "mistral.", "cohere.", "ai21.", "us.")
-            ):
-                source = "Bedrock"
-            else:
-                raise ValueError("Unable to determine model source. Please specify 'source' parameter.")
+            raise ValueError("Unable to determine model source. Please specify 'source' parameter.")
 
     # Create appropriate model based on source
+    # Determine whether to forward stop sequences. Some models (e.g., GPT-5 family) do not support 'stop'.
+    disallow_stop = ("gpt-5" in model.lower()) or ("gpt/5" in model.lower())
     if source == "OpenAI":
         try:
             from langchain_openai import ChatOpenAI
@@ -102,7 +172,22 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-openai package is required for OpenAI models. Install with: pip install langchain-openai"
             )
-        return ChatOpenAI(model=model, temperature=temperature, stop_sequences=stop_sequences)
+        if disallow_stop:
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                max_retries=10,
+                timeout=120,
+            )
+        else:
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                stop_sequences=stop_sequences,
+                max_retries=10,
+                timeout=120,
+            )
+        return _wrap_llm_with_retry(llm)
 
     elif source == "AzureOpenAI":
         try:
@@ -111,15 +196,21 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-openai package is required for Azure OpenAI models. Install with: pip install langchain-openai"
             )
-        API_VERSION = "2024-12-01-preview"
+        if ("gpt-5" in model.lower()) or ("gpt/5" in model.lower()):
+            API_VERSION = "2025-03-01-preview"
+        else:
+            API_VERSION = "2024-12-01-preview"
         model = model.replace("azure-", "")
-        return AzureChatOpenAI(
+        llm = AzureChatOpenAI(
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             azure_endpoint=os.getenv("OPENAI_ENDPOINT"),
             azure_deployment=model,
             openai_api_version=API_VERSION,
             temperature=temperature,
+            max_retries=10,
+            timeout=120,
         )
+        return _wrap_llm_with_retry(llm)
 
     elif source == "Anthropic":
         try:
@@ -133,6 +224,7 @@ def get_llm(
             temperature=temperature,
             max_tokens=8192,
             stop_sequences=stop_sequences,
+            max_retries=10,
         )
 
     elif source == "Gemini":
@@ -154,6 +246,8 @@ def get_llm(
             api_key=os.getenv("GEMINI_API_KEY"),
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             stop_sequences=stop_sequences,
+            max_retries=10,
+            timeout=120,
         )
 
     elif source == "Groq":
@@ -169,6 +263,8 @@ def get_llm(
             api_key=os.getenv("GROQ_API_KEY"),
             base_url="https://api.groq.com/openai/v1",
             stop_sequences=stop_sequences,
+            max_retries=10,
+            timeout=120,
         )
 
     elif source == "Ollama":
@@ -206,14 +302,27 @@ def get_llm(
             )
         # Custom LLM serving such as SGLang. Must expose an openai compatible API.
         assert base_url is not None, "base_url must be provided for customly served LLMs"
-        llm = ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            max_tokens=8192,
-            stop_sequences=stop_sequences,
-            base_url=base_url,
-            api_key=api_key,
-        )
+        if disallow_stop:
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                max_tokens=8192,
+                base_url=base_url,
+                api_key=api_key,
+                max_retries=10,
+                timeout=120,
+            )
+        else:
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                max_tokens=8192,
+                stop_sequences=stop_sequences,
+                base_url=base_url,
+                api_key=api_key,
+                max_retries=10,
+                timeout=120,
+            )
         return llm
 
     else:
