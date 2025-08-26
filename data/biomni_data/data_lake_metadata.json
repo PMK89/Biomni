@@ -1,0 +1,1135 @@
+{
+  "msigdb_human_c5_ontology_geneset.parquet": {
+    "description": "Human MSigDB C5 (GO: Biological Process) gene sets linking GO terms to their MSigDB IDs and member gene symbols.",
+    "columns": {
+      "go_term_name": "chromosome_id",
+      "msigdb_collection": "collection",
+      "msigdb_geneset_id": "systematicName",
+      "go_term_id": "exactSource",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols"
+    }
+  },
+  "proximity_label-ms.parquet": {
+    "description": "Physical gene\u2013gene interaction pairs from proximity labeling mass spectrometry, with Ensembl gene identifiers, organism taxonomy, publication source, throughput class, and confidence scores.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_a_ensembl_gene_id": "gene_a_id",
+      "interactor_b_ensembl_gene_id": "gene_b_id",
+      "interaction_type_category": "experimental_system_type",
+      "source_publication_pubmed_id": "pubmed_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "experimental_throughput_class": "throughput_type",
+      "interaction_confidence_score": "experimental_score"
+    }
+  },
+  "proteinatlas.tsv": {
+    "description": "Gene-centric annotations from the Human Protein Atlas including identifiers, protein class, evidence, RNA expression specificity across tissues and cell types (including cancer and brain), subcellular localization, antibodies, blood protein levels, interaction counts, and expression clusters.",
+    "columns": {
+      "gene_symbol": "Gene",
+      "gene_synonyms": "Gene synonym",
+      "ensembl_gene_id": "Ensembl",
+      "gene_description": "Gene description",
+      "uniprot_accession": "Uniprot",
+      "chromosome": "Chromosome",
+      "genomic_coordinates": "Position",
+      "protein_class": "Protein class",
+      "go_biological_process": "Biological process",
+      "go_molecular_function": "Molecular function",
+      "disease_association": "Disease involvement",
+      "protein_evidence_level": "Evidence",
+      "rna_tissue_specificity": "RNA tissue specificity",
+      "rna_tissue_specific_expression_ntpm": "RNA tissue specific nTPM",
+      "rna_single_cell_type_specificity": "RNA single cell type specificity",
+      "rna_single_cell_type_specific_expression_ntpm": "RNA single cell type specific nTPM",
+      "rna_single_nuclei_brain_specificity": "RNA single nuclei brain specificity",
+      "rna_single_nuclei_brain_specific_expression_ntpm": "RNA single nuclei brain specific nTPM",
+      "rna_cancer_specificity": "RNA cancer specificity",
+      "rna_cancer_specific_expression_fpkm": "RNA cancer specific FPKM",
+      "rna_brain_region_specificity_human": "RNA brain regional specificity",
+      "rna_brain_region_specific_expression_ntpm": "RNA brain regional specific nTPM",
+      "rna_blood_cell_specificity": "RNA blood cell specificity",
+      "rna_blood_cell_specific_expression_ntpm": "RNA blood cell specific nTPM",
+      "rna_blood_lineage_specificity": "RNA blood lineage specificity",
+      "rna_blood_lineage_specific_expression_ntpm": "RNA blood lineage specific nTPM",
+      "rna_cell_line_specificity": "RNA cell line specificity",
+      "rna_cell_line_specific_expression_ntpm": "RNA cell line specific nTPM",
+      "rna_tissue_cell_type_enrichment": "RNA tissue cell type enrichment",
+      "rna_mouse_brain_region_specificity": "RNA mouse brain regional specificity",
+      "rna_pig_brain_region_specificity": "RNA pig brain regional specificity",
+      "antibody_ids": "Antibody",
+      "ih_reliability": "Reliability (IH)",
+      "if_reliability": "Reliability (IF)",
+      "subcellular_location_main": "Subcellular main location",
+      "subcellular_location_additional": "Subcellular additional location",
+      "secretome_location": "Secretome location",
+      "secretome_function": "Secretome function",
+      "blood_concentration_immunoassay_pg_per_l": "Blood concentration - Conc. blood IM [pg/L]",
+      "blood_concentration_mass_spectrometry_pg_per_l": "Blood concentration - Conc. blood MS [pg/L]",
+      "expression_cluster_blood": "Blood expression cluster",
+      "expression_cluster_tissue": "Tissue expression cluster",
+      "expression_cluster_brain": "Brain expression cluster",
+      "expression_cluster_cell_line": "Cell line expression cluster",
+      "expression_cluster_single_cell": "Single cell expression cluster",
+      "ppi_interaction_count": "Interactions",
+      "antibody_rrid": "Antibody RRID"
+    }
+  },
+  "mousemine_m1_positional_geneset.parquet": {
+    "description": "Mouse MSigDB M1 positional gene sets linking cytogenetic chromosome bands to lists of mouse gene symbols, with source annotation details.",
+    "columns": {
+      "chromosome_band": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "gene_symbols": "geneSymbols",
+      "annotation_source": "exactSource",
+      "pubmed_id": "pmid"
+    }
+  },
+  "evebio_detailed_result_table.csv": {
+    "description": "Detailed compound screening and profiling results against molecular targets, including assay mode, activity calls, potency (pXC50), and key dose\u2013response parameters.",
+    "columns": {
+      "assay_id": "Assay_ID",
+      "target_gene_symbol": "Target_ID",
+      "pharmacological_mode": "Mode",
+      "compound_id": "Compound_ID",
+      "compound_name": "Compound",
+      "screen_max_response_percent": "Scr_Observed_Max",
+      "screen_activity_label": "Scr_Category_Simplified",
+      "bundle_id": "Bundle_ID",
+      "progressed_flag": "Progressed",
+      "progression_reason": "Progression_Reason",
+      "profile_max_response_percent": "Prof_Max",
+      "profile_activity_label": "Prof_Category_Simplified",
+      "final_activity_label": "Final_Category",
+      "potency_pXC50": "pXC50",
+      "potency_relation": "pXC50_Modifier",
+      "potency_CI_upper": "pXC50_CI_Upper",
+      "potency_CI_lower": "pXC50_CI_Lower",
+      "hill_slope": "Slope",
+      "response_asymptote_min": "Asymp_Min",
+      "response_asymptote_max": "Asymp_Max",
+      "qc_flag_frequency": "Frequency_Flag",
+      "qc_flag_viability": "Viability_Flag",
+      "data_release_version": "Release"
+    }
+  },
+  "ddinter_respiratory.csv": {
+    "description": "Pairwise drug\u2013drug interactions from the DDInter database (respiratory-focused subset), listing interacting drugs with their DDInter IDs, names, and interaction severity.",
+    "columns": {
+      "interactor_a_ddinter_id": "DDInterID_A",
+      "interactor_a_name": "Drug_A",
+      "interactor_b_ddinter_id": "DDInterID_B",
+      "interactor_b_name": "Drug_B",
+      "interaction_severity_level": "Level"
+    }
+  },
+  "broad_repurposing_hub_molecule_with_smiles.parquet": {
+    "description": "Compound entries from the Broad Repurposing Hub with identifiers, names, chemical structures (SMILES/InChIKey), monoisotopic mass, PubChem IDs, vendor sourcing, and purity.",
+    "columns": {
+      "compound_id": "broad_id",
+      "compound_name": "pert_iname",
+      "smiles": "smiles",
+      "inchi_key": "InChIKey",
+      "pubchem_cid": "pubchem_cid",
+      "monoisotopic_mass": "expected_mass",
+      "purity_percent": "purity",
+      "supplier_name": "vendor",
+      "supplier_catalog_number": "catalog_no",
+      "supplier_product_name": "vendor_name",
+      "previous_compound_id": "deprecated_broad_id"
+    }
+  },
+  "evebio_observed_points_table.csv": {
+    "description": "Per-assay observed activity measurements for compounds tested against biological targets, including pharmacological mode and concentration per plate run.",
+    "columns": {
+      "assay_id": "Assay_ID",
+      "compound_id": "Compound_ID",
+      "compound_name": "Compound",
+      "target_symbol": "Target_ID",
+      "assay_phase": "Phase",
+      "pharmacological_mode": "Mode",
+      "plate_id": "Plate_ID",
+      "test_concentration": "Concentration",
+      "activity_value": "Activity"
+    }
+  },
+  "msigdb_human_c8_celltype_signature_geneset.parquet": {
+    "description": "A table of human MSigDB C8 cell type signature gene sets, including each set's name, systematic ID, member gene symbols, collection, PubMed source, and derivation details.",
+    "columns": {
+      "gene_set_name": "chromosome_id",
+      "msigdb_collection": "collection",
+      "geneset_systematic_id": "systematicName",
+      "pubmed_id": "pmid",
+      "member_gene_symbols": "geneSymbols",
+      "source_derivation_details": "exactSource"
+    }
+  },
+  "mousemine_mh_hallmark_geneset.parquet": {
+    "description": "MSigDB Mouse Hallmark gene sets with identifiers, names, source provenance, PubMed reference, and member gene symbols.",
+    "columns": {
+      "geneset_name": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "reference_pmid": "pmid",
+      "source_description": "exactSource",
+      "member_gene_symbols": "geneSymbols"
+    }
+  },
+  "DepMap_Model.csv": {
+    "description": "Metadata for DepMap cancer models (primarily cell lines) including identifiers, disease ontology annotations, patient demographics, sample origin, culture conditions, and external database links.",
+    "columns": {
+      "model_id": "ModelID",
+      "patient_id": "PatientID",
+      "cell_line_name": "CellLineName",
+      "cell_line_name_simplified": "StrippedCellLineName",
+      "model_category": "ModelType",
+      "disease_lineage": "OncotreeLineage",
+      "disease_name": "OncotreePrimaryDisease",
+      "disease_subtype": "OncotreeSubtype",
+      "disease_ontology_code": "OncotreeCode",
+      "rrid": "RRID",
+      "age_years": "Age",
+      "age_category": "AgeCategory",
+      "sex": "Sex",
+      "patient_race": "PatientRace",
+      "tumor_sample_origin": "PrimaryOrMetastasis",
+      "sample_collection_site": "SampleCollectionSite",
+      "vendor": "SourceType",
+      "vendor_catalog_number": "CatalogNumber",
+      "culture_growth_pattern": "GrowthPattern",
+      "culture_media_id": "OnboardedMedia",
+      "culture_media_formulation": "FormulationID",
+      "serum_free_media": "SerumFreeMedia",
+      "plate_coating": "PlateCoating",
+      "engineered_status": "EngineeredModel",
+      "engineered_details": "EngineeredModelDetails",
+      "cultured_resistance_drug": "CulturedResistanceDrug",
+      "ccle_name": "CCLEName",
+      "hcmi_id": "HCMIID",
+      "pediatric_model": "PediatricModelType",
+      "data_sharing_status": "ModelAvailableInDbgap",
+      "model_subtype_features": "ModelSubtypeFeatures",
+      "patient_subtype_features": "PatientSubtypeFeatures",
+      "patient_treatment_status": "PatientTreatmentStatus",
+      "patient_treatment_type": "PatientTreatmentType",
+      "patient_treatment_details": "PatientTreatmentDetails",
+      "cancer_stage": "Stage",
+      "staging_system": "StagingSystem",
+      "tumor_grade": "PatientTumorGrade",
+      "patient_treatment_response": "PatientTreatmentResponse",
+      "wt_si_master_cell_id": "WTSIMasterCellID",
+      "sanger_model_id": "SangerModelID",
+      "cosmic_sample_id": "COSMICID",
+      "model_id_alias": "ModelIDAlias"
+    }
+  },
+  "reconstituted_complex.parquet": {
+    "description": "Pairwise gene interaction records (likely from reconstituted protein complex assays) with Ensembl gene identifiers, organism taxonomy, experimental evidence, throughput, literature reference, and an experimental confidence score.",
+    "columns": {
+      "interaction_identifier": "interaction_id",
+      "interactor_a_ensembl_gene_id": "gene_a_id",
+      "interactor_b_ensembl_gene_id": "gene_b_id",
+      "interactor_a_ncbi_taxonomy_id": "organism_id_a",
+      "interactor_b_ncbi_taxonomy_id": "organism_id_b",
+      "interaction_evidence_type": "experimental_system_type",
+      "experiment_throughput": "throughput_type",
+      "pubmed_publication_id": "pubmed_id",
+      "interaction_confidence_score": "experimental_score"
+    }
+  },
+  "msigdb_human_c3_regulatory_target_geneset.parquet": {
+    "description": "Human MSigDB C3 miRNA (miRDB) regulatory target gene sets, providing the miRNA name, MSigDB accession, collection, source PMID, and the list of predicted target gene symbols.",
+    "columns": {
+      "mirna_id": "chromosome_id",
+      "geneset_collection": "collection",
+      "msigdb_accession": "systematicName",
+      "source_pmid": "pmid",
+      "target_gene_symbols": "geneSymbols"
+    }
+  },
+  "evebio_assay_table.csv": {
+    "description": "Assay metadata for nuclear receptor targets capturing mode, mechanism, technology, target name, and control compound potency parameters.",
+    "columns": {
+      "assay_id": "Assay_ID",
+      "pharmacological_mode": "Mode",
+      "target_class": "Class",
+      "target_name": "Target_ID",
+      "mechanism_of_action": "Mechanism",
+      "detection_technology": "Technology",
+      "reference_control_compound": "Max_Control",
+      "control_potency_pXC50": "Control_pXC50",
+      "inactive_threshold": "Inactive_Limit"
+    }
+  },
+  "Virus-Host_PPI_P-HIPSTER_2020.parquet": {
+    "description": "Virus\u2013host protein\u2013protein interaction dataset (P-HIPSTER 2020) listing viral proteins and their associated human host interactor gene symbols.",
+    "columns": {
+      "viral_protein_name": "Viral Protien",
+      "host_interactor_gene_symbols": "Genes"
+    }
+  },
+  "msigdb_human_c3_subset_transcription_factor_targets_from_GTRD.parquet": {
+    "description": "Human MSigDB C3 transcription factor target gene sets from GTRD, providing each gene set\u2019s name, collection, systematic identifier, transcription factor UniProt ID, source PubMed ID, and member gene symbols.",
+    "columns": {
+      "geneset_standard_name": "chromosome_id",
+      "msigdb_collection": "collection",
+      "msigdb_systematic_name": "systematicName",
+      "transcription_factor_uniprot_id": "exactSource",
+      "source_publication_pmid": "pmid",
+      "member_gene_symbols": "geneSymbols"
+    }
+  },
+  "marker_celltype.parquet": {
+    "description": "A Parquet dataset mapping cell types to narrative descriptions and lists of marker genes, including canonical markers.",
+    "columns": {
+      "cell_type_name": "cell_type",
+      "cell_type_description": "description",
+      "marker_gene_symbols": "marker_genes",
+      "canonical_marker_gene_symbols": "cano_marker_genes"
+    }
+  },
+  "mousemine_m8_celltype_signature_geneset.parquet": {
+    "description": "Mouse MSigDB M8 cell-type signature gene sets with gene lists, MSigDB identifiers, source notes, and PubMed references.",
+    "columns": {
+      "geneset_name": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "gene_symbols": "geneSymbols",
+      "pubmed_id": "pmid",
+      "source_description": "exactSource"
+    }
+  },
+  "msigdb_human_c6_oncogenic_signature_geneset.parquet": {
+    "description": "Human MSigDB C6 (oncogenic signatures) gene sets with standard names, MSigDB IDs, source descriptions, PubMed references, and member gene symbols.",
+    "columns": {
+      "geneset_standard_name": "chromosome_id",
+      "msigdb_collection": "collection",
+      "msigdb_systematic_name": "systematicName",
+      "geneset_definition": "exactSource",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols"
+    }
+  },
+  "mousemine_m5_ontology_geneset.parquet": {
+    "description": "Mouse MSigDB M5 Gene Ontology Biological Process gene sets linking GO term IDs to their member mouse gene symbols with set identifiers.",
+    "columns": {
+      "gene_set_name": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "go_term_id": "exactSource",
+      "gene_symbols": "geneSymbols",
+      "pubmed_id": "pmid"
+    }
+  },
+  "McPAS-TCR.parquet": {
+    "description": "Curated T-cell receptor (TCR) dataset linking alpha/beta CDR3 sequences and V(D)J usage to antigens/epitopes, MHC context, diseases (with MeSH), tissue and T-cell subset, with study methods and PubMed references.",
+    "columns": {
+      "tcr_cdr3_alpha_aa": "CDR3.alpha.aa",
+      "tcr_cdr3_beta_aa": "CDR3.beta.aa",
+      "tcr_cdr3_alpha_nt": "CDR3.alpha.nt",
+      "tcr_cdr3_beta_nt": "CDR3.beta.nt",
+      "tcr_alpha_v_gene": "TRAV",
+      "tcr_alpha_j_gene": "TRAJ",
+      "tcr_beta_v_gene": "TRBV",
+      "tcr_beta_d_gene": "TRBD",
+      "tcr_beta_j_gene": "TRBJ",
+      "species": "Species",
+      "disease_category": "Category",
+      "disease_name": "Pathology",
+      "disease_mesh_id": "Pathology.Mesh.ID",
+      "antigen_identification_method": "Antigen.identification.method",
+      "single_cell_assay": "Single.cell",
+      "ngs_used": "NGS",
+      "antigen_protein_name": "Antigen.protein",
+      "antigen_uniprot_id": "Protein.ID",
+      "epitope_peptide": "Epitope.peptide",
+      "epitope_id": "Epitope.ID",
+      "mhc_allele": "MHC",
+      "tissue": "Tissue",
+      "t_cell_subset": "T.Cell.Type",
+      "t_cell_phenotype": "T.cell.characteristics",
+      "mouse_strain": "Mouse.strain",
+      "pubmed_id": "PubMed.ID"
+    }
+  },
+  "miRTarBase_MicroRNA_Target_Sites.parquet": {
+    "description": "Experimentally validated microRNA\u2013target gene interactions from miRTarBase, including miRNA IDs, target genes, species, target site sequences, evidence types, support levels, and PubMed references.",
+    "columns": {
+      "interaction_id": "miRTarBase ID",
+      "mirna_id": "miRNA",
+      "mirna_species": "Species (miRNA)",
+      "target_gene_symbol": "Target Gene",
+      "target_gene_entrez_id": "Target Gene (Entrez Gene ID)",
+      "target_gene_species": "Species (Target Gene)",
+      "target_site_sequence": "Target Site",
+      "evidence_methods": "Experiments",
+      "evidence_support_level": "Support Type",
+      "pubmed_ids": "References (PMID)"
+    }
+  },
+  "msigdb_human_h_hallmark_geneset.parquet": {
+    "description": "Catalog of human MSigDB Hallmark gene sets, including gene set names, collection code, MSigDB accession IDs, member gene symbols, and reference PubMed ID.",
+    "columns": {
+      "gene_set_name": "chromosome_id",
+      "gene_set_collection": "collection",
+      "msigdb_accession": "systematicName",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols"
+    }
+  },
+  "msigdb_human_c1_positional_geneset.parquet": {
+    "description": "Human MSigDB C1 positional gene sets grouping genes by chromosomal cytobands, with MSigDB identifiers and source annotation.",
+    "columns": {
+      "cytoband": "chromosome_id",
+      "msigdb_collection": "collection",
+      "msigdb_geneset_id": "systematicName",
+      "member_gene_symbols": "geneSymbols",
+      "pubmed_id": "pmid",
+      "annotation_source": "exactSource"
+    }
+  },
+  "ddinter_alimentary_tract_metabolism.csv": {
+    "description": "Drug\u2013drug interaction pairs from DDInter focused on the alimentary tract and metabolism category, including each drug\u2019s DDInter ID, name, and the interaction severity level.",
+    "columns": {
+      "interacting_drug_ddinter_id_1": "DDInterID_A",
+      "interacting_drug_name_1": "Drug_A",
+      "interacting_drug_ddinter_id_2": "DDInterID_B",
+      "interacting_drug_name_2": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "synthetic_growth_defect.parquet": {
+    "description": "Pairwise genetic interaction records for synthetic growth defects, including gene IDs, organism taxon IDs, interaction type, throughput, PubMed reference, and a quantitative score.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "gene_a_systematic_id": "gene_a_id",
+      "gene_b_systematic_id": "gene_b_id",
+      "interaction_category": "experimental_system_type",
+      "publication_pubmed_id": "pubmed_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "assay_throughput": "throughput_type",
+      "genetic_interaction_score": "experimental_score"
+    }
+  },
+  "co-fractionation.parquet": {
+    "description": "Co-fractionation interaction evidence linking pairs of genes (Ensembl IDs) with organism taxonomy, evidence type, throughput, confidence score, and PubMed source.",
+    "columns": {
+      "interaction_identifier": "interaction_id",
+      "interactor_a_ensembl_gene_id": "gene_a_id",
+      "interactor_b_ensembl_gene_id": "gene_b_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "interaction_evidence_type": "experimental_system_type",
+      "assay_throughput": "throughput_type",
+      "interaction_confidence_score": "experimental_score",
+      "pubmed_reference": "pubmed_id"
+    }
+  },
+  "genetic_interaction.parquet": {
+    "description": "Pairwise genetic interaction records linking gene pairs with interaction scores, experimental system type and throughput, organism taxonomy IDs, and PubMed references.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_a_gene_id": "gene_a_id",
+      "interactor_b_gene_id": "gene_b_id",
+      "interactor_a_organism_tax_id": "organism_id_a",
+      "interactor_b_organism_tax_id": "organism_id_b",
+      "interaction_type": "experimental_system_type",
+      "experimental_throughput": "throughput_type",
+      "interaction_score": "experimental_score",
+      "pubmed_id": "pubmed_id"
+    }
+  },
+  "ddinter_dermatological.csv": {
+    "description": "Pairwise drug-drug interaction entries from the DDInter database for dermatology-related drugs, including each drug pair and the interaction severity.",
+    "columns": {
+      "interactor_a_id": "DDInterID_A",
+      "interactor_a_name": "Drug_A",
+      "interactor_b_id": "DDInterID_B",
+      "interactor_b_name": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "ddinter_hormonal.csv": {
+    "description": "Drug\u2013drug interaction pairs from the DDInter database, listing each drug (with DDInter IDs) and the interaction severity level, focused on hormonal-related interactions.",
+    "columns": {
+      "interactor_1_id": "DDInterID_A",
+      "interactor_1_name": "Drug_A",
+      "interactor_2_id": "DDInterID_B",
+      "interactor_2_name": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "Cosmic_Genes_v101_GRCh38.parquet": {
+    "description": "COSMIC v101 GRCh38 gene registry with COSMIC IDs, gene symbols, cross-references to Ensembl/Entrez/HGNC, and flags for Cancer Gene Census membership and expert curation.",
+    "columns": {
+      "cosmic_gene_id": "COSMIC_GENE_ID",
+      "cosmic_gene_id_legacy": "LEGACY_GENE_ID",
+      "gene_symbol": "GENE_SYMBOL",
+      "ensembl_gene_id_versioned": "GENE_ACCESSION",
+      "entrez_gene_id": "ENTREZ_ID",
+      "hgnc_id": "HGNC_ID",
+      "is_in_cancer_gene_census": "IN_CANCER_CENSUS",
+      "is_expert_curated": "IS_EXPERT_CURATED"
+    }
+  },
+  "msigdb_human_c4_computational_geneset.parquet": {
+    "description": "Human MSigDB C4 (Computational Gene Networks) gene sets, providing each set\u2019s standard name, systematic ID, and member gene symbols with optional PubMed references.",
+    "columns": {
+      "geneset_standard_name": "chromosome_id",
+      "msigdb_collection": "collection",
+      "geneset_systematic_id": "systematicName",
+      "member_gene_symbols": "geneSymbols",
+      "pubmed_id": "pmid"
+    }
+  },
+  "evebio_target_table.csv": {
+    "description": "A table of biological targets (e.g., nuclear receptors) with their abbreviations, full names, gene symbols, and UniProt accessions.",
+    "columns": {
+      "target_class": "Class",
+      "target_abbreviation": "Target_ID",
+      "protein_name": "Name",
+      "gene_symbol": "Gene",
+      "uniprot_accession": "UniProt_ID"
+    }
+  },
+  "DisGeNET.parquet": {
+    "description": "A table from DisGeNET mapping disease/disorder names to their associated human gene symbols.",
+    "columns": {
+      "disease_name": "Disorder",
+      "associated_gene_symbols": "Genes"
+    }
+  },
+  "Cosmic_CompleteCNA_v101_GRCh38.tsv.gz": {
+    "description": "Gene-level copy number alteration calls from COSMIC v101 (GRCh38), listing per-sample CNV events with genomic coordinates, copy number metrics, event type, and study/phenotype references.",
+    "columns": {
+      "cnv_event_id": "COSMIC_CNV_ID",
+      "gene_symbol": "GENE_SYMBOL",
+      "sample_id": "COSMIC_SAMPLE_ID",
+      "sample_name": "SAMPLE_NAME",
+      "phenotype_id": "COSMIC_PHENOTYPE_ID",
+      "total_copy_number": "TOTAL_CN",
+      "minor_allele_copy_number": "MINOR_ALLELE",
+      "copy_number_event_type": "MUT_TYPE",
+      "study_id": "COSMIC_STUDY_ID",
+      "chromosome": "CHROMOSOME",
+      "genomic_interval_start": "GENOME_START",
+      "genomic_interval_end": "GENOME_STOP"
+    }
+  },
+  "msigdb_human_c7_immunologic_signature_geneset.parquet": {
+    "description": "A table of human MSigDB C7 (Immunologic Signature) gene sets, including gene symbols, MSigDB accession and collection, source dataset identifiers, and PubMed references.",
+    "columns": {
+      "geneset_name": "chromosome_id",
+      "geneset_accession": "systematicName",
+      "msigdb_collection": "collection",
+      "source_dataset_id": "exactSource",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols"
+    }
+  },
+  "evebio_bundle_table.csv": {
+    "description": "Table listing GPCR (7TM) targets with receptor class, pharmacological mode of action, associated bundle IDs, and assay identifiers.",
+    "columns": {
+      "protein_class": "Class",
+      "target_gene_symbol": "Target_ID",
+      "mode_of_action": "Mode",
+      "assay_bundle_id": "Bundle_ID",
+      "assay_id": "Assay_ID"
+    }
+  },
+  "BindingDB_All_202409.tsv": {
+    "description": "BindingDB assay dataset of small-molecule ligands with binding affinity and kinetic measurements against annotated protein targets, including chemical identifiers, target UniProt annotations, and literature references.",
+    "columns": {
+      "record_id": "BindingDB Reactant_set_id",
+      "ligand_name": "BindingDB Ligand Name",
+      "ligand_smiles": "Ligand SMILES",
+      "ligand_inchi": "Ligand InChI",
+      "ligand_inchikey": "Ligand InChI Key",
+      "ligand_id_bindingdb": "BindingDB MonomerID",
+      "pubchem_cid": "PubChem CID",
+      "pubchem_sid": "PubChem SID",
+      "pubchem_aid": "PubChem AID",
+      "chembl_id": "ChEMBL ID of Ligand",
+      "chebi_id": "ChEBI ID of Ligand",
+      "drugbank_id": "DrugBank ID of Ligand",
+      "zinc_id": "ZINC ID of Ligand",
+      "kegg_ligand_id": "KEGG ID of Ligand",
+      "iuphar_ligand_id": "IUPHAR_GRAC ID of Ligand",
+      "ligand_pdb_het_id": "Ligand HET ID in PDB",
+      "target_name": "Target Name",
+      "target_organism": "Target Source Organism According to Curator or DataSource",
+      "target_num_chains": "Number of Protein Chains in Target (>1 implies a multichain complex)",
+      "target_chain_sequence": "BindingDB Target Chain Sequence",
+      "target_chain_pdb_ids": "PDB ID(s) of Target Chain",
+      "uniprot_protein_name": "UniProt (SwissProt) Recommended Name of Target Chain",
+      "uniprot_entry_name": "UniProt (SwissProt) Entry Name of Target Chain",
+      "uniprot_primary_id": "UniProt (SwissProt) Primary ID of Target Chain",
+      "uniprot_secondary_ids": "UniProt (SwissProt) Secondary ID(s) of Target Chain",
+      "uniprot_alternative_ids": "UniProt (SwissProt) Alternative ID(s) of Target Chain",
+      "pdb_complex_ids": "PDB ID(s) for Ligand-Target Complex",
+      "ki_nM": "Ki (nM)",
+      "ic50_nM": "IC50 (nM)",
+      "kd_nM": "Kd (nM)",
+      "ec50_nM": "EC50 (nM)",
+      "kon_per_M_per_s": "kon (M-1-s-1)",
+      "koff_per_s": "koff (s-1)",
+      "assay_pH": "pH",
+      "assay_temperature_C": "Temp (C)",
+      "data_source": "Curation/DataSource",
+      "article_doi": "Article DOI",
+      "pmid": "PMID",
+      "patent_number": "Patent Number",
+      "authors": "Authors",
+      "institution": "Institution"
+    }
+  },
+  "mousemine_m2_curated_geneset.parquet": {
+    "description": "Curated Mouse MSigDB (M2) gene sets, including standard and systematic names, collection membership, member gene symbols, and source publication details.",
+    "columns": {
+      "geneset_standard_name": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_systematic_name": "systematicName",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols",
+      "source_detail": "exactSource"
+    }
+  },
+  "Cosmic_MutantCensus_v101_GRCh38.csv": {
+    "description": "Somatic variant records from COSMIC Mutant Census v101 (GRCh38), including gene, transcript, sample identifiers, genomic coordinates, alleles, HGVS annotations, and variant consequence.",
+    "columns": {
+      "gene_symbol": "GENE_SYMBOL",
+      "cosmic_gene_id": "COSMIC_GENE_ID",
+      "transcript_accession": "TRANSCRIPT_ACCESSION",
+      "sample_id": "COSMIC_SAMPLE_ID",
+      "sample_name": "SAMPLE_NAME",
+      "cosmic_variant_id": "GENOMIC_MUTATION_ID",
+      "variant_consequence": "MUTATION_DESCRIPTION",
+      "zygosity": "MUTATION_ZYGOSITY",
+      "loss_of_heterozygosity": "LOH",
+      "chromosome": "CHROMOSOME",
+      "genome_start": "GENOME_START",
+      "genome_end": "GENOME_STOP",
+      "strand": "STRAND",
+      "pubmed_id": "PUBMED_PMID",
+      "cosmic_study_id": "COSMIC_STUDY_ID",
+      "hgvs_protein": "HGVSP",
+      "hgvs_cdna": "HGVSC",
+      "hgvs_genomic": "HGVSG",
+      "reference_allele": "GENOMIC_WT_ALLELE",
+      "alternate_allele": "GENOMIC_MUT_ALLELE",
+      "somatic_status": "MUTATION_SOMATIC_STATUS"
+    }
+  },
+  "miRDB_v6.0_results.parquet": {
+    "description": "Predicted microRNA\u2013mRNA target interactions from miRDB v6.0, listing miRNA names, target transcript accessions, target gene symbols, and prediction scores.",
+    "columns": {
+      "mirna_name": "miRNA",
+      "target_refseq_transcript_accession": "target_accession",
+      "target_gene_symbol": "target_symbol",
+      "target_prediction_score": "score"
+    }
+  },
+  "evebio_control_table.csv": {
+    "description": "Control well measurements for high-throughput assay plates, including assay and plate identifiers, control type, and activity readouts.",
+    "columns": {
+      "assay_id": "Assay_ID",
+      "plate_id": "Plate_ID",
+      "control_type": "Control",
+      "activity_value": "Activity"
+    }
+  },
+  "kg.csv": {
+    "description": "An edge list of protein-protein interactions linking gene/protein nodes with NCBI Gene IDs, symbols, types, and source database.",
+    "columns": {
+      "edge_relation_type": "relation",
+      "subject_symbol": "x_name",
+      "subject_ncbi_gene_id": "x_id",
+      "subject_entity_type": "x_type",
+      "subject_source_database": "x_source",
+      "object_symbol": "y_name",
+      "object_ncbi_gene_id": "y_id",
+      "object_entity_type": "y_type",
+      "object_source_database": "y_source"
+    }
+  },
+  "miRTarBase_microRNA_target_interaction.parquet": {
+    "description": "Experimentally supported microRNA\u2013target gene interactions from miRTarBase, including miRNA and target species, Entrez gene IDs, experimental methods, support type, and PubMed references.",
+    "columns": {
+      "interaction_id": "miRTarBase ID",
+      "mirna_name": "miRNA",
+      "mirna_species": "Species (miRNA)",
+      "target_gene_symbol": "Target Gene",
+      "target_gene_entrez_id": "Target Gene (Entrez ID)",
+      "target_gene_species": "Species (Target Gene)",
+      "experimental_methods": "Experiments",
+      "evidence_support_type": "Support Type",
+      "pubmed_ids": "References (PMID)"
+    }
+  },
+  "ddinter_antiparasitic.csv": {
+    "description": "Pairwise drug\u2013drug interactions (likely focused on antiparasitic agents) with DDInter identifiers and interaction severity levels.",
+    "columns": {
+      "drug_a_id": "DDInterID_A",
+      "drug_a_name": "Drug_A",
+      "drug_b_id": "DDInterID_B",
+      "drug_b_name": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "Cosmic_CompleteDifferentialMethylation_v101_GRCh38.tsv.gz": {
+    "description": "COSMIC differential DNA methylation calls on GRCh38 linking tumor samples to CpG probe loci and gene annotations with beta values relative to normal and associated p-values.",
+    "columns": {
+      "gene_id": "COSMIC_GENE_ID",
+      "gene_symbol": "GENE_SYMBOL",
+      "study_id": "COSMIC_STUDY_ID",
+      "sample_id": "COSMIC_SAMPLE_ID",
+      "sample_external_id": "SAMPLE_NAME",
+      "cpg_probe_id": "FRAGMENT_ID",
+      "chromosome": "CHROMOSOME",
+      "genomic_position": "POSITION",
+      "genomic_strand": "STRAND",
+      "differential_methylation_direction": "METHYLATION",
+      "normal_beta_mean": "AVG_BETA_VALUE_NORMAL",
+      "tumor_beta_value": "BETA_VALUE",
+      "differential_methylation_p_value": "TWO_SIDED_P_VALUE",
+      "phenotype_id": "COSMIC_PHENOTYPE_ID"
+    }
+  },
+  "gene_info.parquet": {
+    "description": "Gene and transcript annotations providing Ensembl identifiers, genomic coordinates, strand orientation, transcription start sites, canonical transcript flags, gene symbols, GC content, and gene biotypes per chromosome.",
+    "columns": {
+      "ensembl_gene_id": "gene_id",
+      "ensembl_transcript_id": "transcript_id",
+      "chromosome": "chr",
+      "gene_start_position": "gene_start",
+      "gene_end_position": "gene_end",
+      "strand_orientation": "strand",
+      "transcript_start_position": "transcript_start",
+      "transcript_end_position": "transcript_end",
+      "transcription_start_site": "tss",
+      "canonical_transcript_flag": "transcript_is_canonical",
+      "gene_symbol": "gene_name",
+      "gene_gc_content_percent": "percentage_gene_gc_content",
+      "gene_biotype": "gene_type"
+    }
+  },
+  "broad_repurposing_hub_phase_moa_target_info.parquet": {
+    "description": "Catalog of Broad Repurposing Hub compounds with their clinical development phase, mechanism of action, molecular gene targets, and associated therapeutic areas and disease indications.",
+    "columns": {
+      "drug_name": "pert_iname",
+      "clinical_trial_phase": "clinical_phase",
+      "mechanism_of_action": "moa",
+      "target_gene_symbols": "target",
+      "therapeutic_area": "disease_area",
+      "disease_indication": "indication"
+    }
+  },
+  "affinity_capture-ms.parquet": {
+    "description": "Pairwise physical interactions identified by affinity capture\u2013mass spectrometry with Ensembl gene identifiers, organism taxonomy, throughput category, literature PubMed references, and confidence scores.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_a_ensembl_gene_id": "gene_a_id",
+      "interactor_b_ensembl_gene_id": "gene_b_id",
+      "interactor_a_ncbi_taxon_id": "organism_id_a",
+      "interactor_b_ncbi_taxon_id": "organism_id_b",
+      "pubmed_reference_id": "pubmed_id",
+      "interaction_evidence_type": "experimental_system_type",
+      "assay_throughput_category": "throughput_type",
+      "interaction_confidence_score": "experimental_score"
+    }
+  },
+  "Cosmic_ClassificationPaper_v101_GRCh38.parquet": {
+    "description": "COSMIC v101 (GRCh38) paper-level tumor phenotype classifications linking phenotype IDs to literature-reported primary site and histology with hierarchical subtypes.",
+    "columns": {
+      "phenotype_paper_record_id": "COSMIC_PHENOTYPE_PAPER_ID",
+      "cosmic_phenotype_id": "COSMIC_PHENOTYPE_ID",
+      "reported_primary_site": "PAPER_PRIMARY_SITE",
+      "reported_site_subtype_level_1": "PAPER_SITE_SUBTYPE_1",
+      "reported_site_subtype_level_2": "PAPER_SITE_SUBTYPE_2",
+      "reported_site_subtype_level_3": "PAPER_SITE_SUBTYPE_3",
+      "reported_primary_histology": "PAPER_PRIMARY_HISTOLOGY",
+      "reported_histology_subtype_level_1": "PAPER_HISTOLOGY_SUBTYPE_1",
+      "reported_histology_subtype_level_2": "PAPER_HISTOLOGY_SUBTYPE_2",
+      "reported_histology_subtype_level_3": "PAPER_HISTOLOGY_SUBTYPE_3"
+    }
+  },
+  "Cosmic_Classification_v101_GRCh38.parquet": {
+    "description": "COSMIC phenotype classification records linking paper-specific phenotype entries to COSMIC phenotype IDs with primary anatomical site and histology, including hierarchical site and histology subtypes (GRCh38 context).",
+    "columns": {
+      "cosmic_phenotype_paper_id": "COSMIC_PHENOTYPE_PAPER_ID",
+      "cosmic_phenotype_id": "COSMIC_PHENOTYPE_ID",
+      "primary_anatomical_site": "PAPER_PRIMARY_SITE",
+      "site_subtype_level_1": "PAPER_SITE_SUBTYPE_1",
+      "site_subtype_level_2": "PAPER_SITE_SUBTYPE_2",
+      "site_subtype_level_3": "PAPER_SITE_SUBTYPE_3",
+      "primary_histology": "PAPER_PRIMARY_HISTOLOGY",
+      "histology_subtype_level_1": "PAPER_HISTOLOGY_SUBTYPE_1",
+      "histology_subtype_level_2": "PAPER_HISTOLOGY_SUBTYPE_2",
+      "histology_subtype_level_3": "PAPER_HISTOLOGY_SUBTYPE_3"
+    }
+  },
+  "evebio_compound_table.csv": {
+    "description": "A curated table of compounds with internal IDs, names, standard chemical identifiers (CAS, DrugBank salt ID, UNII, InChIKey), and supplier catalog information.",
+    "columns": {
+      "compound_internal_id": "Compound_ID",
+      "compound_name": "Compound",
+      "cas_registry_number": "CAS",
+      "drugbank_salt_id": "DrugBank_ID",
+      "fda_unii": "UNII",
+      "inchi_key": "Inchikey",
+      "supplier_catalog_info": "Suppliers"
+    }
+  },
+  "Cosmic_CancerGeneCensus_v101_GRCh38.parquet": {
+    "description": "Catalog of Cancer Gene Census (COSMIC v101, GRCh38) genes with genomic coordinates, cancer roles, mutation evidence, tumor associations, and structural rearrangement partners.",
+    "columns": {
+      "gene_symbol": "GENE_SYMBOL",
+      "gene_name": "NAME",
+      "cosmic_gene_id": "COSMIC_GENE_ID",
+      "chromosome": "CHROMOSOME",
+      "genomic_start_grch38": "GENOME_START",
+      "genomic_end_grch38": "GENOME_STOP",
+      "cytogenetic_band": "CHR_BAND",
+      "somatic_mutation_evidence": "SOMATIC",
+      "germline_mutation_evidence": "GERMLINE",
+      "cancer_types_somatic": "TUMOUR_TYPES_SOMATIC",
+      "cancer_types_germline": "TUMOUR_TYPES_GERMLINE",
+      "cancer_syndrome": "CANCER_SYNDROME",
+      "tissue_class": "TISSUE_TYPE",
+      "molecular_genetics_mechanism": "MOLECULAR_GENETICS",
+      "role_in_cancer": "ROLE_IN_CANCER",
+      "mutation_types": "MUTATION_TYPES",
+      "translocation_partners": "TRANSLOCATION_PARTNER",
+      "additional_syndrome": "OTHER_SYNDROME",
+      "cgc_tier": "TIER",
+      "gene_synonyms": "SYNONYMS"
+    }
+  },
+  "affinity_capture-rna.parquet": {
+    "description": "Pairs of genes representing physical interactions detected by Affinity Capture-RNA assays, with organism taxon IDs, throughput classification, PubMed references, and an interaction score.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_gene_id_a": "gene_a_id",
+      "interactor_gene_id_b": "gene_b_id",
+      "interactor_taxon_id_a": "organism_id_a",
+      "interactor_taxon_id_b": "organism_id_b",
+      "interaction_evidence_category": "experimental_system_type",
+      "assay_throughput": "throughput_type",
+      "publication_pubmed_id": "pubmed_id",
+      "interaction_score": "experimental_score"
+    }
+  },
+  "ddinter_antineoplastic.csv": {
+    "description": "Pairwise drug\u2013drug interaction records involving antineoplastic agents from the DDInter database, listing interacting drug IDs, names, and the interaction severity level.",
+    "columns": {
+      "drug_interactor_a_id": "DDInterID_A",
+      "drug_interactor_a_name": "Drug_A",
+      "drug_interactor_b_id": "DDInterID_B",
+      "drug_interactor_b_name": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "gtex_tissue_gene_tpm.parquet": {
+    "description": "GTEx tissue-specific gene expression (TPM) linking Ensembl gene IDs and HGNC gene symbols across human tissues.",
+    "columns": {
+      "ensembl_gene_id": "Description",
+      "gene_symbol": "Gene",
+      "tissue_name": "Tissue",
+      "gene_expression_tpm": "Expression"
+    }
+  },
+  "evebio_summary_result_table.csv": {
+    "description": "Summary pharmacology screening results linking compounds to molecular targets with mode of action, potency, efficacy, and quality flags.",
+    "columns": {
+      "assay_id": "Assay_ID",
+      "compound_id": "Compound_ID",
+      "compound_name": "Compound",
+      "pharmacological_mode": "Mode",
+      "target_gene_symbol": "Target_ID",
+      "activity_call": "Result",
+      "max_response_observed": "OMax",
+      "max_response_absolute": "AMax",
+      "potency_pXC50": "pXC50",
+      "viability_flag": "Viability",
+      "frequent_hitter_flag": "Frequency"
+    }
+  },
+  "ddinter_various.csv": {
+    "description": "Pairwise drug\u2013drug interactions from the DDInter database, listing each interacting drug pair with their DDInter identifiers and the interaction severity level.",
+    "columns": {
+      "interacting_drug_id_1": "DDInterID_A",
+      "interacting_drug_name_1": "Drug_A",
+      "interacting_drug_id_2": "DDInterID_B",
+      "interacting_drug_name_2": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "variant_table.parquet": {
+    "description": "Table of genetic variants with dbSNP identifiers, genomic coordinates, reported alleles, and minor allele frequencies.",
+    "columns": {
+      "rsid": "RS",
+      "variant_id": "ID",
+      "chromosome": "CHR",
+      "base_pair_position": "POS",
+      "allele_1": "A1",
+      "allele_2": "A2",
+      "minor_allele_frequency": "MAF"
+    }
+  },
+  "Cosmic_Fusion_v101_GRCh38.csv": {
+    "description": "COSMIC (v101, GRCh38) gene fusion annotations linking samples and phenotypes to five-prime/three-prime fusion partners, genomic breakpoints, evidence type, and PubMed references.",
+    "columns": {
+      "sample_id": "COSMIC_SAMPLE_ID",
+      "sample_name": "SAMPLE_NAME",
+      "phenotype_id": "COSMIC_PHENOTYPE_ID",
+      "fusion_id": "COSMIC_FUSION_ID",
+      "fusion_transcript_syntax": "FUSION_SYNTAX",
+      "five_prime_chromosome": "FIVE_PRIME_CHROMOSOME",
+      "five_prime_strand": "FIVE_PRIME_STRAND",
+      "five_prime_partner_transcript_id": "FIVE_PRIME_TRANSCRIPT_ID",
+      "five_prime_partner_gene_symbol": "FIVE_PRIME_GENE_SYMBOL",
+      "five_prime_last_observed_exon": "FIVE_PRIME_LAST_OBSERVE_EXON",
+      "five_prime_genomic_start_from": "FIVE_PRIME_GENOME_START_FROM",
+      "five_prime_genomic_start_to": "FIVE_PRIME_GENOME_START_TO",
+      "five_prime_genomic_stop_from": "FIVE_PRIME_GENOME_STOP_FROM",
+      "five_prime_genomic_stop_to": "FIVE_PRIME_GENOME_STOP_TO",
+      "three_prime_chromosome": "THREE_PRIME_CHROMOSOME",
+      "three_prime_strand": "THREE_PRIME_STRAND",
+      "three_prime_partner_transcript_id": "THREE_PRIME_TRANSCRIPT_ID",
+      "three_prime_partner_gene_symbol": "THREE_PRIME_GENE_SYMBOL",
+      "three_prime_first_observed_exon": "THREE_PRIME_FIRST_OBSERVE_EXON",
+      "three_prime_genomic_start_from": "THREE_PRIME_GENOME_START_FROM",
+      "three_prime_genomic_start_to": "THREE_PRIME_GENOME_START_TO",
+      "three_prime_genomic_stop_from": "THREE_PRIME_GENOME_STOP_FROM",
+      "three_prime_genomic_stop_to": "THREE_PRIME_GENOME_STOP_TO",
+      "fusion_evidence_type": "FUSION_TYPE",
+      "pubmed_id": "PUBMED_PMID"
+    }
+  },
+  "czi_census_datasets_v4.parquet": {
+    "description": "A curated catalog of CZ CELLxGENE Discover single-cell datasets with identifiers, collection metadata, species, tissues, diseases, cell types, demographics, file names, and total cell counts.",
+    "columns": {
+      "dataset_uuid": "dataset_id",
+      "dataset_version_uuid": "dataset_version_id",
+      "dataset_title": "dataset_title",
+      "h5ad_file_name": "dataset_h5ad_path",
+      "total_cell_count": "dataset_total_cell_count",
+      "collection_uuid": "collection_id",
+      "collection_title": "collection_name",
+      "collection_publication_doi": "collection_doi",
+      "organism_scientific_name": "organism",
+      "cell_types": "cell_type",
+      "developmental_stage": "development_stage",
+      "tissue": "tissue",
+      "disease_condition": "disease",
+      "biological_sex": "sex",
+      "tissue_general": "tissue_general",
+      "ethnicity_self_reported": "self_reported_ethnicity"
+    }
+  },
+  "Cosmic_CancerGeneCensusHallmarksOfCancer_v101_GRCh38.parquet": {
+    "description": "Literature-curated associations from COSMIC linking Cancer Gene Census genes to hallmarks of cancer across cancer types and cell lines, with evidence summaries and PubMed references (v101, GRCh38).",
+    "columns": {
+      "gene_symbol": "GENE_SYMBOL",
+      "cosmic_gene_id": "COSMIC_GENE_ID",
+      "cancer_type": "CELL_TYPE",
+      "pubmed_pmid": "PUBMED_PMID",
+      "cancer_hallmark": "HALLMARK",
+      "impact_annotation": "IMPACT",
+      "evidence_description": "DESCRIPTION",
+      "cell_line_name": "CELL_LINE"
+    }
+  },
+  "mousemine_m3_regulatory_target_geneset.parquet": {
+    "description": "Mouse MSigDB M3 (miRDB) microRNA target gene sets, listing each miRNA geneset with its MSigDB ID, collection, supporting PubMed ID, and the target gene symbols.",
+    "columns": {
+      "regulatory_mirna": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "pubmed_id": "pmid",
+      "target_gene_symbols": "geneSymbols"
+    }
+  },
+  "Cosmic_ResistanceMutations_v101_GRCh38.parquet": {
+    "description": "Sample-level COSMIC resistance mutations (GRCh38) linking cancer gene variants to drug resistance phenotypes with genomic coordinates, HGVS annotations, alleles, and literature references.",
+    "columns": {
+      "cosmic_sample_id": "COSMIC_SAMPLE_ID",
+      "gene_symbol": "GENE_SYMBOL",
+      "cosmic_gene_id": "COSMIC_GENE_ID",
+      "ensembl_transcript_id": "TRANSCRIPT_ACCESSION",
+      "cancer_gene_census_member": "CENSUS_GENE",
+      "drug_name": "DRUG_NAME",
+      "drug_response": "DRUG_RESPONSE",
+      "cosmic_variant_id": "GENOMIC_MUTATION_ID",
+      "pubmed_id": "PUBMED_PMID",
+      "chromosome": "CHROMOSOME",
+      "genomic_start": "GENOME_START",
+      "genomic_end": "GENOME_STOP",
+      "strand": "STRAND",
+      "reference_allele": "GENOMIC_WT_ALLELE",
+      "alternate_allele": "GENOMIC_MUT_ALLELE",
+      "hgvs_protein": "HGVSP",
+      "hgvs_coding_dna": "HGVSC",
+      "hgvs_genomic": "HGVSG",
+      "zygosity": "MUTATION_ZYGOSITY",
+      "somatic_status": "MUTATION_SOMATIC_STATUS"
+    }
+  },
+  "two-hybrid.parquet": {
+    "description": "Pairwise gene interaction records from two-hybrid experiments, including Ensembl gene identifiers, organism taxonomy IDs, evidence type, throughput, PubMed reference, and an interaction score.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_a_ensembl_gene_id": "gene_a_id",
+      "interactor_b_ensembl_gene_id": "gene_b_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "interaction_evidence_type": "experimental_system_type",
+      "assay_throughput_type": "throughput_type",
+      "publication_pubmed_id": "pubmed_id",
+      "interaction_confidence_score": "experimental_score"
+    }
+  },
+  "Cosmic_GenomeScreensMutant_v101_GRCh38.tsv.gz": {
+    "description": "Somatic mutation records from COSMIC Genome Screens (v101, GRCh38) with gene, sample, genomic coordinates, HGVS annotations, alleles, consequences, and supporting references.",
+    "columns": {
+      "gene_symbol": "GENE_SYMBOL",
+      "gene_id_cosmic": "COSMIC_GENE_ID",
+      "transcript_id_ensembl": "TRANSCRIPT_ACCESSION",
+      "sample_id_cosmic": "COSMIC_SAMPLE_ID",
+      "sample_name": "SAMPLE_NAME",
+      "variant_id_cosmic": "GENOMIC_MUTATION_ID",
+      "hgvs_transcript": "HGVSC",
+      "hgvs_protein": "HGVSP",
+      "hgvs_genomic": "HGVSG",
+      "consequence": "MUTATION_DESCRIPTION",
+      "zygosity": "MUTATION_ZYGOSITY",
+      "loh_status": "LOH",
+      "chromosome": "CHROMOSOME",
+      "genomic_start": "GENOME_START",
+      "genomic_end": "GENOME_STOP",
+      "strand": "STRAND",
+      "reference_allele": "GENOMIC_WT_ALLELE",
+      "alternate_allele": "GENOMIC_MUT_ALLELE",
+      "pubmed_id": "PUBMED_PMID",
+      "study_id_cosmic": "COSMIC_STUDY_ID",
+      "somatic_status": "MUTATION_SOMATIC_STATUS"
+    }
+  },
+  "omim.parquet": {
+    "description": "OMIM gene/locus and phenotype entries mapped to human genomic locations with cytoband annotations and cross-references to gene identifiers, plus mouse ortholog information.",
+    "columns": {
+      "chromosome": "Chromosome",
+      "genomic_start_bp": "Genomic Position Start",
+      "genomic_end_bp": "Genomic Position End",
+      "cytoband_reported": "Cyto Location",
+      "cytoband_computed": "Computed Cyto Location",
+      "omim_id": "MIM Number",
+      "locus_symbol": "Gene/Locus And Other Related Symbols",
+      "omim_title": "Gene Name",
+      "approved_gene_symbol": "Approved Gene Symbol",
+      "entrez_gene_id": "Entrez Gene ID",
+      "ensembl_gene_id": "Ensembl Gene ID",
+      "associated_phenotypes": "Phenotypes",
+      "comments": "Comments",
+      "mouse_gene_symbol_or_id": "Mouse Gene Symbol/ID"
+    }
+  },
+  "dosage_growth_defect.parquet": {
+    "description": "Pairwise genetic interaction measurements from a dosage growth defect assay, linking Saccharomyces cerevisiae gene ORF pairs to interaction scores, evidence type, throughput, and PubMed source.",
+    "columns": {
+      "interactor_a_gene_orf": "gene_a_id",
+      "interactor_b_gene_orf": "gene_b_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "pubmed_reference_id": "pubmed_id",
+      "interaction_type": "experimental_system_type",
+      "assay_throughput": "throughput_type",
+      "dosage_growth_defect_score": "experimental_score"
+    }
+  },
+  "ddinter_blood_organs.csv": {
+    "description": "Pairs of drugs from the DDInter database with their identifiers and names, annotated with the severity level of the drug-drug interaction.",
+    "columns": {
+      "drug_a_id": "DDInterID_A",
+      "drug_a_name": "Drug_A",
+      "drug_b_id": "DDInterID_B",
+      "drug_b_name": "Drug_B",
+      "interaction_severity": "Level"
+    }
+  },
+  "Cosmic_Breakpoints_v101_GRCh38.csv": {
+    "description": "Structural variant breakpoint records from COSMIC v101 (GRCh38), including sample, phenotype, genomic breakends, inserted sequence, and study/publication annotations.",
+    "columns": {
+      "sample_name": "SAMPLE_NAME",
+      "sample_accession": "COSMIC_SAMPLE_ID",
+      "phenotype_accession": "COSMIC_PHENOTYPE_ID",
+      "structural_variant_id": "COSMIC_STRUCTURAL_ID",
+      "variant_type": "MUTATION_TYPE",
+      "breakpoint_from_chromosome": "CHROM_FROM",
+      "breakpoint_from_position_min": "LOCATION_FROM_MIN",
+      "breakpoint_from_position_max": "LOCATION_FROM_MAX",
+      "breakpoint_from_strand": "STRAND_FROM",
+      "breakpoint_to_chromosome": "CHROM_TO",
+      "breakpoint_to_position_min": "LOCATION_TO_MIN",
+      "breakpoint_to_position_max": "LOCATION_TO_MAX",
+      "breakpoint_to_strand": "STRAND_TO",
+      "inserted_sequence": "NON_TEMPLATED_INS_SEQ",
+      "pubmed_id": "PUBMED_PMID",
+      "study_accession": "COSMIC_STUDY_ID"
+    }
+  },
+  "synthetic_rescue.parquet": {
+    "description": "Pairwise synthetic rescue genetic interactions between genes (primarily yeast), including publication references, experimental context, and quantitative interaction scores.",
+    "columns": {
+      "interaction_record_id": "interaction_id",
+      "interactor_a_gene_id": "gene_a_id",
+      "interactor_b_gene_id": "gene_b_id",
+      "experiment_type": "experimental_system_type",
+      "publication_pubmed_id": "pubmed_id",
+      "interactor_a_taxon_id": "organism_id_a",
+      "interactor_b_taxon_id": "organism_id_b",
+      "throughput_category": "throughput_type",
+      "genetic_interaction_score": "experimental_score"
+    }
+  },
+  "synthetic_lethality.parquet": {
+    "description": "Pairwise synthetic lethal genetic interactions between genes with evidence type, throughput, organism taxon IDs, PubMed source, and an interaction score.",
+    "columns": {
+      "interaction_identifier": "interaction_id",
+      "interacting_gene_id_a": "gene_a_id",
+      "interacting_gene_id_b": "gene_b_id",
+      "interaction_evidence_type": "experimental_system_type",
+      "publication_pubmed_id": "pubmed_id",
+      "organism_taxon_id_a": "organism_id_a",
+      "organism_taxon_id_b": "organism_id_b",
+      "experiment_throughput": "throughput_type",
+      "interaction_score": "experimental_score"
+    }
+  },
+  "Cosmic_CompleteGeneExpression_v101_GRCh38.tsv.gz": {
+    "description": "Genome-wide gene expression z-scores per sample from COSMIC v101 (GRCh38), linking COSMIC samples and genes to HGNC symbols with regulation status and study identifiers.",
+    "columns": {
+      "sample_id": "COSMIC_SAMPLE_ID",
+      "sample_external_name": "SAMPLE_NAME",
+      "gene_id_cosmic": "COSMIC_GENE_ID",
+      "gene_symbol": "GENE_SYMBOL",
+      "expression_regulation": "REGULATION",
+      "expression_z_score": "Z_SCORE",
+      "study_id": "COSMIC_STUDY_ID"
+    }
+  },
+  "msigdb_human_c2_curated_geneset.parquet": {
+    "description": "Curated MSigDB human C2 gene sets including standard names, collection, systematic IDs, PubMed references, member genes, and source notes.",
+    "columns": {
+      "geneset_name": "chromosome_id",
+      "geneset_collection": "collection",
+      "geneset_id": "systematicName",
+      "pubmed_id": "pmid",
+      "gene_symbols": "geneSymbols",
+      "source_note": "exactSource"
+    }
+  }
+}
