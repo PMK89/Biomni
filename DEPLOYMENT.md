@@ -19,6 +19,30 @@ The app honors an optional `ROOT_PATH` (via Uvicorn `--root-path`) for subpath d
 
 ---
 
+## Deployment Details (current environment)
+
+Use these values as your working defaults. Update if you recreate resources.
+
+```bash
+# Azure defaults
+az configure --defaults group=esqairg location=westeurope acr=esqaireg1
+
+# Key resources
+export RG=esqairg
+export LOCATION=westeurope
+export VM_NAME=biomni-vm-01
+export VM_PUBLIC_IP=52.236.161.11
+export ACR_NAME=esqaireg1
+export APP_IMAGE=${ACR_NAME}.azurecr.io/biomni:latest
+
+# SSH to VM
+ssh azureuser@${VM_PUBLIC_IP}
+```
+
+ACR login server: `esqaireg1.azurecr.io`
+
+---
+
 ## 1) Prerequisites
 
 - Docker Desktop or Docker CE with Compose plugin
