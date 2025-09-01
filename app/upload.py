@@ -3,20 +3,28 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request, Query
+from datetime import datetime, timezone
+from .db import save_upload
+from .config import settings
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-# Store uploads under biomni/data/uploads (ignored by .gitignore patterns)
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_UPLOAD_DIR = _REPO_ROOT / "biomni" / "data" / "uploads"
+# Store uploads under the configured BIOMNI_BASE_PATH/uploads so they persist on the mounted volume
+_BASE_DIR = Path(os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH)))
+_UPLOAD_DIR = _BASE_DIR / "uploads"
 _UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/file")
-async def upload_file(file: UploadFile = File(...)) -> dict:
-    """Accept a file upload and persist it under biomni/data/uploads.
+async def upload_file(
+    request: Request,
+    file: UploadFile = File(...),
+    run_id: str | None = Query(default=None, description="Optional run identifier to associate this upload with"),
+) -> dict:
+    """Accept a file upload and persist it under BIOMNI_BASE_PATH/uploads.
 
+    Example default: "./local_data/uploads" when using local development defaults.
     Note: Placeholder implementation; processing will be added later.
     """
     # Basic sanity checks
@@ -36,9 +44,35 @@ async def upload_file(file: UploadFile = File(...)) -> dict:
     finally:
         await file.close()
 
+    # Get user from session
+    user = {}
+    try:
+        user = request.session.get("user") or {}
+    except Exception:
+        user = {}
+    user_id = (user or {}).get("oid") or "anonymous"
+    username = (user or {}).get("name") or (user or {}).get("preferred_username") or ""
+
+    # Persist upload metadata per user
+    try:
+        ts_iso = datetime.now(timezone.utc).isoformat()
+        save_upload(
+            user_id=user_id,
+            username=username,
+            ts_iso=ts_iso,
+            filename=sanitized,
+            stored_path=str(dest),
+            run_id=run_id,
+        )
+    except Exception:
+        # Swallow persistence errors here; API still returns success for the file write
+        pass
+
     return {
         "status": "accepted",
         "filename": sanitized,
         "stored_path": str(dest),
-        "note": "Upload received. Processing to be implemented in a future update.",
+        "run_id": run_id,
+        "user_id": user_id,
+        "note": "Upload received and recorded.",
     }

@@ -1,0 +1,19 @@
+version: "3.8"
+
+# Local-only overrides for quick testing on this machine
+services:
+  biomni-app:
+    user: "0:0"
+    ports:
+      - "8000:8000"
+    environment:
+      # Optional: test running under a subpath locally, e.g., ROOT_PATH=/biomni
+      - ROOT_PATH=${ROOT_PATH:-}
+      # Force container to use the mounted data volume path, overriding .env host paths
+      - BIOMNI_BASE_PATH=/mnt/biomni_data
+      - USER_DB_DIR=/mnt/biomni_data/user_dbs
+    volumes:
+      # Point to the repo root .env for testing by default
+      - ${ENV_FILE_PATH:-../.env}:/app/.env:ro
+      # Use a local folder as the data lake
+      - ${LOCAL_DATA_PATH:-../local_data}:/mnt/biomni_data

@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  biomni-app:
+    ports:
+      - "8000:8000"
+      - "8001:8000"

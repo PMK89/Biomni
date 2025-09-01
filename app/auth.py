@@ -14,6 +14,8 @@ router = APIRouter()
 def _get_msal_app_and_authority():
     """Reads config and returns an MSAL app instance and the authority URL."""
     # Read settings inside the function to avoid import-time validation
+    if not settings.AAD_ENABLED:
+        raise RuntimeError("AAD not configured for this environment")
     client_id = settings.CLIENT_ID
     client_secret = settings.CLIENT_SECRET
     tenant_id = settings.TENANT_ID
@@ -26,6 +28,17 @@ def _get_msal_app_and_authority():
 
 @router.get("/login")
 async def login(request: Request):
+    # In dev mode (no AAD), auto-login a local dev user
+    if not settings.AAD_ENABLED:
+        dev_user = {
+            "name": "Dev User",
+            "oid": "anonymous",
+            "tid": "dev-tenant",
+            "preferred_username": "dev@example.com",
+        }
+        request.session["user"] = dev_user
+        return RedirectResponse(url="/")
+
     msal_app, _ = _get_msal_app_and_authority()
     redirect_uri = str(request.url_for("authorized"))
     print(f"DEBUG: Using redirect URI: {redirect_uri}")
@@ -38,6 +51,9 @@ async def login(request: Request):
 
 @router.get(REDIRECT_PATH, name="authorized")
 async def authorized(request: Request):
+    if not settings.AAD_ENABLED:
+        return PlainTextResponse("AAD not configured in this environment.", status_code=400)
+
     msal_app, _ = _get_msal_app_and_authority()
     
     print(f"DEBUG: Authorized endpoint called with query params: {dict(request.query_params)}")
@@ -87,6 +103,8 @@ async def authorized(request: Request):
 @router.get("/logout")
 async def logout(request: Request):
     request.session.clear()
+    if not settings.AAD_ENABLED:
+        return RedirectResponse(url="/")
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()
     logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_for('root')}"
@@ -99,8 +117,10 @@ def get_current_user(request: Request):
     expects a regular callable, not a coroutine.
     """
     user = request.session.get("user")
-    if not user:
-        # In a real app, you might raise an HTTPException here
-        # but for Gradio's dependency, returning None is often handled.
-        return None
-    return user
+    if user:
+        return user
+    # In dev mode, allow an anonymous dev user for local testing
+    if not settings.AAD_ENABLED:
+        return {"name": "Dev User", "oid": "anonymous", "preferred_username": "dev@example.com"}
+    # In production (AAD enabled) with no session, block access
+    return None

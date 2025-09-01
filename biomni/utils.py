@@ -915,7 +915,11 @@ def download_and_unzip(url: str, dest_dir: str) -> str:
 
 
 def check_and_download_s3_files(
-    s3_bucket_url: str, local_data_lake_path: str, expected_files: list[str], folder: str = "data_lake"
+    s3_bucket_url: str,
+    local_data_lake_path: str,
+    expected_files: list[str],
+    folder: str = "data_lake",
+    request_timeout: float | None = None,
 ) -> dict[str, bool]:
     """Check for missing files in the local data lake and download them from S3 bucket.
 
@@ -924,6 +928,7 @@ def check_and_download_s3_files(
         local_data_lake_path: Local path to the data lake directory
         expected_files: List of expected file names in the data lake
         folder: S3 folder name ("data_lake" or "benchmark")
+        request_timeout: Optional per-request timeout in seconds for HTTP GET calls
 
     Returns:
         Dictionary mapping file names to download success status
@@ -935,7 +940,14 @@ def check_and_download_s3_files(
     def download_with_progress(url: str, file_path: str, desc: str) -> bool:
         """Download file with progress bar."""
         try:
-            response = requests.get(url, stream=True)
+            # Build request kwargs with optional timeout
+            _req_kwargs = {"stream": True}
+            if request_timeout is not None:
+                try:
+                    _req_kwargs["timeout"] = float(request_timeout)
+                except Exception:
+                    pass
+            response = requests.get(url, **_req_kwargs)
             response.raise_for_status()
 
             total_size = int(response.headers.get("content-length", 0))

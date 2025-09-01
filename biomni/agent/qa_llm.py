@@ -4,7 +4,7 @@ from biomni.llm import get_llm
 
 
 class qa_llm:
-    def __init__(self, path="./data", llm="claude-3-haiku-20240307", lab_bench_reproduce=False):
+    def __init__(self, path="./local_data", llm="claude-3-haiku-20240307", lab_bench_reproduce=False):
         self.path = path
         self.llm = get_llm(llm)
 

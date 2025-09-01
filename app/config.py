@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     SESSION_SECRET: str = "a_default_insecure_secret_key_for_development_only"
 
     # Microsoft Entra ID (Azure AD) settings
-    CLIENT_ID: str
-    CLIENT_SECRET: str
-    TENANT_ID: str
+    CLIENT_ID: Optional[str] = None
+    CLIENT_SECRET: Optional[str] = None
+    TENANT_ID: Optional[str] = None
 
     # Optional OpenAI settings
     OPENAI_API_TYPE: Optional[str] = None
@@ -23,8 +23,11 @@ class Settings(BaseSettings):
     OPENAI_ENDPOINT: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
 
-    # Biomni base data directory (parent of biomni_data). Defaults to ./biomni/data
-    BIOMNI_BASE_PATH: str = "./biomni/data"
+    # Biomni base data directory (parent of biomni_data). Defaults to ./local_data
+    BIOMNI_BASE_PATH: str = "./local_data"
+
+    # Directory for per-user SQLite databases
+    USER_DB_DIR: str = os.path.join(project_dir, "local_data", "user_dbs")
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(project_dir, '.env'),
@@ -32,4 +35,10 @@ class Settings(BaseSettings):
         extra='ignore'  # Ignore extra fields from the .env file
     )
 
+    @property
+    def AAD_ENABLED(self) -> bool:
+        """True if all required AAD settings are present."""
+        return bool(self.CLIENT_ID and self.CLIENT_SECRET and self.TENANT_ID)
+
 settings = Settings()
+

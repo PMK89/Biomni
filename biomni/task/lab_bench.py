@@ -12,7 +12,7 @@ def shuffle(x):
 
 
 class lab_bench(base_task):
-    def __init__(self, path="./data", dataset="DbQA"):
+    def __init__(self, path="./local_data", dataset="DbQA"):
         if dataset not in ["DbQA", "SeqQA"]:
             raise ValueError("dataset must be one of 'DbQA', 'SeqQA'")
 

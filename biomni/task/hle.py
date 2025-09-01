@@ -12,7 +12,7 @@ def shuffle(x):
 
 
 class humanity_last_exam(base_task):
-    def __init__(self, path="./data", category="Biology/Medicine", answer_type="multipleChoice"):
+    def __init__(self, path="./local_data", category="Biology/Medicine", answer_type="multipleChoice"):
         if category not in [
             "Other",
             "Humanities/Social Science",

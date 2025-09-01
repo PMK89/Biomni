@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  biomni-app:
+    # Use an already-pushed image from ACR in production by setting APP_IMAGE env
+    image: ${APP_IMAGE:-biomni:latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["/bin/sh","-lc",
+      "micromamba run -n biomni_e1 uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' ${ROOT_PATH:+--root-path $ROOT_PATH}"
+    ]
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount your external/attached data disk or blobfuse mount here
+      - ${HOST_DATA_PATH:-/mnt/biomni_data}:/mnt/biomni_data
+      # Provide .env with Azure Entra and OPENAI keys inside container at /app/.env
+      - ${ENV_FILE_PATH:-/opt/biomni/.env}:/app/.env:ro
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - biomni-app
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /bin/sh
+    command: -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet --agree-tos && sleep 12h; done"
+    restart: unless-stopped
+
+# Usage (initial certificate):
+# 1) docker compose -f deploy/docker-compose.yml up -d nginx
+# 2) docker compose -f deploy/docker-compose.yml run --rm certbot \
+#       certbot certonly --webroot -w /var/www/certbot \
+#       -d your.domain.tld --email you@example.com --agree-tos --no-eff-email
+# 3) docker compose -f deploy/docker-compose.yml restart nginx
+# 4) Set APP_IMAGE to your ACR image (e.g., myacr.azurecr.io/biomni:latest) on the VM

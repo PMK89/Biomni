@@ -1,0 +1,20 @@
+# VCS / caches
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local env and secrets
+.env
+
+# Large and non-runtime folders
+save_folder/
+biomni/data/
+local_data/
+results/
+runs/
+docs/
+figs/
+tutorials/
+*.ipynb

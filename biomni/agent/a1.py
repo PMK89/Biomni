@@ -129,30 +129,46 @@ class A1:
 
         expected_data_lake_files = list(data_lake_dict.keys())
 
-        # Check and download missing data lake files
-        print("Checking and downloading missing data lake files...")
-        check_and_download_s3_files(
-            s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-            local_data_lake_path=data_lake_dir,
-            expected_files=expected_data_lake_files,
-            folder="data_lake",
-        )
+        # Optional skip and timeout controls via environment
+        s3_base_url = os.getenv("BIOMNI_S3_BASE_URL", "https://biomni-release.s3.amazonaws.com")
+        skip_downloads = os.getenv("BIOMNI_SKIP_DOWNLOADS", "false").lower() in ("1", "true", "yes", "on")
+        _dl_timeout_env = os.getenv("BIOMNI_DOWNLOAD_TIMEOUT")
+        request_timeout = None
+        if _dl_timeout_env:
+            try:
+                request_timeout = float(_dl_timeout_env)
+            except Exception:
+                request_timeout = None
 
-        # Check if benchmark directory structure is complete
-        benchmark_ok = False
-        if os.path.isdir(benchmark_dir):
-            patient_gene_detection_dir = os.path.join(benchmark_dir, "hle")
-            if os.path.isdir(patient_gene_detection_dir):
-                benchmark_ok = True
-
-        if not benchmark_ok:
-            print("Checking and downloading benchmark files...")
+        if skip_downloads:
+            print("Skipping S3 downloads due to BIOMNI_SKIP_DOWNLOADS=true")
+        else:
+            # Check and download missing data lake files
+            print("Checking and downloading missing data lake files...")
             check_and_download_s3_files(
-                s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-                local_data_lake_path=benchmark_dir,
-                expected_files=[],  # Empty list - will download entire folder
-                folder="benchmark",
+                s3_bucket_url=s3_base_url,
+                local_data_lake_path=data_lake_dir,
+                expected_files=expected_data_lake_files,
+                folder="data_lake",
+                request_timeout=request_timeout,
             )
+
+            # Check if benchmark directory structure is complete
+            benchmark_ok = False
+            if os.path.isdir(benchmark_dir):
+                patient_gene_detection_dir = os.path.join(benchmark_dir, "hle")
+                if os.path.isdir(patient_gene_detection_dir):
+                    benchmark_ok = True
+
+            if not benchmark_ok:
+                print("Checking and downloading benchmark files...")
+                check_and_download_s3_files(
+                    s3_bucket_url=s3_base_url,
+                    local_data_lake_path=benchmark_dir,
+                    expected_files=[],  # Empty list - will download entire folder
+                    folder="benchmark",
+                    request_timeout=request_timeout,
+                )
 
         self.path = os.path.join(path, "biomni_data")
         module2api = read_module2api()

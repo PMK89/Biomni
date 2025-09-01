@@ -99,7 +99,7 @@ AWS_REGION=us-east-1
 OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 
 # Biomni Settings
-BIOMNI_PATH=/path/to/data                   # Default: ./data
+BIOMNI_PATH=/path/to/data                   # Default: ./local_data
 BIOMNI_TIMEOUT_SECONDS=1200                 # Default: 600
 BIOMNI_LLM=model_name                        # Default: claude-sonnet-4-20250514
 BIOMNI_TEMPERATURE=0.7                      # Default: 0.7
@@ -115,7 +115,7 @@ BIOMNI_CUSTOM_API_KEY=custom_key
 from biomni.config import default_config
 
 # All available settings
-default_config.path = "./data"
+default_config.path = "./local_data"
 default_config.timeout_seconds = 600
 default_config.llm = "claude-sonnet-4-20250514"
 default_config.temperature = 0.7
