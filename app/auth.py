@@ -50,6 +50,12 @@ async def login(request: Request):
     request.session["flow"] = flow
     return RedirectResponse(url=flow["auth_uri"], headers={"Cache-Control": "no-store"})
 
+@router.head("/login")
+async def login_head(request: Request):
+    """Handle HEAD on /login without side effects to prevent 405 from proxies/HEAD checks."""
+    # Do not initiate MSAL flow on HEAD; just acknowledge.
+    return PlainTextResponse("", status_code=200)
+
 @router.get(REDIRECT_PATH, name="authorized")
 async def authorized(request: Request):
     if not settings.AAD_ENABLED:
