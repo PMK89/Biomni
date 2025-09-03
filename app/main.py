@@ -84,7 +84,7 @@ def create_chat_interface():
             def repl(m):
                 p = os.path.abspath(m.group(0))
                 name = os.path.basename(p)
-                href = f"/download?p={quote(p)}"
+                href = f"download?p={quote(p)}"
                 return f"[{name}]({href})"
             return pattern.sub(repl, text)
         except Exception:
@@ -527,9 +527,13 @@ async def root(request: Request):
     """Handles the root URL, showing a welcome page or redirecting to login."""
     user = request.session.get('user')
     if not user:
-        return RedirectResponse(url='/login')
+        return RedirectResponse(url=request.url_for('login'))
     
     user_name = user.get('name', 'User')
+    # Build root_path-aware absolute links (avoids any double prefix issues)
+    base = (request.scope.get('root_path') or '').rstrip('/')
+    href_chat = f"{base}/gradio" if base else "/gradio"
+    href_logout = f"{base}/logout" if base else "/logout"
     return f"""
     <html>
         <head>
@@ -547,9 +551,9 @@ async def root(request: Request):
             <div class="container">
                 <h1>Welcome to Biomni</h1>
                 <p>You are logged in as: {user_name}</p>
-                <a href="/gradio">Go to Chat</a>
+                <a href="{href_chat}">Go to Chat</a>
                 <br><br>
-                <a href="/logout">Logout</a>
+                <a href="{href_logout}">Logout</a>
             </div>
         </body>
     </html>

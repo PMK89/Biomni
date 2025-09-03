@@ -37,7 +37,7 @@ async def login(request: Request):
             "preferred_username": "dev@example.com",
         }
         request.session["user"] = dev_user
-        return RedirectResponse(url="/")
+        return RedirectResponse(url=request.url_for("root"))
 
     msal_app, _ = _get_msal_app_and_authority()
     redirect_uri = str(request.url_for("authorized"))
@@ -104,7 +104,7 @@ async def authorized(request: Request):
 async def logout(request: Request):
     request.session.clear()
     if not settings.AAD_ENABLED:
-        return RedirectResponse(url="/")
+        return RedirectResponse(url=request.url_for("root"))
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()
     logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_for('root')}"
