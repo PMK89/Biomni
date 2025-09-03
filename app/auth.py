@@ -39,7 +39,7 @@ async def login(request: Request):
         request.session["user"] = dev_user
         base = (request.scope.get('root_path') or '').rstrip('/')
         root_url = f"{base}/" if base else "/"
-        return RedirectResponse(url=root_url)
+        return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
 
     msal_app, _ = _get_msal_app_and_authority()
     redirect_uri = str(request.url_for("authorized"))
@@ -49,7 +49,7 @@ async def login(request: Request):
         redirect_uri=redirect_uri
     )
     request.session["flow"] = flow
-    return RedirectResponse(url=flow["auth_uri"])
+    return RedirectResponse(url=flow["auth_uri"], headers={"Cache-Control": "no-store"})
 
 @router.get(REDIRECT_PATH, name="authorized")
 async def authorized(request: Request):
@@ -96,7 +96,7 @@ async def authorized(request: Request):
         request.session["user"] = user_min
         base = (request.scope.get('root_path') or '').rstrip('/')
         root_url = f"{base}/" if base else "/"
-        return RedirectResponse(url=root_url)
+        return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
     except Exception as e:
         print(f"DEBUG: Exception in authorized: {str(e)}")
         return PlainTextResponse(
@@ -110,7 +110,7 @@ async def logout(request: Request):
     if not settings.AAD_ENABLED:
         base = (request.scope.get('root_path') or '').rstrip('/')
         root_url = f"{base}/" if base else "/"
-        return RedirectResponse(url=root_url)
+        return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()
     logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_for('root')}"

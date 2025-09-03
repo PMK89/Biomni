@@ -529,7 +529,7 @@ async def root(request: Request):
     if not user:
         base = (request.scope.get('root_path') or '').rstrip('/')
         login_url = f"{base}/login" if base else "/login"
-        return RedirectResponse(url=login_url)
+        return RedirectResponse(url=login_url, headers={"Cache-Control": "no-store"})
     
     user_name = user.get('name', 'User')
     # Build root_path-aware absolute links (avoids any double prefix issues)
