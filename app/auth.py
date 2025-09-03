@@ -37,7 +37,9 @@ async def login(request: Request):
             "preferred_username": "dev@example.com",
         }
         request.session["user"] = dev_user
-        return RedirectResponse(url=request.url_for("root"))
+        base = (request.scope.get('root_path') or '').rstrip('/')
+        root_url = f"{base}/" if base else "/"
+        return RedirectResponse(url=root_url)
 
     msal_app, _ = _get_msal_app_and_authority()
     redirect_uri = str(request.url_for("authorized"))
@@ -92,7 +94,9 @@ async def authorized(request: Request):
             "preferred_username": claims.get("preferred_username"),
         }
         request.session["user"] = user_min
-        return RedirectResponse(url=request.url_for("root"))
+        base = (request.scope.get('root_path') or '').rstrip('/')
+        root_url = f"{base}/" if base else "/"
+        return RedirectResponse(url=root_url)
     except Exception as e:
         print(f"DEBUG: Exception in authorized: {str(e)}")
         return PlainTextResponse(
@@ -104,7 +108,9 @@ async def authorized(request: Request):
 async def logout(request: Request):
     request.session.clear()
     if not settings.AAD_ENABLED:
-        return RedirectResponse(url=request.url_for("root"))
+        base = (request.scope.get('root_path') or '').rstrip('/')
+        root_url = f"{base}/" if base else "/"
+        return RedirectResponse(url=root_url)
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()
     logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_for('root')}"

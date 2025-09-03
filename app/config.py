@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 import os
 from typing import Optional
 
@@ -34,6 +35,17 @@ class Settings(BaseSettings):
         env_file_encoding='utf-8',
         extra='ignore'  # Ignore extra fields from the .env file
     )
+
+    # Normalize BIOMNI_BASE_PATH to avoid CRLF and stray quotes/whitespace
+    @field_validator('BIOMNI_BASE_PATH', mode='before')
+    @classmethod
+    def _normalize_base_path(cls, v: str | None):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            # Remove any carriage returns from CRLF, strip whitespace and quotes
+            v = v.replace('\r', '').strip().strip('"').strip("'")
+        return v
 
     @property
     def AAD_ENABLED(self) -> bool:

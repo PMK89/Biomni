@@ -527,7 +527,9 @@ async def root(request: Request):
     """Handles the root URL, showing a welcome page or redirecting to login."""
     user = request.session.get('user')
     if not user:
-        return RedirectResponse(url=request.url_for('login'))
+        base = (request.scope.get('root_path') or '').rstrip('/')
+        login_url = f"{base}/login" if base else "/login"
+        return RedirectResponse(url=login_url)
     
     user_name = user.get('name', 'User')
     # Build root_path-aware absolute links (avoids any double prefix issues)
