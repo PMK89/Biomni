@@ -16,7 +16,7 @@
 set -euo pipefail
 
 # Defaults (can be overridden)
-DIR="${DIR:-/opt/biomni}"
+DIR="${DIR:-/home/azureuser/biomni}"
 REPO="${REPO:-https://github.com/PMK89/Biomni.git}"
 BRANCH="${BRANCH:-amine-pmk}"
 BACKUP="${BACKUP:-1}"
