@@ -37,8 +37,7 @@ async def login(request: Request):
             "preferred_username": "dev@example.com",
         }
         request.session["user"] = dev_user
-        base = (request.scope.get('root_path') or '').rstrip('/')
-        root_url = f"{base}/" if base else "/"
+        root_url = request.url_for("root")
         return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
 
     msal_app, _ = _get_msal_app_and_authority()
@@ -94,8 +93,7 @@ async def authorized(request: Request):
             "preferred_username": claims.get("preferred_username"),
         }
         request.session["user"] = user_min
-        base = (request.scope.get('root_path') or '').rstrip('/')
-        root_url = f"{base}/" if base else "/"
+        root_url = request.url_for("root")
         return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
     except Exception as e:
         print(f"DEBUG: Exception in authorized: {str(e)}")
@@ -108,8 +106,7 @@ async def authorized(request: Request):
 async def logout(request: Request):
     request.session.clear()
     if not settings.AAD_ENABLED:
-        base = (request.scope.get('root_path') or '').rstrip('/')
-        root_url = f"{base}/" if base else "/"
+        root_url = request.url_for("root")
         return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()

@@ -527,15 +527,15 @@ async def root(request: Request):
     """Handles the root URL, showing a welcome page or redirecting to login."""
     user = request.session.get('user')
     if not user:
-        base = (request.scope.get('root_path') or '').rstrip('/')
-        login_url = f"{base}/login" if base else "/login"
+        login_url = request.url_for("login")
         return RedirectResponse(url=login_url, headers={"Cache-Control": "no-store"})
     
     user_name = user.get('name', 'User')
     # Build root_path-aware absolute links (avoids any double prefix issues)
-    base = (request.scope.get('root_path') or '').rstrip('/')
+    base_raw = (request.scope.get('root_path') or '')
+    base = ('/' + base_raw.strip('/')) if base_raw else ''
     href_chat = f"{base}/gradio" if base else "/gradio"
-    href_logout = f"{base}/logout" if base else "/logout"
+    href_logout = request.url_for("logout")
     return f"""
     <html>
         <head>

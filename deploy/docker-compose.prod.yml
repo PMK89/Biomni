@@ -4,7 +4,7 @@ services:
   biomni-app:
     image: ${APP_IMAGE}
     command: ["/bin/sh","-lc",
-      "uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' ${ROOT_PATH:+--root-path $ROOT_PATH}"
+      "set -a; [ -f /app/.env ] && . /app/.env; micromamba run -n biomni_e1 uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' ${ROOT_PATH:+--root-path $ROOT_PATH}"
     ]
     environment:
       - PYTHONUNBUFFERED=1
