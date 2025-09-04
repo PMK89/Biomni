@@ -1,6 +1,7 @@
 import msal
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse, PlainTextResponse
+from starlette.datastructures import URL
 
 from .config import settings
 
@@ -41,7 +42,8 @@ async def login(request: Request):
         return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
 
     msal_app, _ = _get_msal_app_and_authority()
-    redirect_uri = str(request.url_for("authorized"))
+    # Build redirect_uri based on app routing and force HTTPS scheme to match Azure configuration
+    redirect_uri = str(URL(str(request.url_for("authorized"))).replace(scheme="https"))
     print(f"DEBUG: Using redirect URI: {redirect_uri}")
     flow = msal_app.initiate_auth_code_flow(
         SCOPE,
@@ -116,7 +118,9 @@ async def logout(request: Request):
         return RedirectResponse(url=root_url, headers={"Cache-Control": "no-store"})
     # Get authority dynamically to construct the logout URL
     _, authority = _get_msal_app_and_authority()
-    logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={request.url_for('root')}"
+    # Ensure post_logout redirect also uses HTTPS to avoid scheme mismatches
+    post_logout = str(URL(str(request.url_for('root'))).replace(scheme="https"))
+    logout_uri = f"{authority}/oauth2/v2.0/logout?post_logout_redirect_uri={post_logout}"
     return RedirectResponse(url=logout_uri)
 
 
