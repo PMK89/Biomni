@@ -9,7 +9,6 @@ import gradio as gr
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
 from biomni.agent.a1 import A1
 from biomni.agent.apak import APKA_Agent
 from . import auth
@@ -658,21 +657,6 @@ chat_interface = create_chat_interface()
 # The auth_dependency ensures that only authenticated users can access it.
 app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=auth.get_current_user)
 
-# Re-apply proxy/https scheme handling on the final mounted app as well.
-# 1) Honor X-Forwarded-* headers from upstream proxies.
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
-
-# 2) Force scheme to https if proxies indicate so, ensuring url_for builds https links.
-@app.middleware("http")
-async def enforce_https_scheme_after_mount(request: Request, call_next):
-    try:
-        xf_proto = (request.headers.get("x-forwarded-proto") or "").lower()
-        fwd = (request.headers.get("forwarded") or "").lower()
-        if ("https" in xf_proto) or ("proto=https" in fwd):
-            request.scope["scheme"] = "https"
-    except Exception:
-        pass
-    return await call_next(request)
 
 # --- API Endpoints for history ---
 
