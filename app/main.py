@@ -1,19 +1,29 @@
 import asyncio
-import os
 import time
 import threading
 import contextlib
 import shutil
+import os
 import re
 import gradio as gr
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 from biomni.agent.a1 import A1
+from biomni.agent.apak import APKA_Agent
 from . import auth
 from .config import settings
 from .upload import router as upload_router
-from .db import save_run, save_upload, fetch_runs, fetch_run_by_id, fetch_uploads
+from .db import (
+    save_run,
+    save_upload,
+    fetch_runs,
+    fetch_run_by_id,
+    fetch_uploads,
+    fetch_uploads_by_run,
+    delete_uploads_by_run,
+    delete_run as db_delete_run,
+)
 import uuid
 from datetime import datetime, timezone
 from urllib.parse import quote
@@ -161,15 +171,16 @@ def create_chat_interface():
         think_hist.append({"role": "user", "content": message})
         prompt = message
 
-        # Handle optional file upload and persist to BIOMNI_BASE_PATH
+        # Handle optional file upload and persist to BIOMNI_BASE_PATH/uploads/{user_id}
         uploaded_paths = []
         if uploaded_file is not None:
             try:
                 file_path, original_name = _resolve_upload_path_and_name(uploaded_file)
                 description = original_name or os.path.basename(file_path)
 
-                # Determine destination directory from settings and ensure it exists
-                dest_dir = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+                # Determine per-user destination directory from settings and ensure it exists
+                base_dir = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+                dest_dir = os.path.join(base_dir, "uploads", user_id)
                 os.makedirs(dest_dir, exist_ok=True)
 
                 # Build a safe destination path and avoid collisions
@@ -221,6 +232,27 @@ def create_chat_interface():
                         return None
                 return None
 
+            # Helper to detect network/connection errors
+            def _is_connection_error(err: Exception) -> bool:
+                t = str(err).lower()
+                # Broad heuristics to catch httpx/aiohttp/requests/socket connection faults
+                signals = [
+                    "connection error",
+                    "connect error",
+                    "connect timeout",
+                    "read timeout",
+                    "timed out",
+                    "timeout",
+                    "connection reset",
+                    "reset by peer",
+                    "econn",
+                    "broken pipe",
+                    "temporary failure in name resolution",
+                    "dns lookup failed",
+                    "proxy error",
+                ]
+                return any(s in t for s in signals)
+
             # Prepare a live console tee to mirror terminal output to the UI
             _lock = threading.Lock()
 
@@ -253,7 +285,25 @@ def create_chat_interface():
                 tee_out = _Tee(orig_out, agent._live_console, _lock)
                 tee_err = _Tee(orig_err, agent._live_console, _lock)
                 with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
-                    return agent.go(final_prompt)
+                    # Use streaming generator to produce outputs incrementally
+                    collected = []
+                    for step in agent.go_stream(final_prompt):
+                        try:
+                            out = (step or {}).get("output") or ""
+                            if out:
+                                collected.append(out)
+                        except Exception:
+                            pass
+
+                    # After streaming completes, build final content and audit
+                    full_transcript = "\n".join(collected)
+                    try:
+                        apak_auditor = APKA_Agent(model="azure-gpt-5", temperature=1.0)
+                        analysis_results = apak_auditor.analyze_transcript(full_transcript)
+                    except Exception:
+                        analysis_results = {}
+
+                    return (collected, full_transcript, analysis_results)
 
             max_attempts = 3
             attempt = 1
@@ -284,16 +334,39 @@ def create_chat_interface():
                     await asyncio.sleep(0.5)
 
                 try:
-                    # Completed
-                    log, final_content, audit = await future
+                    # Completed with timeout guard to prevent indefinite hanging
+                    timeout_s = getattr(agent, "timeout_seconds", 600) or 600
+                    log, final_content, audit = await asyncio.wait_for(future, timeout=timeout_s)
                     break  # success
-                except Exception as exec_err:  # Handle 429 at UI level with wait + retry
+                except asyncio.TimeoutError:
+                    # Timeout: report to UI and stop
+                    elapsed = time.time() - start_time
+                    timeout_msg = f"[timeout] Agent exceeded {timeout_s}s (elapsed {elapsed:.1f}s). Aborting run."
+                    # Append timeout notice to thinking log without crashing the UI
+                    existing = think_hist[-1].get("content") or ""
+                    think_hist[-1]["content"] = (existing + ("\n\n" if existing else "") + timeout_msg).strip()
+                    sol_hist[-1]["content"] = "Run timed out. Please try refining your prompt or try again."
+                    yield sol_hist, think_hist, "", "", ""
+                    return
+                except Exception as exec_err:  # Handle transient errors with wait + retry
                     if _is_rate_limit(exec_err) and attempt < max_attempts:
                         wait_s = _parse_retry_after(exec_err) or min(backoff, 120)
                         backoff = min(int(backoff * 1.8) + 1, 120)
                         # Stream a countdown to the UI while waiting
                         for remaining in range(wait_s, 0, -1):
                             status_text = f"⏳ Rate limited. Retrying in {remaining}s…"
+                            think_hist[-1]["content"] = (think_hist[-1]["content"] or "")
+                            yield sol_hist, think_hist, status_text, "", ""
+                            await asyncio.sleep(1)
+                        attempt += 1
+                        continue
+                    elif _is_connection_error(exec_err) and attempt < max_attempts:
+                        # Generic connection error: wait and retry with exponential backoff
+                        wait_s = min(backoff, 60)
+                        backoff = min(int(backoff * 1.8) + 1, 120)
+                        for remaining in range(wait_s, 0, -1):
+                            status_text = f"🌐 Connection error. Retrying in {remaining}s…"
+                            # Keep previous logs visible
                             think_hist[-1]["content"] = (think_hist[-1]["content"] or "")
                             yield sol_hist, think_hist, status_text, "", ""
                             await asyncio.sleep(1)
@@ -585,6 +658,55 @@ async def api_list_runs(request: Request, limit: int = 50, offset: int = 0):
     user_id = user.get("oid") or "anonymous"
     rows = fetch_runs(user_id=user_id, limit=limit, offset=offset)
     return {"items": rows, "count": len(rows)}
+
+
+@app.delete("/api/runs/{run_id}")
+async def api_delete_run(run_id: str, request: Request):
+    """Delete a run and all associated uploaded files for the current user.
+
+    Steps:
+    - Verify authentication and resolve current user
+    - Look up uploads linked to the run
+    - Delete files from disk (only within BIOMNI_BASE_PATH)
+    - Delete upload rows and run row from the per-user DB
+    - Remove empty per-user upload directory if it becomes empty
+    """
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+
+    # Collect uploads for this run
+    uploads = fetch_uploads_by_run(user_id=user_id, run_id=run_id)
+
+    # Delete files from disk safely (contained under BIOMNI_BASE_PATH)
+    base = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+    for up in uploads:
+        p = os.path.abspath(up.get("stored_path") or "")
+        try:
+            if p and (p == base or p.startswith(base + os.sep)) and os.path.isfile(p):
+                os.remove(p)
+        except Exception:
+            # Continue deleting others even if one fails
+            pass
+
+    # Delete DB rows
+    try:
+        delete_uploads_by_run(user_id=user_id, run_id=run_id)
+    except Exception:
+        pass
+    try:
+        db_delete_run(user_id=user_id, run_id=run_id)
+    except Exception:
+        pass
+
+    # Attempt to remove empty per-user upload directory
+    try:
+        user_dir = os.path.join(base, "uploads", user_id)
+        if os.path.isdir(user_dir) and not os.listdir(user_dir):
+            os.rmdir(user_dir)
+    except Exception:
+        pass
+
+    return {"status": "deleted", "run_id": run_id}
 
 
 @app.get("/api/runs/{run_id}")

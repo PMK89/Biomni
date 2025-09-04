@@ -10,10 +10,10 @@ from .config import settings
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-# Store uploads under the configured BIOMNI_BASE_PATH/uploads so they persist on the mounted volume
+# Store uploads under the configured BIOMNI_BASE_PATH/uploads/{user_id} so they persist per user
 _BASE_DIR = Path(os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH)))
-_UPLOAD_DIR = _BASE_DIR / "uploads"
-_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+_UPLOADS_ROOT = _BASE_DIR / "uploads"
+_UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/file")
@@ -22,7 +22,7 @@ async def upload_file(
     file: UploadFile = File(...),
     run_id: str | None = Query(default=None, description="Optional run identifier to associate this upload with"),
 ) -> dict:
-    """Accept a file upload and persist it under BIOMNI_BASE_PATH/uploads.
+    """Accept a file upload and persist it under BIOMNI_BASE_PATH/uploads/{user_id}/.
 
     Example default: "./local_data/uploads" when using local development defaults.
     Note: Placeholder implementation; processing will be added later.
@@ -31,10 +31,21 @@ async def upload_file(
     if file.size is not None and file.size > 50 * 1024 * 1024:  # 50MB limit for now
         raise HTTPException(status_code=413, detail="File too large (limit 50MB)")
 
-    # Build a safe destination filename
+    # Resolve current user to determine per-user upload directory
+    user = {}
+    try:
+        user = request.session.get("user") or {}
+    except Exception:
+        user = {}
+    user_id = (user or {}).get("oid") or "anonymous"
+    username = (user or {}).get("name") or (user or {}).get("preferred_username") or ""
+
+    # Build per-user upload directory and safe destination filename
+    user_dir = _UPLOADS_ROOT / user_id
+    user_dir.mkdir(parents=True, exist_ok=True)
     sanitized = os.path.basename(file.filename or f"upload_{int(time.time())}")
     ts = time.strftime("%Y%m%d-%H%M%S")
-    dest = _UPLOAD_DIR / f"{ts}_{sanitized}"
+    dest = user_dir / f"{ts}_{sanitized}"
 
     # Persist to disk
     try:
@@ -43,15 +54,6 @@ async def upload_file(
             f.write(chunk)
     finally:
         await file.close()
-
-    # Get user from session
-    user = {}
-    try:
-        user = request.session.get("user") or {}
-    except Exception:
-        user = {}
-    user_id = (user or {}).get("oid") or "anonymous"
-    username = (user or {}).get("name") or (user or {}).get("preferred_username") or ""
 
     # Persist upload metadata per user
     try:

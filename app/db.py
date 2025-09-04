@@ -186,3 +186,34 @@ def fetch_uploads(user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[s
         rows = cur.fetchall()
         cols = [d[0] for d in cur.description]
         return [{cols[i]: r[i] for i in range(len(cols))} for r in rows]
+
+
+def fetch_uploads_by_run(user_id: str, run_id: str) -> List[Dict[str, Any]]:
+    """Return all upload rows linked to a run for the given user."""
+    with _connect_user_db(user_id) as conn:
+        cur = conn.execute(
+            """
+            SELECT id, ts, user_id, username, filename, stored_path, run_id
+            FROM uploads
+            WHERE run_id = ?
+            ORDER BY ts DESC
+            """,
+            (run_id,),
+        )
+        rows = cur.fetchall()
+        cols = [d[0] for d in cur.description]
+        return [{cols[i]: r[i] for i in range(len(cols))} for r in rows]
+
+
+def delete_run(user_id: str, run_id: str) -> None:
+    """Delete a run record for the given user."""
+    with _connect_user_db(user_id) as conn:
+        conn.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
+        conn.commit()
+
+
+def delete_uploads_by_run(user_id: str, run_id: str) -> None:
+    """Delete upload rows linked to the run for the given user."""
+    with _connect_user_db(user_id) as conn:
+        conn.execute("DELETE FROM uploads WHERE run_id = ?", (run_id,))
+        conn.commit()
