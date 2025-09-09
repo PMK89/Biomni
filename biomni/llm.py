@@ -36,7 +36,8 @@ def get_llm(
     # Use config values for any unspecified parameters
     if config is not None:
         if model is None:
-            model = config.llm_model
+            # BiomniConfig uses 'llm' as the attribute name
+            model = getattr(config, "llm", None)
         if temperature is None:
             temperature = config.temperature
         if source is None:
@@ -102,7 +103,15 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-openai package is required for OpenAI models. Install with: pip install langchain-openai"
             )
-        return ChatOpenAI(model=model, temperature=temperature, stop_sequences=stop_sequences)
+        # Force the standard OpenAI endpoint regardless of any Azure env like OPENAI_ENDPOINT/OPENAI_API_BASE
+        # IMPORTANT: Some OpenAI models (e.g., o3 family) do not support the 'stop' parameter.
+        # Do NOT pass stop_sequences at construction to avoid sending 'stop' to unsupported models.
+        return ChatOpenAI(
+            model=model,
+            temperature=temperature,
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url="https://api.openai.com/v1",
+        )
 
     elif source == "AzureOpenAI":
         try:
@@ -113,6 +122,13 @@ def get_llm(
             )
         API_VERSION = "2024-12-01-preview"
         model = model.replace("azure-", "")
+        # Masked diagnostics to confirm the runtime key used (tail only)
+        try:
+            _k = os.getenv("OPENAI_API_KEY") or ""
+            _tail = ("*" * 8 + _k[-4:]) if len(_k) > 8 else ("***" if _k else "(empty)")
+            print(f"AzureOpenAI using OPENAI_API_KEY: {_tail}")
+        except Exception:
+            pass
         return AzureChatOpenAI(
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             azure_endpoint=os.getenv("OPENAI_ENDPOINT"),

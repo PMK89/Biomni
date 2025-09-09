@@ -2,9 +2,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 import os
 from typing import Optional
+from dotenv import load_dotenv
 
 # Determine the project root directory
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Force-load the repo .env with override so .env takes precedence over shell env (e.g., from .bashrc)
+load_dotenv(os.path.join(project_dir, ".env"), override=True)
 
 class Settings(BaseSettings):
     # Declare all expected environment variables here.
@@ -18,6 +22,9 @@ class Settings(BaseSettings):
     CLIENT_SECRET: Optional[str] = None
     TENANT_ID: Optional[str] = None
 
+    # Local testing: when true, completely disable AAD and auto-login a dev user
+    DISABLE_AUTH: bool = False
+
     # Optional OpenAI settings
     OPENAI_API_TYPE: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
@@ -29,6 +36,12 @@ class Settings(BaseSettings):
 
     # Directory for per-user SQLite databases
     USER_DB_DIR: str = os.path.join(project_dir, "local_data", "user_dbs")
+
+    # Weekly quota for requests per user (used for UI display)
+    WEEKLY_QUOTA: int = 50
+
+    # Comma-separated list of Entra (Azure AD) Object IDs that are admins
+    ADMIN_ENTRA_IDS: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(project_dir, '.env'),
@@ -50,7 +63,8 @@ class Settings(BaseSettings):
     @property
     def AAD_ENABLED(self) -> bool:
         """True if all required AAD settings are present."""
+        if self.DISABLE_AUTH:
+            return False
         return bool(self.CLIENT_ID and self.CLIENT_SECRET and self.TENANT_ID)
 
 settings = Settings()
-

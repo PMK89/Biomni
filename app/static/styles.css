@@ -1,0 +1,142 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #f6f7fb;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #4f46e5;
+  --primary-600: #4338ca;
+  --accent: #0ea5e9;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+}
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { width: 36px; height: 36px; object-fit: contain; }
+.welcome { font-weight: 600; }
+.subtitle { font-size: 12px; color: var(--muted); }
+.account { display: flex; gap: 12px; align-items: center; }
+.quota { color: var(--muted); font-size: 14px; }
+.quota .dot { margin: 0 6px; opacity: .6; }
+.btn { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.btn:hover { background: #f8fafc; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { background: var(--primary-600); }
+.btn.ghost { background: transparent; }
+.muted { color: var(--muted); text-decoration: none; margin-left: 8px; }
+
+.main {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;           /* Left: Copilot, Right: Executor */
+  grid-template-rows: 1fr 260px;               /* Row 1 fills remaining height, Row 2: accordions grid */
+  grid-template-areas:
+    "left right"
+    "bottom bottom";
+  gap: 16px;
+  padding: 16px;
+  flex: 1;
+  height: calc(100vh - 64px);                  /* Fit window below topbar */
+}
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
+.panel-title { font-weight: 600; margin-bottom: 8px; }
+.copilot { grid-area: left; }
+.executor { grid-area: right; }
+.accordions-grid { grid-area: bottom; overflow: hidden; }
+
+.chat-window { flex: 1 1 auto; overflow: auto; border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: #fafbff; }
+.empty-state { color: var(--muted); text-align: center; padding: 24px; }
+.message { display: flex; gap: 10px; margin-bottom: 12px; }
+.message .avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; flex: 0 0 auto; display: grid; place-items: center; color: #334155; font-weight: 600; }
+.message .bubble { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; max-width: 100%; }
+.message.user .bubble { background: #eef2ff; border-color: #dbeafe; }
+.message.assistant .bubble { background: #fff; }
+.message .meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.message .bubble pre { margin: 8px 0; padding: 10px; border-radius: 8px; background: #0f172a; color: #e2e8f0; overflow: auto; }
+.message .bubble code { background: #0f172a; color: #e2e8f0; padding: 2px 4px; border-radius: 4px; }
+.message img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+
+.input-area { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.attach { display: grid; place-items: center; width: 38px; height: 38px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); cursor: pointer; }
+.chat-input { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+
+.accordions { margin-top: 12px; }
+.accordions details { border: 1px solid var(--border); border-radius: 10px; background: #fff; margin-bottom: 8px; }
+.accordions summary { list-style: none; cursor: pointer; padding: 10px 12px; font-weight: 500; }
+.accordions summary::-webkit-details-marker { display: none; }
+.accordions details > div { padding: 8px 12px 14px; border-top: 1px solid var(--border); }
+.side-accordions .accordions { overflow: auto; }
+
+.examples { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.example { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #f8fafc; cursor: pointer; }
+.example:hover { background: #eef2ff; }
+
+.exports .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.models { display: flex; gap: 18px; align-items: center; }
+.feedback { display: flex; flex-direction: column; gap: 8px; }
+.feedback textarea { min-height: 80px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; font-family: inherit; }
+.usage { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+.disclaimer { color: var(--muted); font-size: 14px; }
+
+.timeline { flex: 1 1 auto; overflow: auto; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #fafbff; }
+.event { border-left: 3px solid #e2e8f0; padding-left: 10px; margin: 8px 0; }
+.event .title { font-weight: 600; margin-bottom: 6px; }
+.event .content { font-size: 13px; color: var(--muted); }
+.event pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; overflow: auto; }
+.event ul { margin: 4px 0 0 16px; }
+
+.accordions-grid .gridCols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  height: 100%;
+}
+.accordions-grid .col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;  /* allow children to shrink */
+}
+.accordions-grid .col details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+.accordions-grid .col details > div { display: none; }
+.accordions-grid .col details[open] > div { display: block; }
+.accordions-grid .col details[open] {
+  flex: 1 1 0;     /* only the opened item expands to fill column */
+  min-height: 0;
+}
+.accordions-grid .col details[open] > div { height: 100%; overflow: auto; }
+
+@media (max-width: 980px) {
+  .main {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;   /* accordions shrink on mobile */
+    grid-template-areas:
+      "left"
+      "right"
+      "bottom";
+    height: auto;
+  }
+  .accordions-grid .grid3 { grid-template-columns: 1fr; }
+}

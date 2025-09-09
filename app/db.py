@@ -33,10 +33,19 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
             solution TEXT,
             thinking TEXT,
             audit_html TEXT,
-            uploads_json TEXT
+            uploads_json TEXT,
+            model TEXT
         )
         """
     )
+    # Backfill: add 'model' column if missing
+    try:
+        cur.execute("PRAGMA table_info(runs)")
+        cols = [row[1] for row in cur.fetchall()]
+        if "model" not in cols:
+            cur.execute("ALTER TABLE runs ADD COLUMN model TEXT")
+    except Exception:
+        pass
     # Uploads table stores uploaded files (optionally linked to a run)
     cur.execute(
         """
@@ -48,6 +57,19 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
             filename TEXT,
             stored_path TEXT,
             run_id TEXT
+        )
+        """
+    )
+    # Feedback table stores user feedback per run
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT,
+            user_id TEXT,
+            username TEXT,
+            run_id TEXT,
+            text TEXT
         )
         """
     )
@@ -71,14 +93,15 @@ def save_run(
     thinking: str,
     audit_html: str,
     uploads: Optional[List[str]] = None,
+    model: Optional[str] = None,
 ) -> None:
     """Persist a single agent run for a user."""
     uploads_json = json.dumps(uploads or [])
     with _connect_user_db(user_id) as conn:
         conn.execute(
             """
-            INSERT OR REPLACE INTO runs (run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO runs (run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json, model)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run_id,
@@ -90,9 +113,70 @@ def save_run(
                 thinking or "",
                 audit_html or "",
                 uploads_json,
+                model or "",
             ),
         )
         conn.commit()
+
+
+def list_user_ids() -> List[str]:
+    """Return list of user IDs (derived from sqlite filenames) that have a DB."""
+    users: List[str] = []
+    try:
+        for p in _DB_ROOT.glob("*.sqlite3"):
+            users.append(p.stem)
+    except Exception:
+        pass
+    return sorted(users)
+
+
+def user_run_stats(user_id: str) -> Dict[str, Any]:
+    """Lightweight stats for a user: number of runs and last timestamp."""
+    stats = {"user_id": user_id, "run_count": 0, "last_ts": None}
+    try:
+        with _connect_user_db(user_id) as conn:
+            cur = conn.execute("SELECT COUNT(*) FROM runs")
+            stats["run_count"] = int(cur.fetchone()[0])
+            cur = conn.execute("SELECT MAX(ts) FROM runs")
+            row = cur.fetchone()
+            stats["last_ts"] = row[0] if row and row[0] else None
+    except Exception:
+        pass
+    return stats
+
+
+def save_feedback(
+    user_id: str,
+    username: Optional[str],
+    ts_iso: str,
+    run_id: str,
+    text: str,
+) -> None:
+    with _connect_user_db(user_id) as conn:
+        conn.execute(
+            """
+            INSERT INTO feedback (ts, user_id, username, run_id, text)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (ts_iso, user_id, username or "", run_id or "", text or ""),
+        )
+        conn.commit()
+
+
+def fetch_feedback_by_run(user_id: str, run_id: str) -> List[Dict[str, Any]]:
+    with _connect_user_db(user_id) as conn:
+        cur = conn.execute(
+            """
+            SELECT id, ts, user_id, username, run_id, text
+            FROM feedback
+            WHERE run_id = ?
+            ORDER BY ts ASC
+            """,
+            (run_id,),
+        )
+        rows = cur.fetchall()
+        cols = [d[0] for d in cur.description]
+        return [{cols[i]: r[i] for i in range(len(cols))} for r in rows]
 
 
 def save_upload(
@@ -127,7 +211,7 @@ def fetch_runs(user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str,
     with _connect_user_db(user_id) as conn:
         cur = conn.execute(
             """
-            SELECT run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json
+            SELECT run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json, model
             FROM runs
             ORDER BY ts DESC
             LIMIT ? OFFSET ?
@@ -153,7 +237,7 @@ def fetch_run_by_id(user_id: str, run_id: str) -> Optional[Dict[str, Any]]:
     with _connect_user_db(user_id) as conn:
         cur = conn.execute(
             """
-            SELECT run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json
+            SELECT run_id, ts, user_id, username, prompt, solution, thinking, audit_html, uploads_json, model
             FROM runs
             WHERE run_id = ?
             """,

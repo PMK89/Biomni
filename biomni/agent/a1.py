@@ -35,9 +35,14 @@ from biomni.utils import (
     textify_api_dict,
 )
 
-if os.path.exists(".env"):
-    load_dotenv(".env", override=False)
-    print("Loaded environment variables from .env")
+# Load the project-root .env with override so it takes precedence over shell env (e.g., from .bashrc)
+_here = os.path.dirname(__file__)
+# biomni/agent/a1.py -> project root is two levels up: biomni -> repo root
+_project_root = os.path.abspath(os.path.join(_here, "..", ".."))
+_env_path = os.path.join(_project_root, ".env")
+if os.path.exists(_env_path):
+    load_dotenv(_env_path, override=True)
+    print(f"Loaded environment variables from {_env_path}")
 
 
 class AgentState(TypedDict):
@@ -98,7 +103,11 @@ class A1:
         config_dict = default_config.to_dict()
         for key, value in config_dict.items():
             if value is not None:
-                print(f"  {key.replace('_', ' ').title()}: {value}")
+                if key == "api_key" and isinstance(value, str):
+                    masked = ("*" * 8 + value[-4:]) if len(value) > 8 else "***"
+                    print(f"  {key.replace('_', ' ').title()}: {masked}")
+                else:
+                    print(f"  {key.replace('_', ' ').title()}: {value}")
 
         # Show agent-specific LLM if different from default
         if agent_llm != default_config.llm or agent_source != default_config.source:
@@ -1578,7 +1587,7 @@ IMPORTANT: Before interacting with any dataset, your FIRST step MUST ALWAYS be t
         print("="*50 + "\n")
 
         # 1. Instantiate the APKA Agent. Using a low temperature for analytical tasks
-        apak_auditor = APKA_Agent(model="azure-gpt-5", temperature=1.0)
+        apak_auditor = APKA_Agent(model="gpt-5", temperature=1.0)
 
         # 2. Join the log list into a single string to create the full transcript.
         full_transcript = "\n".join(self.log)

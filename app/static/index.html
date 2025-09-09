@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biomni • Biomedical AI Agent</title>
+  <link rel="stylesheet" href="/app/static/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <img src="/figs/biomni_logo.png" alt="Biomni" class="logo" onerror="this.style.display='none'" />
+        <div>
+          <div class="welcome">Welcome to Biomni</div>
+          <div class="subtitle">Biomedical AI Agent</div>
+        </div>
+      </div>
+      <div class="account">
+        <div class="quota">
+          <span id="user-email">user@example.com</span>
+        </div>
+        <a id="admin-btn" class="btn ghost" href="/admin" style="display:none">Admin</a>
+        <a id="logout-btn" class="btn ghost" href="#">Logout</a>
+      </div>
+    </header>
+
+    <!-- Main Content: two-panel layout -->
+    <main class="main">
+      <section class="panel copilot">
+        <div class="panel-title">Biomni Co-pilot</div>
+        <div id="chat-window" class="chat-window">
+          <!-- Messages injected here -->
+          <div class="empty-state">Ask something or upload a file to get started.</div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+          <label class="attach" title="Upload a file">
+            <input id="file-input" type="file" hidden />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.2a2 2 0 01-2.83-2.83l8.49-8.49"/></svg>
+          </label>
+          <input id="chat-input" class="chat-input" placeholder="Ask something or upload a file..." />
+          <button id="send-btn" class="btn primary">Send</button>
+        </div>
+
+        <!-- Expandable Sections (moved to bottom grid) -->
+        <div class="accordions left-accordions" style="display:none">
+          <details>
+            <summary>Example Research Questions</summary>
+            <div class="examples" id="examples">
+              <!-- Examples injected -->
+            </div>
+          </details>
+
+          <details>
+            <summary>Export & Download</summary>
+            <div class="exports">
+              <div class="row">
+                <label for="session-select">Select session</label>
+                <select id="session-select"></select>
+                <button id="refresh-sessions" class="btn">Refresh</button>
+              </div>
+              <div class="row">
+                <button id="dl-notebook" class="btn">Download Notebook</button>
+                <button id="dl-logs" class="btn">Download Logs</button>
+                <button id="dl-files" class="btn">Download Files</button>
+                <button id="dl-bundle-json" class="btn">Bundle (JSON)</button>
+                <button id="dl-bundle-txt" class="btn">Bundle (TXT)</button>
+              </div>
+              <div class="row">
+                <button id="view-feedback" class="btn">View Feedback</button>
+              </div>
+              <textarea id="my-feedback-view" class="search" style="width:100%; min-height: 100px; height: 140px; resize: vertical; font-family: monospace; white-space: pre-wrap;"></textarea>
+            </div>
+          </details>
+
+          <details>
+            <summary>Model Selection</summary>
+            <div class="models">
+              <label><input type="radio" name="model" value="GPT-5-mini" /> GPT-5-mini</label>
+              <label><input type="radio" name="model" value="GPT-5" checked /> GPT-5</label>
+              <label><input type="radio" name="model" value="O3" /> O3</label>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <aside class="panel executor">
+        <div class="panel-title">Biomni Executor</div>
+        <div id="timeline" class="timeline"></div>
+      </aside>
+
+      <!-- Bottom: 2 x 3 grid (3 columns, each with two stacked accordions) -->
+      <section class="panel accordions-grid">
+        <div class="gridCols">
+          <!-- Column 1 -->
+          <div class="col" data-col="1">
+            <details>
+              <summary>Example Research Questions</summary>
+              <div class="examples" id="examples">
+                <!-- Examples injected -->
+              </div>
+            </details>
+            <details>
+              <summary>Provide Feedback</summary>
+              <div class="feedback">
+                <textarea id="feedback-text" placeholder="Tell us what worked well or what could be improved..."></textarea>
+                <button id="submit-feedback" class="btn">Submit</button>
+                <span id="feedback-status" class="muted"></span>
+              </div>
+            </details>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="col" data-col="2">
+            <details>
+              <summary>Export & Download</summary>
+              <div class="exports">
+                <div class="row">
+                  <label for="session-select">Select session</label>
+                  <select id="session-select"></select>
+                  <button id="refresh-sessions" class="btn">Refresh</button>
+                </div>
+                <div class="row">
+                  <button id="dl-notebook" class="btn">Download Notebook</button>
+                  <button id="dl-logs" class="btn">Download Logs</button>
+                  <button id="dl-files" class="btn">Download Files</button>
+                </div>
+              </div>
+            </details>
+            <details>
+              <summary>Usage Statistics</summary>
+              <div class="usage" id="usage-stats">
+                <!-- Usage injected -->
+              </div>
+            </details>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="col" data-col="3">
+            <details>
+              <summary>Model Selection</summary>
+              <div class="models">
+                <label><input type="radio" name="model" value="GPT-5-mini" /> GPT-5-mini</label>
+                <label><input type="radio" name="model" value="GPT-5" checked /> GPT-5</label>
+                <label><input type="radio" name="model" value="O3" /> O3</label>
+              </div>
+            </details>
+            <details>
+              <summary>Disclaimer & Data Security & Privacy</summary>
+              <div class="disclaimer">
+                <p><strong>Important:</strong> Biomni is an AI assistant for research support. It may generate incorrect or incomplete information. It does not provide medical advice. Validate critical results.</p>
+                <p>Uploaded files are stored under your user space and used to fulfill your request. Please avoid uploading sensitive personal data. See your institution's policy for data handling.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app/static/app.js" defer></script>
+</body>
+</html>

@@ -7,10 +7,9 @@ import os
 import re
 import gradio as gr
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, StreamingResponse, PlainTextResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from biomni.agent.a1 import A1
-from biomni.agent.apak import APKA_Agent
 from . import auth
 from .config import settings
 from .upload import router as upload_router
@@ -21,12 +20,20 @@ from .db import (
     fetch_run_by_id,
     fetch_uploads,
     fetch_uploads_by_run,
+    delete_run,
     delete_uploads_by_run,
-    delete_run as db_delete_run,
+    list_user_ids,
+    user_run_stats,
+    save_feedback,
+    fetch_feedback_by_run,
 )
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from urllib.parse import quote
+import nbformat
+import zipfile
+import tempfile
+import io
 
 app = FastAPI()
 
@@ -55,15 +62,34 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(upload_router)
 
-# Initialize the Biomni agent once when the application starts.
-# The agent's data path is relative to the project root where uvicorn is run.
+# Mount static frontend for the new UI
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(STATIC_DIR, exist_ok=True)
+app.mount("/app/static", StaticFiles(directory=STATIC_DIR), name="app-static")
+
+# Also serve project figs/ for logo and images
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FIGS_DIR = os.path.join(PROJECT_ROOT, "figs")
+if os.path.isdir(FIGS_DIR):
+    app.mount("/figs", StaticFiles(directory=FIGS_DIR), name="figs")
+
+# Initialize the Biomni agent once when the application starts (legacy Gradio uses this instance).
+# The new /app UI creates a fresh agent per job with the selected model.
 agent = None
 try:
-    # Prefer OpenAI GPT-5 by default; requires OPENAI_API_KEY
     if settings.OPENAI_API_KEY:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+        try:
+            from biomni.config import default_config as _defcfg
+            tail = (settings.OPENAI_API_KEY or "")[-6:]
+            print(f"OPENAI key tail: {tail}")
+        except Exception:
+            pass
+        from biomni.agent.a1 import A1
+        # Default to OpenAI 'gpt-5' as the global default model
         agent = A1(
-            llm="azure-gpt-5",
+            llm="gpt-5",
+            source="OpenAI",
             path=settings.BIOMNI_BASE_PATH,
         )
     else:
@@ -71,6 +97,68 @@ try:
 except Exception as e:
     print(f"Error initializing Biomni agent: {e}")
     agent = None
+
+# In-memory job registry for the new UI executor panel
+RUN_JOBS: dict[str, dict] = {}
+
+# --- Usage / Cost helpers ---
+_PRICE_USD_PER_TOKEN = {
+    # prices per token (USD) based on provided per 1M token rates
+    # input, cached_input, output
+    "gpt-5": {
+        "input": 1.250 / 1_000_000.0,
+        "cached": 0.125 / 1_000_000.0,
+        "output": 10.000 / 1_000_000.0,
+    },
+    "gpt-5-mini": {
+        "input": 0.250 / 1_000_000.0,
+        "cached": 0.025 / 1_000_000.0,
+        "output": 2.000 / 1_000_000.0,
+    },
+    "o3": {
+        "input": 2.00 / 1_000_000.0,
+        "cached": 0.50 / 1_000_000.0,
+        "output": 8.00 / 1_000_000.0,
+    },
+}
+
+def _approx_tokens(text: str) -> int:
+    """Very rough token estimate: 1 token ~= 4 characters.
+    Falls back to word-based if text is short.
+    """
+    if not text:
+        return 0
+    try:
+        chars = len(text)
+        if chars < 32:
+            return max(1, len(text.split()))
+        return max(1, chars // 4)
+    except Exception:
+        return 0
+
+# --- Admin helpers ---
+def _parse_admin_ids() -> set[str]:
+    raw = (settings.ADMIN_ENTRA_IDS or "").strip()
+    if not raw:
+        return set()
+    return {s.strip().lower() for s in raw.split(",") if s.strip()}
+
+_ADMIN_IDS = _parse_admin_ids()
+
+def _is_admin_user(user: dict | None) -> bool:
+    # When auth is disabled, allow admin access for convenience
+    if not settings.AAD_ENABLED:
+        return True
+    if not user:
+        return False
+    oid = (user or {}).get("oid")
+    return bool(oid and oid.lower() in _ADMIN_IDS)
+
+def _require_admin(request: Request) -> dict:
+    user = _require_user(request)
+    if not _is_admin_user(user):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return user
 
 # --- Gradio Chat Interface ---
 def create_chat_interface():
@@ -298,9 +386,9 @@ def create_chat_interface():
                 orig_out, orig_err = sys.stdout, sys.stderr
                 tee_out = _Tee(orig_out, agent._live_console, _lock)
                 tee_err = _Tee(orig_err, agent._live_console, _lock)
+                collected = []
                 with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
                     # Use streaming generator to produce outputs incrementally
-                    collected = []
                     for step in agent.go_stream(final_prompt):
                         try:
                             out = (step or {}).get("output") or ""
@@ -309,15 +397,15 @@ def create_chat_interface():
                         except Exception:
                             pass
 
-                    # After streaming completes, build final content and audit
-                    full_transcript = "\n".join(collected)
-                    try:
-                        apak_auditor = APKA_Agent(model="azure-gpt-5", temperature=1.0)
-                        analysis_results = apak_auditor.analyze_transcript(full_transcript)
-                    except Exception:
-                        analysis_results = {}
+                # After streaming completes, build final content and audit
+                full_transcript = "\n".join(collected)
+                try:
+                    apak_auditor = APKA_Agent(model="gpt-5", temperature=1.0)
+                    analysis_results = apak_auditor.analyze_transcript(full_transcript)
+                except Exception:
+                    analysis_results = {}
 
-                    return (collected, full_transcript, analysis_results)
+                return (collected, full_transcript, analysis_results)
 
             max_attempts = 3
             attempt = 1
@@ -459,6 +547,7 @@ def create_chat_interface():
                     thinking=thinking_text or "",
                     audit_html=audit_html or "",
                     uploads=uploaded_paths,
+                    model="gpt-5",
                 )
                 # Also record each upload as a separate entry, linked to this run_id
                 for p in uploaded_paths:
@@ -614,39 +703,34 @@ async def root(request: Request):
     """Handles the root URL, showing a welcome page or redirecting to login."""
     user = request.session.get('user')
     if not user:
-        login_url = request.url_for("login")
-        return RedirectResponse(url=login_url, headers={"Cache-Control": "no-store"})
-    
-    user_name = user.get('name', 'User')
-    # Build root_path-aware absolute links (avoids any double prefix issues)
+        # When auth is disabled, skip login entirely and auto-provision a dev user
+        if not settings.AAD_ENABLED:
+            user = {
+                "name": "Dev User",
+                "oid": "anonymous",
+                "tid": "dev-tenant",
+                "preferred_username": "dev@example.com",
+            }
+            request.session['user'] = user
+        else:
+            login_url = request.url_for("login")
+            return RedirectResponse(url=login_url, headers={"Cache-Control": "no-store"})
+    # Default to the new advanced UI
     base_raw = (request.scope.get('root_path') or '')
     base = ('/' + base_raw.strip('/')) if base_raw else ''
-    href_chat = f"{base}/gradio" if base else "/gradio"
-    href_logout = request.url_for("logout")
-    return f"""
-    <html>
-        <head>
-            <title>Biomni</title>
-            <style>
-                body {{ font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }}
-                .container {{ text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
-                h1 {{ color: #333; }}
-                p {{ color: #555; }}
-                a {{ display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }}
-                a:hover {{ background-color: #0056b3; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>Welcome to Biomni</h1>
-                <p>You are logged in as: {user_name}</p>
-                <a href="{href_chat}">Go to Chat</a>
-                <br><br>
-                <a href="{href_logout}">Logout</a>
-            </div>
-        </body>
-    </html>
-    """
+    href_app = f"{base}/app" if base else "/app"
+    return RedirectResponse(url=href_app, headers={"Cache-Control": "no-store"})
+
+@app.get("/app", response_class=HTMLResponse)
+async def serve_app(request: Request):
+    """Serve the Biomni advanced UI shell (index.html)."""
+    _require_user(request)
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.isfile(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content, media_type="text/html")
+    return HTMLResponse("<h1>Biomni</h1>")
 
 # --- Mount Gradio App ---
 
@@ -666,6 +750,113 @@ def _require_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
 
+
+# --- User profile / usage endpoints for the new UI ---
+def _normalize_model_name(m: str | None) -> str:
+    if not m:
+        return "gpt-5"
+    m = str(m).strip()
+    return m.lower().replace(" ", "-")
+
+
+def _estimate_cost_for_run(rec: dict) -> float:
+    try:
+        model = _normalize_model_name(rec.get("model") or "gpt-5")
+        prices = _PRICE_USD_PER_TOKEN.get(model)
+        if not prices:
+            return 0.0
+        prompt = rec.get("prompt") or ""
+        solution = rec.get("solution") or ""
+        in_tok = _approx_tokens(prompt)
+        out_tok = _approx_tokens(solution)
+        return in_tok * prices.get("input", 0.0) + out_tok * prices.get("output", 0.0)
+    except Exception:
+        return 0.0
+
+
+@app.get("/api/me")
+async def api_me(request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    email = user.get("preferred_username") or ""
+    # Weekly usage
+    one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    runs = fetch_runs(user_id=user_id, limit=500)
+    weekly = 0
+    total = len(runs)
+    try:
+        for r in runs:
+            ts = r.get("ts") or ""
+            try:
+                if ts:
+                    t0 = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                    if t0 >= one_week_ago:
+                        weekly += 1
+            except Exception:
+                pass
+    except Exception:
+        pass
+    # Settings
+    out = {
+        "name": user.get("name") or "User",
+        "email": email,
+        "weekly_quota": settings.WEEKLY_QUOTA,
+        "weekly_used": weekly,
+        "model_preference": request.session.get("model_preference") or "GPT-5",
+        "logout_url": request.url_for("logout"),
+        "is_admin": _is_admin_user(user),
+    }
+    return out
+
+
+@app.post("/api/model")
+async def api_set_model(request: Request):
+    _require_user(request)
+    body = await request.json()
+    model = (body or {}).get("model") or ""
+    if model not in ("GPT-5", "GPT-5-mini", "O3"):
+        raise HTTPException(status_code=400, detail="Unsupported model")
+    request.session["model_preference"] = model
+    return {"status": "ok", "model": model}
+
+
+@app.get("/api/runs")
+async def api_list_runs(request: Request, limit: int = 50, offset: int = 0):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    rows = fetch_runs(user_id=user_id, limit=limit, offset=offset)
+    return {"items": rows, "count": len(rows)}
+
+
+@app.get("/api/usage")
+async def api_usage(request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    runs = fetch_runs(user_id=user_id, limit=1000)
+    total_cost = 0.0
+    weekly_cost = 0.0
+    weekly_requests = 0
+    total_requests = len(runs)
+    one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    for r in runs:
+        c = _estimate_cost_for_run(r)
+        total_cost += c
+        try:
+            ts = r.get("ts") or ""
+            if ts:
+                t0 = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                if t0 >= one_week_ago:
+                    weekly_cost += c
+                    weekly_requests += 1
+        except Exception:
+            pass
+    return {
+        "this_request_estimate": 0.0,
+        "weekly_cost": weekly_cost,
+        "total_cost": total_cost,
+        "weekly_requests": weekly_requests,
+        "total_requests": total_requests,
+    }
 
 @app.get("/api/runs")
 async def api_list_runs(request: Request, limit: int = 50, offset: int = 0):
@@ -709,7 +900,7 @@ async def api_delete_run(run_id: str, request: Request):
     except Exception:
         pass
     try:
-        db_delete_run(user_id=user_id, run_id=run_id)
+        delete_run(user_id=user_id, run_id=run_id)
     except Exception:
         pass
 
@@ -724,40 +915,194 @@ async def api_delete_run(run_id: str, request: Request):
     return {"status": "deleted", "run_id": run_id}
 
 
-@app.get("/api/runs/{run_id}")
-async def api_get_run(run_id: str, request: Request):
+# --- Admin area ---
+@app.get("/admin", response_class=HTMLResponse)
+async def serve_admin(request: Request):
+    _require_admin(request)
+    admin_path = os.path.join(STATIC_DIR, "admin.html")
+    if os.path.isfile(admin_path):
+        with open(admin_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content, media_type="text/html")
+    return HTMLResponse("<h1>Admin</h1>")
+
+
+@app.get("/api/admin/users")
+async def api_admin_users(request: Request):
+    _require_admin(request)
+    ids = list_user_ids()
+    stats = [user_run_stats(uid) for uid in ids]
+    return {"items": stats, "count": len(stats)}
+
+
+@app.get("/api/admin/runs")
+async def api_admin_runs(user_id: str, limit: int = 100, offset: int = 0, request: Request = None):
+    _require_admin(request)
+    rows = fetch_runs(user_id=user_id, limit=limit, offset=offset)
+    return {"items": rows, "count": len(rows)}
+
+
+@app.get("/api/admin/feedback")
+async def api_admin_feedback(user_id: str, run_id: str, request: Request):
+    _require_admin(request)
+    items = fetch_feedback_by_run(user_id=user_id, run_id=run_id)
+    return {"items": items, "count": len(items)}
+
+
+@app.get("/api/admin/run_bundle")
+async def api_admin_run_bundle(user_id: str, run_id: str, format: str = "json", request: Request = None):
+    _require_admin(request)
+    rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Run not found")
+    feedback = fetch_feedback_by_run(user_id=user_id, run_id=run_id)
+    bundle = {"run": rec, "feedback": feedback}
+    if format == "txt":
+        lines = []
+        lines.append(f"Run ID: {rec.get('run_id')}")
+        lines.append(f"Timestamp: {rec.get('ts')}")
+        lines.append(f"User: {rec.get('user_id')} {rec.get('username')}")
+        lines.append(f"Model: {rec.get('model') or ''}")
+        lines.append("")
+        lines.append("# Prompt\n" + (rec.get("prompt") or ""))
+        lines.append("")
+        lines.append("# Solution\n" + (rec.get("solution") or ""))
+        lines.append("")
+        lines.append("# Thinking / Console\n" + (rec.get("thinking") or ""))
+        lines.append("")
+        lines.append("# Audit HTML\n" + (rec.get("audit_html") or ""))
+        lines.append("")
+        lines.append("# Uploads JSON\n" + (rec.get("uploads_json") or "[]"))
+        lines.append("")
+        if feedback:
+            lines.append("# Feedback\n" + "\n\n".join([f"[{f.get('ts')}] {f.get('username')}:\n{f.get('text')}" for f in feedback]))
+        txt = "\n".join(lines)
+        headers = {"Content-Disposition": f"attachment; filename=run_{run_id}.txt"}
+        return PlainTextResponse(txt, headers=headers)
+    else:
+        headers = {"Content-Disposition": f"attachment; filename=run_{run_id}.json"}
+        return JSONResponse(bundle, headers=headers)
+
+
+@app.get("/api/feedback")
+async def api_get_feedback(run_id: str, request: Request):
+    user = _require_user(request)
+    items = fetch_feedback_by_run(user_id=user.get("oid") or "anonymous", run_id=run_id)
+    return {"items": items, "count": len(items)}
+
+
+@app.get("/api/run_bundle")
+async def api_run_bundle(run_id: str, format: str = "json", request: Request = None):
     user = _require_user(request)
     user_id = user.get("oid") or "anonymous"
     rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Run not found")
-    return rec
+    feedback = fetch_feedback_by_run(user_id=user_id, run_id=run_id)
+    bundle = {"run": rec, "feedback": feedback}
+    if format == "txt":
+        lines = []
+        lines.append(f"Run ID: {rec.get('run_id')}")
+        lines.append(f"Timestamp: {rec.get('ts')}")
+        lines.append(f"User: {rec.get('user_id')} {rec.get('username')}")
+        lines.append(f"Model: {rec.get('model') or ''}")
+        lines.append("")
+        lines.append("# Prompt\n" + (rec.get("prompt") or ""))
+        lines.append("")
+        lines.append("# Solution\n" + (rec.get("solution") or ""))
+        lines.append("")
+        lines.append("# Thinking / Console\n" + (rec.get("thinking") or ""))
+        lines.append("")
+        lines.append("# Audit HTML\n" + (rec.get("audit_html") or ""))
+        lines.append("")
+        lines.append("# Uploads JSON\n" + (rec.get("uploads_json") or "[]"))
+        lines.append("")
+        if feedback:
+            lines.append("# Feedback\n" + "\n\n".join([f"[{f.get('ts')}] {f.get('username')}:\n{f.get('text')}" for f in feedback]))
+        txt = "\n".join(lines)
+        headers = {"Content-Disposition": f"attachment; filename=run_{run_id}.txt"}
+        return PlainTextResponse(txt, headers=headers)
+    else:
+        headers = {"Content-Disposition": f"attachment; filename=run_{run_id}.json"}
+        return JSONResponse(bundle, headers=headers)
 
 
-@app.get("/api/uploads")
-async def api_list_uploads(request: Request, limit: int = 50, offset: int = 0):
+@app.get("/api/export/{run_id}/notebook")
+async def api_export_notebook(run_id: str, request: Request):
     user = _require_user(request)
     user_id = user.get("oid") or "anonymous"
-    rows = fetch_uploads(user_id=user_id, limit=limit, offset=offset)
-    return {"items": rows, "count": len(rows)}
+    rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Run not found")
+    nb = nbformat.v4.new_notebook()
+    nb.cells.append(nbformat.v4.new_markdown_cell(f"# Biomni Run {run_id}"))
+    nb.cells.append(nbformat.v4.new_markdown_cell("## Prompt\n\n" + (rec.get("prompt") or "")))
+    nb.cells.append(nbformat.v4.new_markdown_cell("## Solution\n\n" + (rec.get("solution") or "")))
+    thinking = rec.get("thinking") or ""
+    if thinking:
+        nb.cells.append(nbformat.v4.new_markdown_cell(f"## Logs\n\n````\n{thinking}\n````"))
+    data = nbformat.writes(nb).encode("utf-8")
+    fname = f"biomni_{run_id}.ipynb"
+    return StreamingResponse(io.BytesIO(data), media_type="application/x-ipynb+json", headers={"Content-Disposition": f"attachment; filename={fname}"})
 
 
-# --- Secure File Download ---
+@app.get("/api/export/{run_id}/logs")
+async def api_export_logs(run_id: str, request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Run not found")
+    logs = (rec.get("thinking") or "").encode("utf-8")
+    fname = f"biomni_{run_id}.log.txt"
+    return StreamingResponse(io.BytesIO(logs), media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={fname}"})
 
-@app.get("/download")
-async def download_file(p: str, request: Request):
-    """Serve a file located under BIOMNI_BASE_PATH with authentication.
 
-    Query param:
-    - p: absolute file path to a file within BIOMNI_BASE_PATH
-    """
-    _require_user(request)  # ensure authenticated
-    base = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
-    path = os.path.abspath(p)
-    # Enforce path containment
-    if not (path == base or path.startswith(base + os.sep)):
-        raise HTTPException(status_code=403, detail="Access denied")
-    if not os.path.isfile(path):
-        raise HTTPException(status_code=404, detail="File not found")
-    fname = os.path.basename(path)
-    return FileResponse(path, filename=fname, media_type="application/octet-stream")
+@app.get("/api/export/{run_id}/files")
+async def api_export_files(run_id: str, request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Run not found")
+    files = rec.get("uploads") or []
+    mem = io.BytesIO()
+    with zipfile.ZipFile(mem, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for p in files:
+            try:
+                if os.path.isfile(p):
+                    zf.write(p, arcname=os.path.basename(p))
+            except Exception:
+                pass
+    mem.seek(0)
+    fname = f"biomni_{run_id}_files.zip"
+    return StreamingResponse(mem, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={fname}"})
+
+
+@app.post("/api/feedback")
+async def api_feedback(request: Request):
+    user = _require_user(request)
+    body = await request.json()
+    text = (body or {}).get("text") or ""
+    run_id = (body or {}).get("run_id") or request.session.get("last_run_id")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Feedback cannot be empty")
+    if not run_id:
+        # fallback to latest run
+        try:
+            latest = fetch_runs(user_id=user.get("oid") or "anonymous", limit=1)
+            if latest:
+                run_id = latest[0].get("run_id")
+        except Exception:
+            pass
+    if not run_id:
+        raise HTTPException(status_code=400, detail="No run_id available for feedback")
+    ts_iso = datetime.now(timezone.utc).isoformat()
+    save_feedback(
+        user_id=user.get("oid") or "anonymous",
+        username=user.get("name") or user.get("preferred_username"),
+        ts_iso=ts_iso,
+        run_id=run_id,
+        text=text,
+    )
+    return {"status": "ok", "run_id": run_id}

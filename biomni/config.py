@@ -8,6 +8,14 @@ Maintains full backward compatibility with existing code.
 import os
 from dataclasses import dataclass, field
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load the project-root .env with override so it takes precedence over shell env
+_here = os.path.dirname(__file__)
+_project_root = os.path.abspath(os.path.join(_here, "..", ".."))
+_env_path = os.path.join(_project_root, ".env")
+if os.path.exists(_env_path):
+    load_dotenv(_env_path, override=True)
 
 
 @dataclass
@@ -34,7 +42,7 @@ class BiomniConfig:
     timeout_seconds: int = 600
 
     # LLM settings (API keys still from environment)
-    llm: str = "azure-gpt-5"
+    llm: str = "gpt-5"
     temperature: float = 1.0
 
     # Tool settings
@@ -63,8 +71,18 @@ class BiomniConfig:
             self.temperature = float(os.getenv("BIOMNI_TEMPERATURE"))
         if os.getenv("BIOMNI_CUSTOM_BASE_URL"):
             self.base_url = os.getenv("BIOMNI_CUSTOM_BASE_URL")
-        if os.getenv("BIOMNI_CUSTOM_API_KEY"):
-            self.api_key = os.getenv("BIOMNI_CUSTOM_API_KEY")
+
+        # Resolve API key precedence:
+        # - Use OPENAI_API_KEY by default
+        # - If a custom model is configured (custom base_url or source==Custom), allow BIOMNI_CUSTOM_API_KEY to override
+        openai_key = os.getenv("OPENAI_API_KEY")
+        custom_key = os.getenv("BIOMNI_CUSTOM_API_KEY")
+        source_env = os.getenv("BIOMNI_SOURCE") or self.source
+        is_custom = bool(self.base_url) or (str(source_env).lower() == "custom" if source_env else False)
+        if is_custom:
+            self.api_key = custom_key or openai_key or self.api_key
+        else:
+            self.api_key = openai_key or self.api_key
         if os.getenv("BIOMNI_SOURCE"):
             self.source = os.getenv("BIOMNI_SOURCE")
 

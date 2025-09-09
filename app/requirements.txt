@@ -36,3 +36,6 @@ jupyter
 notebook
 ipykernel
 pytest
+
+# Export utilities
+nbformat

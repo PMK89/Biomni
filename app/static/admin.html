@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biomni Admin</title>
+  <link rel="stylesheet" href="/app/static/styles.css" />
+  <style>
+    .admin-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:#fff; }
+    .admin-title { font-size:18px; font-weight:600; }
+    .admin-main { display:grid; grid-template-columns: 0.8fr 1.2fr; gap:16px; padding:16px; height: calc(100vh - 60px); }
+    .admin-panel { background: var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; min-height:0; }
+    .admin-panel .panel-title { font-weight:600; margin-bottom:8px; }
+    .table { width:100%; border-collapse: collapse; font-size:14px; }
+    .table th, .table td { padding:8px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+    .table tbody tr { cursor:pointer; }
+    .table tbody tr:hover { background:#f8fafc; }
+    .scroll { overflow:auto; flex:1 1 auto; }
+    .muted { color: var(--muted); }
+    .controls { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .search { border:1px solid var(--border); border-radius:8px; padding:6px 8px; }
+    .badge { display:inline-block; padding:2px 6px; border-radius:6px; background:#eef2ff; border:1px solid #dbeafe; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <div class="admin-title">Biomni Admin</div>
+    <div>
+      <a class="btn" href="/app">Back to App</a>
+      <a id="logout-btn" class="btn ghost" href="#">Logout</a>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <section class="admin-panel">
+      <div class="panel-title">Users</div>
+      <div class="controls">
+        <input id="user-search" class="search" placeholder="Filter by user id..." />
+        <span id="user-count" class="muted"></span>
+      </div>
+      <div class="scroll">
+        <table class="table" id="users-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Runs</th>
+              <th>Last activity</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="panel-title">Runs <span id="runs-header" class="muted"></span></div>
+      <div class="scroll">
+        <table class="table" id="runs-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Model</th>
+              <th>Prompt (preview)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="controls" style="margin-top:8px">
+        <button id="dl-bundle-json" class="btn">Download bundle (JSON)</button>
+        <button id="dl-bundle-txt" class="btn">Download bundle (TXT)</button>
+        <span id="bundle-status" class="muted"></span>
+      </div>
+
+      <div class="controls" style="margin-top:4px"><span class="muted">Feedback (read-only)</span></div>
+      <textarea id="feedback-view" class="search" style="width:100%; min-height: 140px; height: 180px; resize: vertical; font-family: monospace; white-space: pre-wrap;"></textarea>
+    </section>
+  </main>
+
+  <script src="/app/static/admin.js" defer></script>
+</body>
+</html>
