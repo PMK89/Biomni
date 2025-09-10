@@ -8,7 +8,7 @@
   <style>
     .admin-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:#fff; }
     .admin-title { font-size:18px; font-weight:600; }
-    .admin-main { display:grid; grid-template-columns: 0.8fr 1.2fr; gap:16px; padding:16px; height: calc(100vh - 60px); }
+    .admin-main { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px; height: calc(100vh - 60px); }
     .admin-panel { background: var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; min-height:0; }
     .admin-panel .panel-title { font-weight:600; margin-bottom:8px; }
     .table { width:100%; border-collapse: collapse; font-size:14px; }
@@ -20,6 +20,8 @@
     .controls { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
     .search { border:1px solid var(--border); border-radius:8px; padding:6px 8px; }
     .badge { display:inline-block; padding:2px 6px; border-radius:6px; background:#eef2ff; border:1px solid #dbeafe; font-size:12px; }
+    .field-block { display:flex; flex-direction:column; gap:6px; }
+    .halfvh { height: calc(50vh - 40px); min-height: calc(50vh - 40px); }
   </style>
 </head>
 <body>
@@ -50,6 +52,8 @@
           <tbody></tbody>
         </table>
       </div>
+      <div class="controls" style="margin-top:8px"><span class="muted">Bot answer (read-only)</span></div>
+      <textarea id="solution-view" class="search halfvh" style="width:100%; resize: vertical; font-family: monospace; white-space: pre-wrap;" readonly></textarea>
     </section>
 
     <section class="admin-panel">
@@ -73,8 +77,15 @@
         <span id="bundle-status" class="muted"></span>
       </div>
 
-      <div class="controls" style="margin-top:4px"><span class="muted">Feedback (read-only)</span></div>
-      <textarea id="feedback-view" class="search" style="width:100%; min-height: 140px; height: 180px; resize: vertical; font-family: monospace; white-space: pre-wrap;"></textarea>
+      <div class="controls" style="margin-top:4px; justify-content: space-between;">
+        <span class="muted">Details</span>
+        <span>
+          <button id="tab-thoughts" class="btn primary">Thoughts</button>
+          <button id="tab-feedback" class="btn ghost">Feedback</button>
+        </span>
+      </div>
+      <textarea id="thinking-view" class="search halfvh" style="width:100%; resize: vertical; font-family: monospace; white-space: pre-wrap;" readonly></textarea>
+      <textarea id="feedback-view" class="search halfvh" style="width:100%; resize: vertical; font-family: monospace; white-space: pre-wrap; display:none" readonly></textarea>
     </section>
   </main>
 

@@ -9,8 +9,12 @@
   const runsHeader = $('#runs-header');
   const logoutBtn = $('#logout-btn');
   const feedbackView = $('#feedback-view');
+  const solutionView = $('#solution-view');
+  const thinkingView = $('#thinking-view');
   const dlJson = $('#dl-bundle-json');
   const dlTxt = $('#dl-bundle-txt');
+  const tabThoughts = $('#tab-thoughts');
+  const tabFeedback = $('#tab-feedback');
 
   let allUsers = [];
   let selectedUser = null;
@@ -91,14 +95,50 @@
   async function selectRun(uid, runId) {
     selectedRun = runId;
     feedbackView.value = '';
+    if (solutionView) solutionView.value = '';
+    if (thinkingView) thinkingView.value = '';
     try {
+      // Load feedback (list)
       const res = await fetch(`/api/admin/feedback?user_id=${encodeURIComponent(uid)}&run_id=${encodeURIComponent(runId)}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const lines = (data.items || []).map(f => `[${f.ts}] ${f.username || f.user_id}\n${f.text}\n`);
-      feedbackView.value = lines.join('\n');
+      if (res.ok) {
+        const data = await res.json();
+        const lines = (data.items || []).map(f => `[${f.ts}] ${f.username || f.user_id}\n${f.text}\n`);
+        feedbackView.value = lines.join('\n');
+      }
+      // Load run bundle to get solution and thinking
+      const rb = await fetch(`/api/admin/run_bundle?user_id=${encodeURIComponent(uid)}&run_id=${encodeURIComponent(runId)}&format=json`);
+      if (rb.ok) {
+        const bundle = await rb.json();
+        const run = bundle.run || {};
+        if (solutionView) solutionView.value = run.solution || '';
+        if (thinkingView) thinkingView.value = run.thinking || '';
+      }
     } catch(e) { console.error(e); }
   }
+
+  // Tabs: Thoughts vs Feedback
+  function showTab(which) {
+    if (!thinkingView || !feedbackView) return;
+    const isThoughts = which === 'thoughts';
+    thinkingView.style.display = isThoughts ? '' : 'none';
+    feedbackView.style.display = isThoughts ? 'none' : '';
+    if (tabThoughts && tabFeedback) {
+      if (isThoughts) {
+        tabThoughts.classList.add('primary');
+        tabThoughts.classList.remove('ghost');
+        tabFeedback.classList.add('ghost');
+        tabFeedback.classList.remove('primary');
+      } else {
+        tabFeedback.classList.add('primary');
+        tabFeedback.classList.remove('ghost');
+        tabThoughts.classList.add('ghost');
+        tabThoughts.classList.remove('primary');
+      }
+    }
+  }
+
+  tabThoughts?.addEventListener('click', (e) => { e.preventDefault(); showTab('thoughts'); });
+  tabFeedback?.addEventListener('click', (e) => { e.preventDefault(); showTab('feedback'); });
 
   dlJson.addEventListener('click', () => {
     if (!selectedUser || !selectedRun) return;
@@ -111,4 +151,5 @@
 
   // Init
   fetchMe().then(loadUsers);
+  showTab('thoughts');
 })();
