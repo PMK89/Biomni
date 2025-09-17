@@ -1,0 +1,244 @@
+{
+  "timestamp": "2025-09-17T17:49:29.273004Z",
+  "notes": "Parameters compiled with priority to Marok 2021, FDA label, PubChem; assumptions flagged explicitly.",
+  "sources": {
+    "Marok2021": {
+      "pmid": "33806634",
+      "title": "Physiologically Based Pharmacokinetic Modeling of Bupropion and Its Metabolites in a CYP2B6 Drug-Drug-Gene Interaction Network.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/33806634/",
+      "year": 2021
+    },
+    "Chen2010": {
+      "pmid": "20528624",
+      "title": "The in vitro metabolism of bupropion revisited...",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/20528624/",
+      "year": 2010
+    },
+    "Connarn2015": {
+      "pmid": "25904761",
+      "title": "Metabolism of bupropion by carbonyl reductases in liver and intestine.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25904761/",
+      "year": 2015
+    },
+    "PubChem": {
+      "parent": "https://pubchem.ncbi.nlm.nih.gov/#query=bupropion",
+      "hydroxy": "https://pubchem.ncbi.nlm.nih.gov/#query=hydroxybupropion",
+      "threo": "https://pubchem.ncbi.nlm.nih.gov/#query=threohydrobupropion",
+      "erythro": "https://pubchem.ncbi.nlm.nih.gov/#query=erythrohydrobupropion"
+    },
+    "Label": {
+      "label_hint": "FDA/DailyMed Wellbutrin (bupropion HCl) Clinical Pharmacology; exact PDF URL to be verified in local environment"
+    }
+  },
+  "compounds": {
+    "bupropion": {
+      "identifiers": {
+        "SMILES": "CC(C(=O)C1=CC(=CC=C1)Cl)NC(C)(C)C",
+        "InChIKey": "SNPPWIUOZRMYNY-UHFFFAOYSA-N"
+      },
+      "physchem": {
+        "MolecularWeight": {
+          "value": 239.74,
+          "unit": "g/mol",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=bupropion"
+        },
+        "LogP_XlogP3": {
+          "value": 3.2,
+          "unit": "logP",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=bupropion"
+        },
+        "TPSA": {
+          "value": 29.1,
+          "unit": "\u00c5^2",
+          "source": "Calculated",
+          "tool": "calculate_physicochemical_properties"
+        },
+        "pKa_base": {
+          "value": null,
+          "unit": null,
+          "assumption": true,
+          "note": "To be filled from Marok 2021/HMDB."
+        }
+      },
+      "binding": {
+        "protein_binding_percent": {
+          "value": 84,
+          "unit": "%",
+          "pH": 7.4,
+          "temperature_C": 37,
+          "source": "FDA label (Wellbutrin)",
+          "url": "to-verify",
+          "assumption": true,
+          "note": "Commonly cited; verify exact label wording."
+        },
+        "fu_plasma": {
+          "value": 0.16,
+          "unit": "fraction",
+          "derived_from": "protein_binding_percent",
+          "assumption": true
+        }
+      },
+      "blood_to_plasma": {
+        "B:P": {
+          "value": 1.0,
+          "unit": "ratio",
+          "assumption": true,
+          "note": "No RBC data; assume ~1 pending literature."
+        }
+      },
+      "metabolism": {
+        "CYP2B6_to_hydroxybupropion": {
+          "role": "primary",
+          "source": "Marok 2021"
+        },
+        "CYP2C19_to_hydroxybupropion": {
+          "role": "minor concentration-dependent",
+          "source": "Chen 2010"
+        },
+        "Carbonyl_reduction_to_threo_erythro": {
+          "enzymes": "CBR/AKR/11\u03b2-HSD",
+          "source": "Connarn 2015"
+        }
+      }
+    },
+    "hydroxybupropion": {
+      "identifiers": {
+        "SMILES": "CC(C(=O)C1=CC(=CC=C1)Cl)NC(C)(C)CO",
+        "InChIKey": "AKOAEVOSDHIVFX-UHFFFAOYSA-N"
+      },
+      "physchem": {
+        "MolecularWeight": {
+          "value": 255.74,
+          "unit": "g/mol",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=hydroxybupropion"
+        },
+        "LogP_XlogP3": {
+          "value": 2.2,
+          "unit": "logP",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=hydroxybupropion"
+        },
+        "TPSA": {
+          "value": 49.33,
+          "unit": "\u00c5^2",
+          "source": "Calculated"
+        }
+      },
+      "binding": {
+        "protein_binding_percent": {
+          "value": 77,
+          "unit": "%",
+          "pH": 7.4,
+          "temperature_C": 37,
+          "source": "FDA label (Wellbutrin)",
+          "url": "to-verify",
+          "assumption": true
+        },
+        "fu_plasma": {
+          "value": 0.23,
+          "unit": "fraction",
+          "assumption": true
+        }
+      },
+      "blood_to_plasma": {
+        "B:P": {
+          "value": 1.0,
+          "unit": "ratio",
+          "assumption": true
+        }
+      },
+      "metabolism": {
+        "UGT2B7_glucuronidation": {
+          "role": "major clearance pathway",
+          "assumption": true,
+          "note": "Confirm isoform and kinetics"
+        }
+      }
+    },
+    "threohydrobupropion": {
+      "identifiers": {
+        "SMILES": "C[C@@H]([C@H](C1=CC(=CC=C1)Cl)O)NC(C)(C)C",
+        "InChIKey": "NDPTTXIBLSWNSF-JOYOIKCWSA-N"
+      },
+      "physchem": {
+        "MolecularWeight": {
+          "value": 241.76,
+          "unit": "g/mol",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=threohydrobupropion"
+        },
+        "LogP_XlogP3": {
+          "value": 2.7,
+          "unit": "logP",
+          "source": "PubChem"
+        }
+      },
+      "binding": {
+        "protein_binding_percent": {
+          "value": 42,
+          "unit": "%",
+          "pH": 7.4,
+          "temperature_C": 37,
+          "source": "FDA label (Wellbutrin)",
+          "assumption": true
+        },
+        "fu_plasma": {
+          "value": 0.58,
+          "unit": "fraction",
+          "assumption": true
+        }
+      },
+      "blood_to_plasma": {
+        "B:P": {
+          "value": 1.0,
+          "unit": "ratio",
+          "assumption": true
+        }
+      }
+    },
+    "erythrohydrobupropion": {
+      "identifiers": {
+        "SMILES": "C[C@H]([C@H](C1=CC(=CC=C1)Cl)O)NC(C)(C)C",
+        "InChIKey": "NDPTTXIBLSWNSF-BXKDBHETSA-N"
+      },
+      "physchem": {
+        "MolecularWeight": {
+          "value": 241.76,
+          "unit": "g/mol",
+          "source": "PubChem",
+          "url": "https://pubchem.ncbi.nlm.nih.gov/#query=erythrohydrobupropion"
+        },
+        "LogP_XlogP3": {
+          "value": 2.7,
+          "unit": "logP",
+          "source": "PubChem"
+        }
+      },
+      "binding": {
+        "protein_binding_percent": {
+          "value": 42,
+          "unit": "%",
+          "pH": 7.4,
+          "temperature_C": 37,
+          "source": "FDA label (Wellbutrin)",
+          "assumption": true
+        },
+        "fu_plasma": {
+          "value": 0.58,
+          "unit": "fraction",
+          "assumption": true
+        }
+      },
+      "blood_to_plasma": {
+        "B:P": {
+          "value": 1.0,
+          "unit": "ratio",
+          "assumption": true
+        }
+      }
+    }
+  }
+}

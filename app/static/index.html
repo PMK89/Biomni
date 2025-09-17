@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Biomni • Biomedical AI Agent</title>
+  <title>ESQlabs Biomni • Biomedical AI Agent</title>
   <link rel="stylesheet" href="/app/static/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/app/static/esq.png" type="image/png" />
 </head>
 <body>
   <div id="app">
     <!-- Top Bar -->
     <header class="topbar">
       <div class="brand">
-        <img src="/figs/biomni_logo.png" alt="Biomni" class="logo" onerror="this.style.display='none'" />
+        <img src="/app/static/esq.png" alt="ESQlabs Biomni" class="logo" onerror="this.style.display='none'" />
         <div>
-          <div class="welcome">Welcome to Biomni</div>
+          <div class="welcome">Welcome to ESQlabs Biomni</div>
           <div class="subtitle">Biomedical AI Agent</div>
         </div>
       </div>
@@ -48,46 +49,7 @@
           <button id="send-btn" class="btn primary">Send</button>
         </div>
 
-        <!-- Expandable Sections (moved to bottom grid) -->
-        <div class="accordions left-accordions" style="display:none">
-          <details>
-            <summary>Example Research Questions</summary>
-            <div class="examples" id="examples">
-              <!-- Examples injected -->
-            </div>
-          </details>
-
-          <details>
-            <summary>Export & Download</summary>
-            <div class="exports">
-              <div class="row">
-                <label for="session-select">Select session</label>
-                <select id="session-select"></select>
-                <button id="refresh-sessions" class="btn">Refresh</button>
-              </div>
-              <div class="row">
-                <button id="dl-notebook" class="btn">Download Notebook</button>
-                <button id="dl-logs" class="btn">Download Logs</button>
-                <button id="dl-files" class="btn">Download Files</button>
-                <button id="dl-bundle-json" class="btn">Bundle (JSON)</button>
-                <button id="dl-bundle-txt" class="btn">Bundle (TXT)</button>
-              </div>
-              <div class="row">
-                <button id="view-feedback" class="btn">View Feedback</button>
-              </div>
-              <textarea id="my-feedback-view" class="search" style="width:100%; min-height: 100px; height: 140px; resize: vertical; font-family: monospace; white-space: pre-wrap;"></textarea>
-            </div>
-          </details>
-
-          <details>
-            <summary>Model Selection</summary>
-            <div class="models">
-              <label><input type="radio" name="model" value="GPT-5-mini" /> GPT-5-mini</label>
-              <label><input type="radio" name="model" value="GPT-5" checked /> GPT-5</label>
-              <label><input type="radio" name="model" value="O3" /> O3</label>
-            </div>
-          </details>
-        </div>
+        <!-- Removed hidden duplicate accordions to avoid duplicate element IDs -->
       </section>
 
       <aside class="panel executor">
@@ -125,6 +87,7 @@
                   <label for="session-select">Select session</label>
                   <select id="session-select"></select>
                   <button id="refresh-sessions" class="btn">Refresh</button>
+                  <button id="load-session" class="btn secondary">Load</button>
                 </div>
                 <div class="row">
                   <button id="dl-notebook" class="btn">Download Notebook</button>
@@ -149,6 +112,7 @@
                 <label><input type="radio" name="model" value="GPT-5-mini" /> GPT-5-mini</label>
                 <label><input type="radio" name="model" value="GPT-5" checked /> GPT-5</label>
                 <label><input type="radio" name="model" value="O3" /> O3</label>
+                <label class="audit-toggle-row"><input type="checkbox" class="audit-toggle" checked /> Enable audit report</label>
               </div>
             </details>
             <details>

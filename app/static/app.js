@@ -12,6 +12,7 @@
   const logoutBtn = $('#logout-btn');
   const sessionSelect = $('#session-select');
   const refreshSessionsBtn = $('#refresh-sessions');
+  const loadSessionBtn = $('#load-session');
   const dlNotebookBtn = $('#dl-notebook');
   const dlLogsBtn = $('#dl-logs');
   const dlFilesBtn = $('#dl-files');
@@ -24,14 +25,39 @@
   const submitFeedback = $('#submit-feedback');
   const usageStats = $('#usage-stats');
   const examplesBox = $('#examples');
+  const auditToggles = $$('.audit-toggle');
 
   const state = {
     uploadedPaths: [], // absolute server stored paths
     currentJobId: null,
     thinkingInterval: null,
     sessions: [],
-    model: 'GPT-5'
+    model: 'GPT-5',
+    audit: true,
+    loadedRunId: null
   };
+
+  function syncAuditToggles(enabled) {
+    auditToggles.forEach(toggle => {
+      toggle.checked = enabled;
+    });
+  }
+
+  async function updatePreferences(modelOverride) {
+    const payload = {
+      model: modelOverride ?? state.model,
+      audit: state.audit
+    };
+    try {
+      await fetch('/api/model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn('Failed to update preferences', err);
+    }
+  }
 
   // Utilities
   function escapeHtml(s) {
@@ -110,6 +136,10 @@
       const pre = document.createElement('pre');
       pre.textContent = evt.code;
       content.appendChild(pre);
+    } else if (evt.type === 'logs') {
+      const pre = document.createElement('pre');
+      pre.textContent = evt.text || '';
+      content.appendChild(pre);
     } else if (evt.type === 'observation' && Array.isArray(evt.lines)) {
       // Look for image paths and render previews
       const imgPaths = [];
@@ -138,8 +168,11 @@
       });
     } else if (evt.type === 'info' && evt.title) {
       // already shown in title
+      if (evt.text) {
+        content.innerHTML = mdToHtml(evt.text);
+      }
     } else {
-      content.textContent = evt.text || '';
+      content.innerHTML = mdToHtml(evt.text || '');
     }
 
     if (content.childNodes.length) div.appendChild(content);
@@ -153,6 +186,81 @@
     if (Array.isArray(job.logs) && job.logs.length) {
       renderEvent({ type: 'logs', title: 'Console output', text: job.logs.join('\n') });
     }
+    if (job.audit_html) {
+      const div = document.createElement('div');
+      div.className = 'event';
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = 'Audit';
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.innerHTML = job.audit_html;
+      div.appendChild(title);
+      div.appendChild(content);
+      timeline.appendChild(div);
+    }
+  }
+
+  function resetChatPanels() {
+    clearThinking();
+    chatWindow.innerHTML = '';
+    timeline.innerHTML = '';
+  }
+
+  function renderRun(run) {
+    resetChatPanels();
+    state.uploadedPaths = [];
+    state.loadedRunId = run.run_id || null;
+    state.currentJobId = null;
+
+    if (run.prompt) {
+      addMessage('user', run.prompt, 'Prompt');
+    }
+    if (run.solution) {
+      addMessage('assistant', run.solution, 'Solution');
+    }
+    if (!run.prompt && !run.solution) {
+      chatWindow.innerHTML = '<div class="empty-state">No transcript recorded for this session.</div>';
+    }
+
+    const thinkingLines = (run.thinking || '').split(/\r?\n/);
+    renderTimeline({
+      events: [],
+      logs: thinkingLines,
+      audit_html: run.audit_html
+    });
+    if (Array.isArray(run.uploads) && run.uploads.length) {
+      const filenames = run.uploads.map(u => {
+        if (!u) return '';
+        try { return u.split('/').pop(); } catch (err) { return u; }
+      }).filter(Boolean);
+      if (filenames.length) {
+        renderEvent({ type: 'info', title: 'Uploaded files', text: filenames.join(', ') });
+      }
+    }
+  }
+
+  async function loadRunDetails(runId) {
+    let run = state.sessions.find(r => r.run_id === runId);
+    if (run) {
+      return run;
+    }
+    const res = await fetch(`/api/runs/${encodeURIComponent(runId)}`);
+    if (!res.ok) {
+      throw new Error('Failed to load session details');
+    }
+    run = await res.json();
+    if (run && !run.uploads && run.uploads_json) {
+      try {
+        run.uploads = JSON.parse(run.uploads_json);
+      } catch (err) {
+        run.uploads = [];
+      }
+    }
+    if (run && run.run_id && !state.sessions.find(r => r.run_id === run.run_id)) {
+      state.sessions.unshift(run);
+    }
+    return run;
   }
 
   function populateExamples() {
@@ -185,9 +293,11 @@
     } catch (e) {}
     // model
     state.model = me.model_preference || state.model;
+    state.audit = me.audit_enabled === undefined ? true : !!me.audit_enabled;
     $$('input[name="model"]').forEach(r => {
       r.checked = (r.value === state.model);
     });
+    syncAuditToggles(state.audit);
   }
 
   async function fetchUsage() {
@@ -204,6 +314,7 @@
   }
 
   async function refreshSessions() {
+    const current = sessionSelect.value || state.loadedRunId || '';
     const res = await fetch('/api/runs?limit=100');
     if (!res.ok) return;
     const data = await res.json();
@@ -218,6 +329,12 @@
       opt.textContent = `${ts} · ${short} · ${r.run_id.slice(0,8)}`;
       sessionSelect.appendChild(opt);
     });
+    if (current) {
+      const option = Array.from(sessionSelect.options).find(opt => opt.value === current);
+      if (option) {
+        sessionSelect.value = current;
+      }
+    }
   }
 
   async function uploadFile(file) {
@@ -231,7 +348,7 @@
   }
 
   async function startChat(prompt) {
-    const body = { prompt, uploads: state.uploadedPaths };
+    const body = { prompt, uploads: state.uploadedPaths, audit: state.audit };
     const res = await fetch('/api/chat/start', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     });
@@ -267,9 +384,31 @@
       if (lastAssistant) $('.content', lastAssistant).innerHTML = mdToHtml(job.solution || '');
       // Reset uploads for next run
       state.uploadedPaths = [];
+      if (job.run_id) {
+        const ts = (job.completed || job.created || '').replace('T',' ').split('+')[0].split('Z')[0];
+        const prompt = (job.prompt || '').replace(/\n/g, ' ');
+        const short = prompt.length > 60 ? prompt.slice(0,57) + '...' : prompt;
+        const optionText = `${ts} · ${short} · ${job.run_id.slice(0,8)}`;
+        const existing = Array.from(sessionSelect.options).some(opt => opt.value === job.run_id);
+        if (!existing) {
+          const opt = document.createElement('option');
+          opt.value = job.run_id;
+          opt.textContent = optionText;
+          sessionSelect.prepend(opt);
+        }
+        sessionSelect.value = job.run_id;
+      }
       await fetchMe();
       await fetchUsage();
       await refreshSessions();
+      try {
+        const run = await loadRunDetails(job.run_id || sessionSelect.value);
+        if (run) {
+          renderRun(run);
+        }
+      } catch (err) {
+        console.warn('Unable to auto-load completed run', err);
+      }
     } else if (job.status === 'error') {
       const lastAssistant = $$('.message.assistant').slice(-1)[0];
       if (lastAssistant) $('.content', lastAssistant).textContent = `Error: ${job.error}`;
@@ -318,6 +457,19 @@
   });
 
   refreshSessionsBtn.addEventListener('click', refreshSessions);
+
+  loadSessionBtn?.addEventListener('click', async () => {
+    const runId = sessionSelect.value;
+    if (!runId) return;
+    try {
+      const run = await loadRunDetails(runId);
+      if (run) {
+        renderRun(run);
+      }
+    } catch (err) {
+      console.error('Failed to load session', err);
+    }
+  });
 
   dlNotebookBtn.addEventListener('click', () => {
     const rid = sessionSelect.value;
@@ -379,7 +531,15 @@
       if (!e.target.checked) return;
       const model = e.target.value;
       state.model = model;
-      await fetch('/api/model', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model }) });
+      await updatePreferences(model);
+    });
+  });
+
+  auditToggles.forEach(toggle => {
+    toggle.addEventListener('change', async (e) => {
+      state.audit = !!e.target.checked;
+      syncAuditToggles(state.audit);
+      await updatePreferences();
     });
   });
 

@@ -60,6 +60,26 @@ class Settings(BaseSettings):
             v = v.replace('\r', '').strip().strip('"').strip("'")
         return v
 
+    # Backward-compatible default: if './local_data' is not present, prefer
+    # the osp_tool default './biomni/data'. This preserves amine_pmk behavior
+    # while allowing osp_tool layouts to work without manual config.
+    @field_validator('BIOMNI_BASE_PATH', mode='after')
+    @classmethod
+    def _fallback_base_path(cls, v: str | None):
+        try:
+            # If user explicitly set a path or it exists, keep it
+            if not v:
+                return v
+            abs_v = os.path.abspath(os.path.expanduser(v))
+            if os.path.isdir(abs_v):
+                return v
+            # If default local_data doesn't exist, fall back to biomni/data
+            alt = './biomni/data'
+            alt_abs = os.path.abspath(os.path.expanduser(alt))
+            return alt if os.path.isdir(alt_abs) else v
+        except Exception:
+            return v
+
     @property
     def AAD_ENABLED(self) -> bool:
         """True if all required AAD settings are present."""

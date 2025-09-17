@@ -1,0 +1,14 @@
+Property,Value
+SMILES,C[C@H]([C@H](C1=CC(=CC=C1)Cl)O)NC(C)(C)C
+Molecular Weight,241.76
+cLogP,3.15
+TPSA,32.26
+H-Bond Donors,2
+H-Bond Acceptors,2
+Rotatable Bonds,3
+Heavy Atoms,16
+Ring Count,1
+Estimated Acidic Groups,1
+Estimated Basic Groups,1
+Drug-likeness Score,68.76
+Estimated logD7.4,3.15

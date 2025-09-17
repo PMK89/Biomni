@@ -40,6 +40,8 @@ body {
 .btn:hover { background: #f8fafc; }
 .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn.primary:hover { background: var(--primary-600); }
+.btn.secondary { background: #f1f5f9; }
+.btn.secondary:hover { background: #e2e8f0; }
 .btn.ghost { background: transparent; }
 .muted { color: var(--muted); text-decoration: none; margin-left: 8px; }
 
@@ -66,6 +68,7 @@ body {
 .message { display: flex; gap: 10px; margin-bottom: 12px; }
 .message .avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; flex: 0 0 auto; display: grid; place-items: center; color: #334155; font-weight: 600; }
 .message .bubble { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; max-width: 100%; }
+.message .bubble { max-height: 320px; overflow-y: auto; }
 .message.user .bubble { background: #eef2ff; border-color: #dbeafe; }
 .message.assistant .bubble { background: #fff; }
 .message .meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
@@ -89,7 +92,8 @@ body {
 .example:hover { background: #eef2ff; }
 
 .exports .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
-.models { display: flex; gap: 18px; align-items: center; }
+.models { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.audit-toggle-row { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
 .feedback { display: flex; flex-direction: column; gap: 8px; }
 .feedback textarea { min-height: 80px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; font-family: inherit; }
 .usage { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
@@ -98,8 +102,8 @@ body {
 .timeline { flex: 1 1 auto; overflow: auto; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #fafbff; }
 .event { border-left: 3px solid #e2e8f0; padding-left: 10px; margin: 8px 0; }
 .event .title { font-weight: 600; margin-bottom: 6px; }
-.event .content { font-size: 13px; color: var(--muted); }
-.event pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; overflow: auto; }
+.event .content { font-size: 13px; color: var(--muted); max-height: 260px; overflow-y: auto; white-space: normal; }
+.event pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; overflow: auto; white-space: pre-wrap; }
 .event ul { margin: 4px 0 0 16px; }
 
 .accordions-grid .gridCols {

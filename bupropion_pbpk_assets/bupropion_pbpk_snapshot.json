@@ -1,0 +1,250 @@
+{
+  "Version": "PK-Sim-Snapshot-Template-0.1",
+  "Project": {
+    "Name": "Bupropion_Adult_IR150",
+    "Description": "PBPK model for bupropion parent + hydroxy/threo/erythro per Marok 2021; distribution by Berezhkovskiy."
+  },
+  "Compounds": [
+    {
+      "Name": "Bupropion",
+      "Type": "SmallMolecule",
+      "Properties": {
+        "MolecularWeight_g_per_mol": 239.74,
+        "logP": 3.2,
+        "pKa": [
+          {
+            "type": "base",
+            "value": null,
+            "assumption": true
+          }
+        ],
+        "FractionUnboundPlasma": 0.16,
+        "BloodPlasmaRatio": 1.0,
+        "Solubility": {
+          "type": "UserDefined",
+          "value": null,
+          "unit": "mg/mL",
+          "pH": 6.5,
+          "assumption": true
+        }
+      },
+      "DistributionModel": "Berezhkovskiy",
+      "Permeability": {
+        "Approach": "CalculatedFromLipophilicity",
+        "Reference_pH": 6.5
+      },
+      "Elimination": {
+        "HepaticClearance": {
+          "Approach": "EnzymeKinetics"
+        },
+        "RenalClearance": {
+          "fraction": 0.01,
+          "assumption": true
+        }
+      }
+    },
+    {
+      "Name": "Hydroxybupropion",
+      "Type": "Metabolite",
+      "Properties": {
+        "MolecularWeight_g_per_mol": 255.74,
+        "logP": 2.2,
+        "FractionUnboundPlasma": 0.23,
+        "BloodPlasmaRatio": 1.0
+      },
+      "DistributionModel": "Berezhkovskiy",
+      "Elimination": {
+        "RenalClearance": {
+          "fraction": 0.2,
+          "assumption": true
+        }
+      }
+    },
+    {
+      "Name": "Threohydrobupropion",
+      "Type": "Metabolite",
+      "Properties": {
+        "MolecularWeight_g_per_mol": 241.76,
+        "logP": 2.7,
+        "FractionUnboundPlasma": 0.58,
+        "BloodPlasmaRatio": 1.0
+      },
+      "DistributionModel": "Berezhkovskiy",
+      "Elimination": {
+        "RenalClearance": {
+          "fraction": 0.2,
+          "assumption": true
+        }
+      }
+    },
+    {
+      "Name": "Erythrohydrobupropion",
+      "Type": "Metabolite",
+      "Properties": {
+        "MolecularWeight_g_per_mol": 241.76,
+        "logP": 2.7,
+        "FractionUnboundPlasma": 0.58,
+        "BloodPlasmaRatio": 1.0
+      },
+      "DistributionModel": "Berezhkovskiy",
+      "Elimination": {
+        "RenalClearance": {
+          "fraction": 0.2,
+          "assumption": true
+        }
+      }
+    }
+  ],
+  "Enzymes": [
+    {
+      "Name": "CYP2B6",
+      "Organ": "Liver"
+    },
+    {
+      "Name": "CYP2C19",
+      "Organ": "Liver"
+    },
+    {
+      "Name": "CarbonylReductases_11bHSD",
+      "Organ": "Liver"
+    },
+    {
+      "Name": "UGT2B7",
+      "Organ": "Liver"
+    }
+  ],
+  "Reactions": [
+    {
+      "Name": "Bupropion_to_Hydroxybupropion_by_CYP2B6",
+      "Type": "MichaelisMenten",
+      "Substrate": "Bupropion",
+      "Product": "Hydroxybupropion",
+      "Enzyme": "CYP2B6",
+      "Km_uM": null,
+      "Vmax_pmole_min_mgProtein": null,
+      "assumption": true,
+      "note": "Fill kinetics from Marok 2021"
+    },
+    {
+      "Name": "Bupropion_to_Hydroxybupropion_by_CYP2C19",
+      "Type": "MichaelisMenten",
+      "Substrate": "Bupropion",
+      "Product": "Hydroxybupropion",
+      "Enzyme": "CYP2C19",
+      "Km_uM": null,
+      "Vmax_pmole_min_mgProtein": null,
+      "assumption": true
+    },
+    {
+      "Name": "Bupropion_to_Threohydrobupropion",
+      "Type": "FirstOrder",
+      "Substrate": "Bupropion",
+      "Product": "Threohydrobupropion",
+      "Enzyme": "CarbonylReductases_11bHSD",
+      "k_1_per_h": null,
+      "assumption": true,
+      "note": "Approximation; replace with enzyme kinetics if available"
+    },
+    {
+      "Name": "Bupropion_to_Erythrohydrobupropion",
+      "Type": "FirstOrder",
+      "Substrate": "Bupropion",
+      "Product": "Erythrohydrobupropion",
+      "Enzyme": "CarbonylReductases_11bHSD",
+      "k_1_per_h": null,
+      "assumption": true
+    },
+    {
+      "Name": "Hydroxybupropion_to_Glucuronide",
+      "Type": "FirstOrder",
+      "Substrate": "Hydroxybupropion",
+      "Product": "Hydroxybupropion_Glucuronide",
+      "Enzyme": "UGT2B7",
+      "k_1_per_h": null,
+      "assumption": true
+    }
+  ],
+  "Population": {
+    "Name": "Adults_18to55",
+    "AgeRange_years": [
+      18,
+      55
+    ],
+    "Gender": "Mixed",
+    "PopulationSize": 10
+  },
+  "Protocol": {
+    "Name": "IR_150mg_single_dose",
+    "Dosing": [
+      {
+        "Compound": "Bupropion",
+        "Route": "Oral",
+        "Formulation": "ImmediateRelease",
+        "Amount_mg": 150,
+        "Time_h": 0
+      }
+    ]
+  },
+  "Observers": [
+    {
+      "Type": "PlasmaConcentration",
+      "Compound": "Bupropion"
+    },
+    {
+      "Type": "PlasmaConcentration",
+      "Compound": "Hydroxybupropion"
+    },
+    {
+      "Type": "PlasmaConcentration",
+      "Compound": "Threohydrobupropion"
+    },
+    {
+      "Type": "PlasmaConcentration",
+      "Compound": "Erythrohydrobupropion"
+    },
+    {
+      "Type": "AUC_0_last",
+      "Compound": "Bupropion"
+    },
+    {
+      "Type": "AUC_0_last",
+      "Compound": "Hydroxybupropion"
+    },
+    {
+      "Type": "Cmax",
+      "Compound": "Bupropion"
+    },
+    {
+      "Type": "Cmax",
+      "Compound": "Hydroxybupropion"
+    },
+    {
+      "Type": "Tmax",
+      "Compound": "Bupropion"
+    },
+    {
+      "Type": "Tmax",
+      "Compound": "Hydroxybupropion"
+    },
+    {
+      "Type": "MetaboliteParentAUCratio",
+      "Parent": "Bupropion",
+      "Metabolite": "Hydroxybupropion"
+    },
+    {
+      "Type": "MetaboliteParentAUCratio",
+      "Parent": "Bupropion",
+      "Metabolite": "Threohydrobupropion"
+    },
+    {
+      "Type": "MetaboliteParentAUCratio",
+      "Parent": "Bupropion",
+      "Metabolite": "Erythrohydrobupropion"
+    }
+  ],
+  "Assumptions": [
+    "B:P ~1.0 for all analytes (no RBC data located yet).",
+    "Protein binding percentages from label pending verification; values used: parent 84%, hydroxy 77%, threo/erythro 42%.",
+    "Kinetic parameters (Km, Vmax, first-order rates) to be filled from Marok 2021 supplemental tables."
+  ]
+}

@@ -78,7 +78,7 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
 
 def _connect_user_db(user_id: str) -> sqlite3.Connection:
     db_path = _db_path_for_user(user_id)
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30, check_same_thread=False)
     _ensure_schema(conn)
     return conn
 
@@ -233,7 +233,7 @@ def fetch_runs(user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str,
 
 
 def fetch_run_by_id(user_id: str, run_id: str) -> Optional[Dict[str, Any]]:
-    """Fetch a single run by run_id for a user."""
+    """Fetch a single run and embed uploads list."""
     with _connect_user_db(user_id) as conn:
         cur = conn.execute(
             """
@@ -248,10 +248,35 @@ def fetch_run_by_id(user_id: str, run_id: str) -> Optional[Dict[str, Any]]:
             return None
         cols = [d[0] for d in cur.description]
         item = {cols[i]: row[i] for i in range(len(cols))}
+
+        uploads = []
         try:
-            item["uploads"] = json.loads(item.get("uploads_json") or "[]")
+            uploads = json.loads(item.get("uploads_json") or "[]")
         except Exception:
-            item["uploads"] = []
+            uploads = []
+
+        try:
+            cur = conn.execute(
+                """
+                SELECT stored_path
+                FROM uploads
+                WHERE run_id = ?
+                ORDER BY ts ASC
+                """,
+                (run_id,),
+            )
+            extras = [r[0] for r in cur.fetchall() if r and r[0]]
+            if extras:
+                known = set(uploads)
+                for path in extras:
+                    if path not in known:
+                        uploads.append(path)
+                        known.add(path)
+                item["uploads_json"] = json.dumps(uploads)
+        except Exception:
+            pass
+
+        item["uploads"] = uploads
         return item
 
 

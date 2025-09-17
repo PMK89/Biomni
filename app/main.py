@@ -34,6 +34,7 @@ import nbformat
 import zipfile
 import tempfile
 import io
+from pathlib import Path
 
 app = FastAPI()
 
@@ -100,6 +101,68 @@ except Exception as e:
 
 # In-memory job registry for the new UI executor panel
 RUN_JOBS: dict[str, dict] = {}
+RUN_JOBS_LOCK = threading.Lock()
+
+
+def _update_job_state(job_id: str, **updates) -> dict | None:
+    """Safely update fields on a tracked job."""
+    with RUN_JOBS_LOCK:
+        job = RUN_JOBS.get(job_id)
+        if not job:
+            return None
+        for key, value in updates.items():
+            if isinstance(value, list):
+                job[key] = list(value)
+            elif isinstance(value, dict):
+                job[key] = {**value}
+            else:
+                job[key] = value
+        return job
+
+
+def _append_job_event(job_id: str, event: dict) -> None:
+    if not isinstance(event, dict):
+        return
+    with RUN_JOBS_LOCK:
+        job = RUN_JOBS.get(job_id)
+        if not job:
+            return
+        events = job.setdefault("events", [])
+        events.append({**event})
+
+
+def _build_audit_html(log_lines, audit_dict) -> str:
+    """Render the audit JSON into a simple HTML block for the UI."""
+    if not log_lines:
+        return ""
+    try:
+        sanitized = []
+        for line in log_lines:
+            if line is None:
+                continue
+            sanitized.append(str(line))
+        if not sanitized:
+            return ""
+        flags = {}
+        for item in (audit_dict or {}).get("internal_knowledge_audit", []) or []:
+            if not isinstance(item, dict):
+                continue
+            ln = item.get("line_number")
+            justification = item.get("justification", "")
+            if isinstance(ln, int) and 1 <= ln <= len(sanitized):
+                flags[ln] = str(justification)
+        rows = ['<div class="audit-container">']
+        for idx, raw in enumerate(sanitized, start=1):
+            safe_line = raw.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            if idx in flags:
+                tip = flags[idx].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                rows.append(f'<div class="ln flagged" title="{tip}"><span class="num">{idx:>4}</span> {safe_line}</div>')
+            else:
+                rows.append(f'<div class="ln"><span class="num">{idx:>4}</span> {safe_line}</div>')
+        rows.append('</div>')
+        return "\n".join(rows)
+    except Exception:
+        return ""
 
 # --- Usage / Cost helpers ---
 _PRICE_USD_PER_TOKEN = {
@@ -251,13 +314,17 @@ def create_chat_interface():
         think_hist = think_hist or []
 
         # Identify user from FastAPI session via Gradio request wrapper
+        star_req = getattr(request, "request", None)
         user_min = {}
-        try:
-            star_req = getattr(request, "request", None)
-            if star_req is not None and hasattr(star_req, "session"):
-                user_min = star_req.session.get("user") or {}
-        except Exception:
-            user_min = {}
+        audit_enabled = True
+        if star_req is not None and hasattr(star_req, "session"):
+            try:
+                session = star_req.session
+                user_min = session.get("user") or {}
+                audit_enabled = bool(session.get("audit_enabled", True))
+            except Exception:
+                user_min = {}
+                audit_enabled = True
         user_id = (user_min or {}).get("oid") or "anonymous"
         username = (user_min or {}).get("name") or (user_min or {}).get("preferred_username") or ""
 
@@ -397,13 +464,16 @@ def create_chat_interface():
                         except Exception:
                             pass
 
-                # After streaming completes, build final content and audit
+                # After streaming completes, build final content and optional audit
                 full_transcript = "\n".join(collected)
-                try:
-                    apak_auditor = APKA_Agent(model="gpt-5", temperature=1.0)
-                    analysis_results = apak_auditor.analyze_transcript(full_transcript)
-                except Exception:
-                    analysis_results = {}
+                analysis_results = {}
+                if audit_enabled:
+                    try:
+                        from biomni.agent.apak import APKA_Agent
+                        apak_auditor = APKA_Agent(model="gpt-5", temperature=1.0)
+                        analysis_results = apak_auditor.analyze_transcript(full_transcript)
+                    except Exception:
+                        analysis_results = {}
 
                 return (collected, full_transcript, analysis_results)
 
@@ -506,32 +576,10 @@ def create_chat_interface():
             thinking_text = _linkify_paths_md(thinking_text)
             think_hist[-1]["content"] = thinking_text if thinking_text else ""
 
-            # Build Audit HTML with tooltips from APKA `internal_knowledge_audit`
-            def _build_audit_html(log_lines: list[str], audit_dict: dict) -> str:
-                try:
-                    flagged = {}
-                    for item in audit_dict.get("internal_knowledge_audit", []) or []:
-                        ln = item.get("line_number")
-                        just = item.get("justification", "")
-                        if isinstance(ln, int) and 1 <= ln <= len(log_lines):
-                            flagged[ln] = just
-                    # Generate HTML, using title attr for tooltip
-                    rows = [
-                        '<div class="audit-container">'
-                    ]
-                    for i, line in enumerate(log_lines, start=1):
-                        safe_line = (line or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                        if i in flagged:
-                            tip = (flagged[i] or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                            rows.append(f'<div class="ln flagged" title="{tip}"><span class="num">{i:>4}</span> {safe_line}</div>')
-                        else:
-                            rows.append(f'<div class="ln"><span class="num">{i:>4}</span> {safe_line}</div>')
-                    rows.append('</div>')
-                    return "\n".join(rows)
-                except Exception:
-                    return ""
-
-            audit_html = _build_audit_html(log if isinstance(log, list) else [], audit if isinstance(audit, dict) else {})
+            audit_html = _build_audit_html(
+                log if isinstance(log, list) else [],
+                audit if isinstance(audit, dict) else {}
+            ) if audit_enabled else ""
 
             # Persist this run to the per-user database
             try:
@@ -696,6 +744,243 @@ def create_chat_interface():
 
     return demo
 
+def _run_agent_job(job_id: str, prompt: str, uploads: list[str], user_meta: dict, audit_enabled: bool) -> None:
+    """Background worker that executes the Biomni agent and records progress."""
+    start_time = time.time()
+    user_id = user_meta.get("user_id") or "anonymous"
+    username = user_meta.get("username") or ""
+    model_name = user_meta.get("model") or "gpt-5"
+
+    _update_job_state(job_id, status="running", error="", started=datetime.now(timezone.utc).isoformat())
+    _append_job_event(job_id, {"type": "info", "title": "Execution started", "text": prompt})
+
+    if not agent:
+        msg = "Biomni agent is not initialized. Please check server logs."
+        _update_job_state(job_id, status="error", error=msg)
+        _append_job_event(job_id, {"type": "error", "title": "Agent unavailable", "text": msg})
+        return
+
+    # Register uploaded files with the agent session
+    registered_uploads: list[str] = []
+    for raw_path in uploads or []:
+        if not raw_path:
+            continue
+        abs_path = os.path.abspath(os.path.expanduser(str(raw_path)))
+        if not os.path.isfile(abs_path):
+            _append_job_event(job_id, {
+                "type": "info",
+                "title": "Upload missing",
+                "text": f"{raw_path} not found on server."
+            })
+            continue
+        registered_uploads.append(abs_path)
+        try:
+            agent.add_data({abs_path: os.path.basename(abs_path)})
+        except Exception as add_err:
+            _append_job_event(job_id, {
+                "type": "info",
+                "title": "Upload registration failed",
+                "text": f"{os.path.basename(abs_path)}: {add_err}"
+            })
+
+    collected: list[str] = []
+    try:
+        import sys
+
+        local_console: list[str] = []
+
+        class _Tee:
+            def __init__(self, stream, sink):
+                self.stream = stream
+                self.sink = sink
+
+            def write(self, data):
+                try:
+                    self.stream.write(data)
+                except Exception:
+                    pass
+                text = str(data)
+                if text.strip():
+                    self.sink.append(text)
+
+            def flush(self):
+                try:
+                    self.stream.flush()
+                except Exception:
+                    pass
+
+        agent._live_console = []
+        orig_out, orig_err = sys.stdout, sys.stderr
+        tee_out = _Tee(orig_out, local_console)
+        tee_err = _Tee(orig_err, local_console)
+        with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
+            for step in agent.go_stream(prompt):
+                out = (step or {}).get("output") or ""
+                if out:
+                    collected.append(out)
+                    _update_job_state(job_id, logs=collected[-50:])
+
+        full_transcript = "\n".join(collected)
+
+        analysis_results = {}
+        if audit_enabled:
+            try:
+                from biomni.agent.apak import APKA_Agent
+
+                apak_auditor = APKA_Agent(model="gpt-5", temperature=1.0)
+                analysis_results = apak_auditor.analyze_transcript(full_transcript)
+            except Exception:
+                analysis_results = {}
+
+        log_lines = agent.log if isinstance(agent.log, list) else []
+        console_attr = getattr(agent, "_live_console", [])
+        console_lines = console_attr if isinstance(console_attr, list) else []
+        combined_lines = [str(entry) for entry in log_lines if entry]
+        combined_lines.extend(str(entry) for entry in console_lines if entry)
+
+        thinking_text = "\n".join(combined_lines).strip()
+
+        start_tag = "<solution>"
+        end_tag = "</solution>"
+        solution = ""
+        if full_transcript and start_tag in full_transcript:
+            start_idx = full_transcript.find(start_tag)
+            end_idx = full_transcript.find(end_tag, start_idx + len(start_tag))
+            if start_idx != -1 and end_idx != -1:
+                solution = full_transcript[start_idx + len(start_tag):end_idx].strip()
+            else:
+                solution = full_transcript.split(start_tag)[-1].strip()
+        else:
+            solution = full_transcript.strip()
+
+        audit_html = _build_audit_html(log_lines, analysis_results) if audit_enabled else ""
+
+        run_id = str(uuid.uuid4())
+        ts_iso = datetime.now(timezone.utc).isoformat()
+
+        run_dir, registered_uploads = _prepare_output_dir(user_id, run_id, registered_uploads)
+
+        try:
+            save_run(
+                user_id=user_id,
+                username=username,
+                run_id=run_id,
+                ts_iso=ts_iso,
+                prompt=prompt,
+                solution=solution,
+                thinking=thinking_text or "",
+                audit_html=audit_html or "",
+                uploads=registered_uploads,
+                model=model_name,
+            )
+            for path in registered_uploads:
+                try:
+                    save_upload(
+                        user_id=user_id,
+                        username=username,
+                        ts_iso=ts_iso,
+                        filename=os.path.basename(path),
+                        stored_path=path,
+                        run_id=run_id,
+                    )
+                except Exception:
+                    pass
+        except Exception as persist_err:
+            _append_job_event(job_id, {
+                "type": "info",
+                "title": "Persistence warning",
+                "text": f"Could not save run metadata: {persist_err}"
+            })
+
+        duration = time.time() - start_time
+        _update_job_state(
+            job_id,
+            status="done",
+            solution=solution,
+            logs=combined_lines,
+            audit_html=audit_html,
+            thinking=thinking_text,
+            run_id=run_id,
+            completed=ts_iso,
+            output_dir=str(run_dir),
+        )
+        _append_job_event(job_id, {
+            "type": "info",
+            "title": "Run complete",
+            "text": f"Finished in {duration:.1f}s"
+        })
+    except Exception as exc:
+        error_msg = f"Agent execution failed: {exc}"
+        _update_job_state(job_id, status="error", error=error_msg)
+        _append_job_event(job_id, {
+            "type": "error",
+            "title": "Run failed",
+            "text": error_msg
+        })
+
+
+def _prepare_output_dir(user_id: str, run_id: str, uploads: list[str]) -> Path:
+    """Ensure outputs from tool runs stay under the per-run directory."""
+    base_dir = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+    run_dir = Path(base_dir) / "uploads" / user_id / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Move any outputs written to legacy root folders into the run directory.
+    legacy_dirs = [
+        Path("outputs_bupropion"),
+        Path(base_dir) / "outputs_bupropion",
+        Path("outputs"),
+        Path("artifacts"),
+        Path(base_dir) / "artifacts",
+        Path("artefacts"),
+        Path(base_dir) / "artefacts"
+    ]
+    moved_paths: list[str] = []
+    for legacy in legacy_dirs:
+        if not legacy.exists() or not legacy.is_dir() or legacy.resolve() == run_dir.resolve():
+            continue
+        for item in legacy.iterdir():
+            target = run_dir / item.name
+            try:
+                if item.is_dir():
+                    if target.exists():
+                        shutil.rmtree(target)
+                    shutil.move(str(item), str(target))
+                else:
+                    if target.exists():
+                        target.unlink()
+                    shutil.move(str(item), str(target))
+                moved_paths.append(str(target))
+            except Exception as e:
+                print(f"Error moving file: {e}")
+        try:
+            if legacy.exists() and legacy.is_dir() and not any(legacy.iterdir()):
+                legacy.rmdir()
+        except Exception as e:
+            print(f"Error removing directory: {e}")
+
+    # Normalise uploaded file list so they reside in the run folder
+    normalised: list[str] = []
+    for path in uploads:
+        try:
+            abs_path = Path(path).resolve()
+            if abs_path.exists() and run_dir not in abs_path.parents:
+                target = run_dir / abs_path.name
+                if target.exists():
+                    target.unlink()
+                shutil.move(str(abs_path), str(target))
+                normalised.append(str(target))
+            elif abs_path.exists():
+                normalised.append(str(abs_path))
+        except Exception:
+            continue
+    # Include any moved artifacts in uploads list
+    for new_path in moved_paths:
+        if new_path not in normalised:
+            normalised.append(new_path)
+    return run_dir, normalised
+
+
 # --- FastAPI Endpoints ---
 
 @app.get("/", response_class=HTMLResponse)
@@ -721,6 +1006,42 @@ async def root(request: Request):
     href_app = f"{base}/app" if base else "/app"
     return RedirectResponse(url=href_app, headers={"Cache-Control": "no-store"})
 
+@app.get("/welcome", response_class=HTMLResponse)
+async def welcome(request: Request):
+    """Simple welcome page mirroring the origin/osp_tool layout.
+
+    If the user is not authenticated, redirect to /login. Otherwise render a
+    basic landing page with a link to the Gradio chat and Logout.
+    """
+    user = request.session.get('user')
+    if not user:
+        return RedirectResponse(url='/login')
+    user_name = user.get('name', 'User')
+    return f"""
+    <html>
+        <head>
+            <title>ESQlabs Biomni</title>
+            <style>
+                body {{ font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }}
+                .container {{ text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
+                h1 {{ color: #333; }}
+                p {{ color: #555; }}
+                a {{ display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }}
+                a:hover {{ background-color: #0056b3; }}
+            </style>
+        </head>
+        <body>
+            <div class=\"container\">
+                <h1>Welcome to ESQlabs Biomni</h1>
+                <p>You are logged in as: {user_name}</p>
+                <a href=\"/gradio\">Go to Chat</a>
+                <br><br>
+                <a href=\"/logout\">Logout</a>
+            </div>
+        </body>
+    </html>
+    """
+
 @app.get("/app", response_class=HTMLResponse)
 async def serve_app(request: Request):
     """Serve the Biomni advanced UI shell (index.html)."""
@@ -740,6 +1061,108 @@ chat_interface = create_chat_interface()
 # Mount the Gradio app on the FastAPI app at the /gradio path.
 # The auth_dependency ensures that only authenticated users can access it.
 app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=auth.get_current_user)
+
+
+# --- REST API for advanced UI ---
+
+@app.post("/api/chat/start")
+async def api_chat_start(request: Request):
+    user = _require_user(request)
+    body = await request.json() or {}
+
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+
+    uploads_raw = body.get("uploads") or []
+    uploads: list[str] = []
+    if isinstance(uploads_raw, list):
+        for item in uploads_raw:
+            if isinstance(item, str) and item.strip():
+                uploads.append(item.strip())
+
+    audit_pref = body.get("audit")
+    if audit_pref is None:
+        audit_enabled = bool(request.session.get("audit_enabled", True))
+    elif isinstance(audit_pref, bool):
+        audit_enabled = audit_pref
+    else:
+        audit_enabled = str(audit_pref).lower() in {"1", "true", "yes", "on"}
+    request.session["audit_enabled"] = audit_enabled
+
+    job_id = str(uuid.uuid4())
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user_id = user.get("oid") or "anonymous"
+    job_record = {
+        "job_id": job_id,
+        "prompt": prompt,
+        "status": "running" if agent else "error",
+        "created": now_iso,
+        "logs": [],
+        "events": [],
+        "solution": "",
+        "error": "" if agent else "Biomni agent is not initialized. Please check server logs.",
+        "audit_html": "",
+        "user_id": user_id,
+        "audit_enabled": audit_enabled,
+    }
+    with RUN_JOBS_LOCK:
+        RUN_JOBS[job_id] = job_record
+
+    _append_job_event(job_id, {"type": "info", "title": "Prompt submitted", "text": prompt})
+
+    if not agent:
+        return {"job_id": job_id}
+
+    user_meta = {
+        "user_id": user_id,
+        "username": user.get("name") or user.get("preferred_username") or "",
+        "model": (request.session.get("model_preference") or "gpt-5").lower(),
+    }
+
+    thread = threading.Thread(
+        target=_run_agent_job,
+        args=(job_id, prompt, uploads, user_meta, audit_enabled),
+        daemon=True,
+    )
+    thread.start()
+
+    return {"job_id": job_id}
+
+
+@app.get("/api/chat/status/{job_id}")
+async def api_chat_status(job_id: str, request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+
+    with RUN_JOBS_LOCK:
+        job = RUN_JOBS.get(job_id)
+        if not job or job.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Not Found")
+        job_snapshot = {**job}
+
+    logs = [str(entry) for entry in job_snapshot.get("logs", []) or []]
+    events = []
+    for entry in job_snapshot.get("events", []) or []:
+        if isinstance(entry, dict):
+            events.append({**entry})
+
+    return {
+        "job_id": job_id,
+        "status": job_snapshot.get("status", "unknown"),
+        "prompt": job_snapshot.get("prompt", ""),
+        "solution": job_snapshot.get("solution", ""),
+        "error": job_snapshot.get("error", ""),
+        "run_id": job_snapshot.get("run_id"),
+        "created": job_snapshot.get("created"),
+        "started": job_snapshot.get("started"),
+        "completed": job_snapshot.get("completed"),
+        "logs": logs,
+        "events": events,
+        "audit_html": job_snapshot.get("audit_html", ""),
+        "audit_enabled": job_snapshot.get("audit_enabled", True),
+        "output_dir": job_snapshot.get("output_dir"),
+    }
 
 
 # --- API Endpoints for history ---
@@ -803,6 +1226,7 @@ async def api_me(request: Request):
         "weekly_quota": settings.WEEKLY_QUOTA,
         "weekly_used": weekly,
         "model_preference": request.session.get("model_preference") or "GPT-5",
+        "audit_enabled": request.session.get("audit_enabled", True),
         "logout_url": request.url_for("logout"),
         "is_admin": _is_admin_user(user),
     }
@@ -812,12 +1236,21 @@ async def api_me(request: Request):
 @app.post("/api/model")
 async def api_set_model(request: Request):
     _require_user(request)
-    body = await request.json()
-    model = (body or {}).get("model") or ""
-    if model not in ("GPT-5", "GPT-5-mini", "O3"):
+    body = await request.json() or {}
+    allowed = {"GPT-5", "GPT-5-mini", "O3"}
+    model = body.get("model") or request.session.get("model_preference") or "GPT-5"
+    if model not in allowed:
         raise HTTPException(status_code=400, detail="Unsupported model")
     request.session["model_preference"] = model
-    return {"status": "ok", "model": model}
+    if "audit" in body:
+        audit_raw = body.get("audit")
+        if isinstance(audit_raw, bool):
+            audit_pref = audit_raw
+        else:
+            audit_pref = str(audit_raw).lower() in {"1", "true", "yes", "on"}
+        request.session["audit_enabled"] = audit_pref
+    audit_enabled = request.session.get("audit_enabled", True)
+    return {"status": "ok", "model": model, "audit_enabled": audit_enabled}
 
 
 @app.get("/api/runs")
@@ -826,6 +1259,16 @@ async def api_list_runs(request: Request, limit: int = 50, offset: int = 0):
     user_id = user.get("oid") or "anonymous"
     rows = fetch_runs(user_id=user_id, limit=limit, offset=offset)
     return {"items": rows, "count": len(rows)}
+
+
+@app.get("/api/runs/{run_id}")
+async def api_get_run(run_id: str, request: Request):
+    user = _require_user(request)
+    user_id = user.get("oid") or "anonymous"
+    rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return rec
 
 
 @app.get("/api/usage")
@@ -1041,6 +1484,8 @@ async def api_export_notebook(run_id: str, request: Request):
     thinking = rec.get("thinking") or ""
     if thinking:
         nb.cells.append(nbformat.v4.new_markdown_cell(f"## Logs\n\n````\n{thinking}\n````"))
+    else:
+        nb.cells.append(nbformat.v4.new_markdown_cell("## Logs\n\n_No logs were recorded for this run._"))
     data = nbformat.writes(nb).encode("utf-8")
     fname = f"biomni_{run_id}.ipynb"
     return StreamingResponse(io.BytesIO(data), media_type="application/x-ipynb+json", headers={"Content-Disposition": f"attachment; filename={fname}"})
@@ -1053,7 +1498,10 @@ async def api_export_logs(run_id: str, request: Request):
     rec = fetch_run_by_id(user_id=user_id, run_id=run_id)
     if not rec:
         raise HTTPException(status_code=404, detail="Run not found")
-    logs = (rec.get("thinking") or "").encode("utf-8")
+    thinking = rec.get("thinking") or ""
+    if not thinking.strip():
+        thinking = "No logs were recorded for this run."
+    logs = thinking.encode("utf-8")
     fname = f"biomni_{run_id}.log.txt"
     return StreamingResponse(io.BytesIO(logs), media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={fname}"})
 
@@ -1068,10 +1516,22 @@ async def api_export_files(run_id: str, request: Request):
     files = rec.get("uploads") or []
     mem = io.BytesIO()
     with zipfile.ZipFile(mem, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        prompt = rec.get("prompt") or ""
+        solution = rec.get("solution") or ""
+        thinking = rec.get("thinking") or ""
+        audit_html = rec.get("audit_html") or ""
+
+        zf.writestr("prompt.txt", prompt or "No prompt recorded.\n")
+        zf.writestr("solution.md", solution or "_No solution text recorded._\n")
+        zf.writestr("logs.txt", thinking or "No logs were recorded for this run.\n")
+        if audit_html:
+            zf.writestr("audit.html", audit_html)
+
         for p in files:
             try:
                 if os.path.isfile(p):
-                    zf.write(p, arcname=os.path.basename(p))
+                    arc = os.path.join("uploads", os.path.basename(p))
+                    zf.write(p, arcname=arc)
             except Exception:
                 pass
     mem.seek(0)
