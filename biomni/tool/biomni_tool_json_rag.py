@@ -1,7 +1,3 @@
-# biomni/tool/json_rag.py
-# Generalized JSON RAG + Snapshot autobuilder for Biomni (with PK-Sim sanitation)
-from __future__ import annotations
-
 import json
 import re
 import math
