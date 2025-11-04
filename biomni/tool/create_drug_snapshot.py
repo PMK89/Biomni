@@ -1,0 +1,105 @@
+from typing import Optional
+import json
+
+def create_drug_snapshot(
+    drug_name: str,
+    out_path: str,
+    data_dir: str = "./data/snapshot_files",
+    individual_name: str = "Individual_1",
+    formulation_name: str = "Oral IR Formulation",
+    protocol_name: str = "Protocol_Main",
+) -> dict:
+    """
+    Creates a complete PK-Sim snapshot file for a given drug.
+    
+    This tool orchestrates the entire process:
+    1. Searches the web for pharmacokinetic properties of the drug
+    2. Extracts relevant parameters (MW, LogP, Fu, Solubility)
+    3. Builds a valid PK-Sim snapshot using rag_json_build
+    
+    Args:
+        drug_name: Name of the drug/compound (e.g., "Ibuprofen", "Aspirin")
+        out_path: Output path for the snapshot JSON file
+        data_dir: Directory containing example snapshot files for RAG
+        individual_name: Name for the individual (default: "Individual_1")
+        formulation_name: Name for the formulation (default: "Oral IR Formulation")
+        protocol_name: Name for the protocol (default: "Protocol_Main")
+    
+    Returns:
+        dict with status and instructions for next steps
+    """
+    return {
+        "status": "requires_research",
+        "drug_name": drug_name,
+        "out_path": out_path,
+        "data_dir": data_dir,
+        "instructions": f"""
+To complete this task, you need to:
+
+1. **Search for pharmacokinetic data** for {drug_name}:
+   - Molecular weight (MW) in g/mol
+   - Lipophilicity (LogP or LogD)
+   - Fraction unbound in plasma (Fu)
+   - Solubility (preferably at pH 7.4) in mg/L
+
+2. **Use web_search** to find reliable sources:
+   - Search: "{drug_name} molecular weight"
+   - Search: "{drug_name} LogP lipophilicity"
+   - Search: "{drug_name} fraction unbound plasma protein binding"
+   - Search: "{drug_name} solubility pH 7.4"
+
+3. **After gathering data**, call rag_json_build with this structure:
+```python
+from biomni.tool.biomni_tool_json_rag_V2 import rag_json_build
+
+rag_json_build(
+    section="Compounds",
+    values=[{{
+        "Name": "{drug_name}",
+        "Parameters": [
+            {{"Name": "Molecular weight", "Value": <MW_VALUE>, "Unit": "g/mol"}}
+        ],
+        "Lipophilicity": [
+            {{
+                "Name": "Measurement",
+                "Parameters": [{{"Name": "Lipophilicity", "Value": <LOGP_VALUE>, "Unit": "Log Units"}}]
+            }}
+        ],
+        "FractionUnbound": [
+            {{
+                "Name": "Measurement",
+                "Species": "Human",
+                "Parameters": [{{"Name": "Fraction unbound (plasma, reference value)", "Value": <FU_VALUE>}}]
+            }}
+        ],
+        "Solubility": [
+            {{
+                "Name": "Assumption",
+                "Parameters": [
+                    {{"Name": "Solubility at reference pH", "Value": <SOLUBILITY_VALUE>, "Unit": "mg/l"}},
+                    {{"Name": "Reference pH", "Value": 7.4}}
+                ]
+            }}
+        ]
+    }}],
+    out_path="{out_path}",
+    data_dir="{data_dir}",
+    inherit_rest=True,
+    overrides={{
+        "Individuals": [{{"Name": "{individual_name}"}}],
+        "Formulations": [{{"Name": "{formulation_name}"}}],
+        "Protocols": [{{"Name": "{protocol_name}"}}]
+    }},
+    rebuild_simulations=True
+)
+```
+
+**Important notes:**
+- Molecular weight: typically 100-1000 g/mol for small molecules
+- LogP: typically -2 to +6 (negative = hydrophilic, positive = lipophilic)
+- Fraction unbound: value between 0 and 1 (e.g., 0.01 = 1% unbound, 99% bound)
+- Solubility: in mg/L at pH 7.4 (physiological pH)
+
+If you cannot find exact values, use reasonable estimates based on similar drugs or chemical structure.
+"""
+    }

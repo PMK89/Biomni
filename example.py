@@ -1,71 +1,28 @@
 from biomni.agent import A1
+from biomni.tool.create_drug_snapshot import create_drug_snapshot
+from biomni.tool.biomni_tool_json_rag_V2 import rag_json_build
 
-
-from biomni.tool.prepare_biomni_snapshot import prepare_biomni_snapshot
-from biomni.tool.snapshot_builder import build_snapshot_file
-from biomni.tool.pksim_runner import run_pksim_snapshot
-
-
-from biomni.tool.biomni_tool_json_rag import (
-    rag_json_sections,
-    rag_json_template,
-    rag_json_answer,
-    rag_snapshot_autobuild,
-)
-
-
-
+# Pfade
 BIOMNI_BASE_PATH = "./data"
-DATA_DIR = "./data/snapshot_files"         
-SNAPSHOT_OUT_DIR = "./data/generated_snapshot_files"              
-SNAPSHOT_OUT_PATH = f"{SNAPSHOT_OUT_DIR}/ibuprofen_snapshot.json"
-PROJECT_OUT = "./projects/ibuprofen.pksim5"
-PKML_OUT = "./exports/ibuprofen.pkml"
-SIM_NAME = "Test_Sim"
+DATA_DIR = "./data/snapshot_files"
+SNAPSHOT_OUT_DIR = "./data/generated_snapshot_files"
 
+# Agent initialisieren
 agent = A1(llm="gpt-5", path=BIOMNI_BASE_PATH)
 
+# Tools registrieren
+agent.add_tool(create_drug_snapshot)
+agent.add_tool(rag_json_build)
 
-agent.add_tool(prepare_biomni_snapshot)
-agent.add_tool(build_snapshot_file)
-agent.add_tool(run_pksim_snapshot)
-
-agent.add_tool(rag_json_sections)
-agent.add_tool(rag_json_template)
-agent.add_tool(rag_json_answer)
-agent.add_tool(rag_snapshot_autobuild)
-
-
+drug = "Metoprolol"  # oder beliebiges anderes Medikament
 agent.go(f"""
-Ziel: Erzeuge eine **lauffähige PK-Sim Snapshot-JSON** für 'Ibuprofen' unter '{SNAPSHOT_OUT_PATH}'.
-Nutze strikt die Beispiel-Strukturen aus '{DATA_DIR}' (strategy="copy_best"). Keine Web-Recherche, keine freien Felder.
+Erstelle mir eine Snapshot-Datei für das Medikament {drug}.
+Speichere sie unter '{SNAPSHOT_OUT_DIR}/{drug.lower()}_snapshot.json'.
+Verwende '{DATA_DIR}' als Beispielbasis.
 
-Arbeitsweise:
-1) Baue mit 'rag_snapshot_autobuild':
-   - sections=None  (alle verfügbaren Abschnitte)
-   - strategy="copy_best"
-   - seeds=None
-   - overrides = {{
-       "Compounds": [{{"Name": "Ibuprofen"}}]   # nur den Namen setzen, keine weiteren Properties
-     }}
-   - out_path='{SNAPSHOT_OUT_PATH}'
-   - data_dir='{DATA_DIR}'
-
-2) Verlasse dich auf die integrierte Sanitation:
-   - Version=80
-   - Individuals: OriginData + Einheiten
-   - Formulations: gültiger FormulationType aus Beispielen (z. B. Formulation_Tablet_Weibull)
-   - Protocols: Advanced-Protocol-Schema (Schemas/SchemaItems/Parameters)
-   - Simulations: gültiges Model (z. B. 4Comp) + korrekte Formulation-Links + OutputSchema
-   - Compounds: Mapping auf PK-Sim-Parameter (Molecular weight, Lipophilicity, Fraction unbound, Solubility)
-
-3) Führe den Tool-Call aus und gib eine kurze Zusammenfassung mit Pfad/Abschnittsliste aus.
-
-Konkreter Aufruf:
-- rag_snapshot_autobuild(sections=None, strategy="copy_best", seeds=None,
-                         overrides={{"Compounds":[{{"Name":"Ibuprofen"}}]}},
-                         out_path='{SNAPSHOT_OUT_PATH}', data_dir='{DATA_DIR}')
-
-Ausgabe:
-- "Snapshot gebaut" + Pfad + Liste der enthaltenen Abschnitte.
+Gehe wie folgt vor:
+1. Rufe create_drug_snapshot auf, um Anweisungen zu erhalten
+2. Recherchiere die benötigten pharmakokinetischen Daten im Internet
+3. Baue die Snapshot-Datei mit den gefundenen Daten
+4. Gib eine Zusammenfassung mit allen verwendeten Werten und deren Quellen aus
 """)
