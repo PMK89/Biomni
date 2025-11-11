@@ -7,25 +7,25 @@ from langchain_core.language_models.chat_models import BaseChatModel
 SourceType = Literal["OpenAI", "AzureOpenAI", "Anthropic", "Ollama", "Gemini", "Bedrock", "Groq", "Custom"]
 
 
-def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatModel:
-    """Wrap llm.invoke with robust 429-aware retry logic (respects Retry-After).
 
-    - Honors HTTP 429 Retry-After header when available.
-    - Parses 'retry after <seconds>' phrases in error messages.
-    - Uses exponential backoff (cap ~120s) when header/hint not present.
-    """
+class RetryingChatModel(BaseChatModel):
+    def __init__(self, inner: BaseChatModel, max_attempts: int = 8):
+        super().__init__()
+        self._inner = inner
+        self._max_attempts = max_attempts
 
-    original_invoke: Callable[..., Any] = llm.invoke
-    original_ainvoke: Callable[..., Any] | None = getattr(llm, "ainvoke", None)
+    # Delegation: alles, was wir nicht überschreiben, geht an das innere Modell
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
 
+    # -------- Retry-Utilities --------
+    @staticmethod
     def _parse_retry_after(e: Exception) -> int | None:
-        # Try OpenAI-style rate limit error
         try:
             import openai as _openai
             if isinstance(e, getattr(_openai, "RateLimitError", tuple())):
                 resp = getattr(e, "response", None)
                 if resp is not None:
-                    # OpenAI v1 style
                     headers = getattr(resp, "headers", {}) or {}
                     ra = headers.get("Retry-After") or headers.get("retry-after")
                     if ra:
@@ -35,8 +35,6 @@ def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatM
                             pass
         except Exception:
             pass
-
-        # Azure/Generic: parse from message
         m = re.search(r"retry\s+after\s+(\d+)", str(e), re.IGNORECASE)
         if m:
             try:
@@ -45,64 +43,60 @@ def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatM
                 return None
         return None
 
+    @staticmethod
     def _is_rate_limit(e: Exception) -> bool:
         text = str(e).lower()
         if "429" in text or "rate limit" in text or "throttl" in text:
             return True
-        # Try to match OpenAI RateLimitError class
         try:
             import openai as _openai
             if isinstance(e, getattr(_openai, "RateLimitError", tuple())):
                 return True
         except Exception:
             pass
-        # HTTPX/requests style status_code
         status = getattr(e, "status_code", None) or getattr(getattr(e, "response", None), "status_code", None)
         return status == 429
 
-    def _retry_invoke(*args: Any, **kwargs: Any):
+    # -------- synchron --------
+    def invoke(self, *args: Any, **kwargs: Any) -> Any:
         delay = 5
         attempt = 0
         last_err = None
-        while attempt < max_attempts:
+        while attempt < self._max_attempts:
             try:
-                return original_invoke(*args, **kwargs)
-            except Exception as e:  # noqa: BLE001
+                return self._inner.invoke(*args, **kwargs)
+            except Exception as e:
                 last_err = e
-                if not _is_rate_limit(e):
+                if not self._is_rate_limit(e):
                     raise
-                wait = _parse_retry_after(e)
-                if wait is None:
-                    wait = min(delay, 120)
-                    delay = min(int(delay * 1.8) + 1, 120)
+                wait = self._parse_retry_after(e) or min(delay, 120)
+                delay = min(int(delay * 1.8) + 1, 120)
                 time.sleep(max(wait, 1))
                 attempt += 1
-        # Exhausted retries
         raise last_err
 
-    # Monkey-patch invoke with retrying version
-    setattr(llm, "invoke", _retry_invoke)
-    if original_ainvoke is not None:
-        async def _retry_ainvoke(*args: Any, **kwargs: Any):  # type: ignore
-            delay = 5
-            attempt = 0
-            last_err = None
-            while attempt < max_attempts:
-                try:
-                    return await original_ainvoke(*args, **kwargs)  # type: ignore
-                except Exception as e:  # noqa: BLE001
-                    last_err = e
-                    if not _is_rate_limit(e):
-                        raise
-                    wait = _parse_retry_after(e)
-                    if wait is None:
-                        wait = min(delay, 120)
-                        delay = min(int(delay * 1.8) + 1, 120)
-                    # Async sleep
-                    await __import__("asyncio").sleep(max(wait, 1))
-                    attempt += 1
-            raise last_err
-        setattr(llm, "ainvoke", _retry_ainvoke)
+    # -------- asynchron --------
+    async def ainvoke(self, *args: Any, **kwargs: Any) -> Any:
+        delay = 5
+        attempt = 0
+        last_err = None
+        import asyncio
+        while attempt < self._max_attempts:
+            try:
+                return await self._inner.ainvoke(*args, **kwargs)
+            except Exception as e:
+                last_err = e
+                if not self._is_rate_limit(e):
+                    raise
+                wait = self._parse_retry_after(e) or min(delay, 120)
+                delay = min(int(delay * 1.8) + 1, 120)
+                await asyncio.sleep(max(wait, 1))
+                attempt += 1
+        raise last_err
+
+
+def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatModel:
+    # keine setattr-Hacks mehr – sauberer Wrapper
     return llm
 
 def get_llm(
