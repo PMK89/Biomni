@@ -159,7 +159,6 @@ class A1:
             source=source,
             base_url=base_url,
             api_key=api_key,
-            config=default_config,
         )
         self.module2api = module2api
         self.use_tool_retriever = use_tool_retriever
