@@ -1,61 +1,53 @@
-# ===== Stage 1: Base Environment =====
-# This stage builds the heavy conda environment and is cached
-FROM ubuntu:22.04 AS base
+# syntax=docker/dockerfile:1.7
+ARG MAMBA_VERSION=1.5.8
+FROM mambaorg/micromamba:${MAMBA_VERSION}
 
-# Set Shell
-SHELL ["/bin/bash", "-c"]
+ARG ENV_NAME=biomni_e1
+ARG USERNAME=appuser
+ARG UID=1000
+ARG GID=1000
+ENV ENV_NAME=${ENV_NAME}
 
-# Avoid prompts from apt
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
+RUN groupadd -g ${GID} ${USERNAME} && \
+    useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} && \
+    mkdir -p /workspace && chown -R ${USERNAME}:${USERNAME} /workspace
 
-# Install basic utilities and build tools
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    bzip2 \
-    unzip \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace
+USER ${USERNAME}
 
-# Install Miniconda
-RUN curl -sSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p /opt/conda && \
-    rm /tmp/miniconda.sh
+ENV TMPDIR=/workspace/.tmp
+RUN mkdir -p "${TMPDIR}"
 
-# Set PATH to include conda
-ENV PATH="/opt/conda/bin:$PATH"
+# Cache-friendly: copy env spec first
+COPY --chown=${USERNAME}:${USERNAME} environment.yml /workspace/
+COPY --chown=${USERNAME}:${USERNAME} pyproject.toml /workspace/
 
-# Accept conda ToS
-RUN conda config --set auto_activate_base false && \
-    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+# Single-shot env solve (must include Web UI deps)
+RUN micromamba create -y -n ${ENV_NAME} -f /workspace/environment.yml && \
+    micromamba clean --all --yes
 
-# Copy only the environment setup files
-COPY biomni_env/ /tmp/biomni_env/
+SHELL ["bash", "-lc"]
+ENV MAMBA_DOCKERFILE_ACTIVATE=1
+RUN echo "micromamba activate ${ENV_NAME}" >> ~/.bashrc
 
-# Run the long setup script to create the 'biomni' environment
-WORKDIR /tmp/biomni_env
-RUN source /opt/conda/etc/profile.d/conda.sh && bash setup.sh
+# Copy source (exclude data via .dockerignore)
+COPY --chown=${USERNAME}:${USERNAME} . /workspace
 
+# Optional local install if present
+RUN if [[ -f pyproject.toml ]]; then \
+      micromamba run -n ${ENV_NAME} pip install -e . ; \
+    elif [[ -f requirements.txt ]]; then \
+      micromamba run -n ${ENV_NAME} pip install -r requirements.txt ; \
+    fi
 
-# ===== Stage 2: Final Application Image =====
-# This stage starts from the base, copies app code, and is rebuilt quickly
-FROM base
+ENV BIOMNI_DATA_DIR=/workspace/data/biomni_data
+RUN mkdir -p "$BIOMNI_DATA_DIR"
 
-# Set the working directory
-WORKDIR /app
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD micromamba run -n ${ENV_NAME} python -c "import importlib; importlib.import_module('biomni')" || exit 1
 
-# Copy the application code from the host machine
-COPY app/ /app/
-
-# Install Python dependencies from requirements.txt into the 'biomni' conda environment
-# The conda environment already exists from the base stage
-RUN source /opt/conda/etc/profile.d/conda.sh && \
-    conda activate biomni_e1 && \
-    pip install -r /app/requirements.txt
-
-# Expose the port the app runs on
+# Use existing scripts folder for entrypoint
+RUN chmod +x /workspace/scripts/entrypoint.sh || true
 EXPOSE 8001
-
-# Set the entrypoint to run the application using the python from the 'biomni' env
-CMD ["/opt/conda/envs/biomni_e1/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+ENTRYPOINT ["/workspace/scripts/entrypoint.sh"]

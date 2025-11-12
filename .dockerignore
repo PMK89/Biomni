@@ -1,0 +1,11 @@
+data/biomni_data/
+data/biomniadata/
+**/__pycache__/
+.venv/
+.env
+.git
+.gitignore
+.dist/
+build/
+*.log
+.ipynb_checkpoints/
