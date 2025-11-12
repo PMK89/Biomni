@@ -1,0 +1,202 @@
+{
+  "Version": 80,
+  "Individuals": [
+    {
+      "Name": "Standard Adult",
+      "Gender": "Male",
+      "Age": {
+        "Value": 30,
+        "Unit": "years"
+      },
+      "Weight": {
+        "Value": 70,
+        "Unit": "kg"
+      },
+      "Height": {
+        "Value": 175,
+        "Unit": "cm"
+      },
+      "OriginData": {
+        "Species": "Human",
+        "Population": "European_ICRP_2002"
+      }
+    }
+  ],
+  "Populations": [],
+  "Compounds": [
+    {
+      "Name": "Ibuprofen",
+      "IsSmallMolecule": true,
+      "Parameters": [
+        {
+          "Name": "Molecular weight",
+          "Value": 206.29,
+          "Unit": "g/mol"
+        }
+      ],
+      "Lipophilicity": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
+            {
+              "Name": "Lipophilicity",
+              "Value": 3.5,
+              "Unit": "Log Units"
+            }
+          ]
+        }
+      ],
+      "FractionUnbound": [
+        {
+          "Name": "Measurement",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "Fraction unbound (plasma, reference value)",
+              "Value": 0.01
+            }
+          ]
+        }
+      ],
+      "Solubility": [
+        {
+          "Name": "Assumption",
+          "Parameters": [
+            {
+              "Name": "Solubility at reference pH",
+              "Value": 21.0,
+              "Unit": "mg/l"
+            },
+            {
+              "Name": "Reference pH",
+              "Value": 7.0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "Formulations": [
+    {
+      "Name": "Ibuprofen IR Tablet 200 mg",
+      "FormulationType": "Formulation_Tablet_Weibull",
+      "Parameters": [
+        {
+          "Name": "Dissolution time (50% dissolved)",
+          "Value": 10.0,
+          "Unit": "min"
+        },
+        {
+          "Name": "Lag time",
+          "Value": 0.0,
+          "Unit": "min"
+        },
+        {
+          "Name": "Dissolution shape",
+          "Value": 1.5
+        },
+        {
+          "Name": "Use as suspension",
+          "Value": 1.0
+        }
+      ]
+    }
+  ],
+  "Protocols": [
+    {
+      "Name": "200mg_SD",
+      "DosingInterval": "Single",
+      "Schemas": [
+        {
+          "Name": "Schema 1",
+          "SchemaItems": [
+            {
+              "Name": "Schema Item 1",
+              "ApplicationType": "Oral",
+              "FormulationKey": "Formulation",
+              "Parameters": [
+                {
+                  "Name": "Start time",
+                  "Value": 0.0,
+                  "Unit": "h"
+                },
+                {
+                  "Name": "InputDose",
+                  "Value": 200.0,
+                  "Unit": "mg"
+                },
+                {
+                  "Name": "Volume of water/body weight",
+                  "Value": 3.5,
+                  "Unit": "ml/kg"
+                }
+              ]
+            }
+          ],
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "NumberOfRepetitions",
+              "Value": 1.0
+            },
+            {
+              "Name": "TimeBetweenRepetitions",
+              "Value": 24.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "TimeUnit": "h"
+    }
+  ],
+  "Simulations": [
+    {
+      "Name": "Ibuprofen Single-Dose 200 mg IR",
+      "Model": "4Comp",
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 24.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "Resolution",
+              "Value": 4.0,
+              "Unit": "pts/h"
+            }
+          ]
+        }
+      ],
+      "Individual": "Standard Adult",
+      "Compounds": [
+        {
+          "Name": "Ibuprofen",
+          "Protocol": {
+            "Name": "200mg_SD",
+            "Formulations": [
+              {
+                "Name": "Ibuprofen IR Tablet 200 mg",
+                "Key": "Formulation"
+              }
+            ]
+          }
+        }
+      ],
+      "OutputSelections": [
+        "Organism|PeripheralVenousBlood|Ibuprofen|Plasma (Peripheral Venous Blood)"
+      ]
+    }
+  ]
+}
