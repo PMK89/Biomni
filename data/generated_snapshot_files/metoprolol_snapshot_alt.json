@@ -1,0 +1,650 @@
+{
+  "Version": 80,
+  "Compounds": [
+    {
+      "Name": "Metoprolol",
+      "Parameters": [
+        {
+          "Name": "Molecular weight",
+          "Value": 267.36,
+          "Unit": "g/mol"
+        }
+      ],
+      "Lipophilicity": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
+            {
+              "Name": "Lipophilicity",
+              "Value": 1.88,
+              "Unit": "Log Units"
+            }
+          ]
+        }
+      ],
+      "FractionUnbound": [
+        {
+          "Name": "Measurement",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "Fraction unbound (plasma, reference value)",
+              "Value": 0.88
+            }
+          ]
+        }
+      ],
+      "Solubility": [
+        {
+          "Name": "Assumption",
+          "Parameters": [
+            {
+              "Name": "Solubility at reference pH",
+              "Value": 5000.0,
+              "Unit": "mg/l"
+            },
+            {
+              "Name": "Reference pH",
+              "Value": 7.4
+            }
+          ]
+        }
+      ],
+      "IsSmallMolecule": true
+    }
+  ],
+  "Events": [
+    {
+      "Name": "High-fat breakfast",
+      "Template": "Meal: High-fat breakfast (Human)"
+    }
+  ],
+  "ExpressionProfiles": [
+    {
+      "Type": "Enzyme",
+      "Species": "Human",
+      "Molecule": "CYP3A4",
+      "Category": "Agarwala2003",
+      "Parameters": [
+        {
+          "Path": "CYP3A4|Reference concentration",
+          "Value": 4.32,
+          "Unit": "µmol/l"
+        },
+        {
+          "Path": "CYP3A4|t1/2 (intestine)",
+          "Value": 1380.0,
+          "Unit": "min"
+        },
+        {
+          "Path": "CYP3A4|t1/2 (liver)",
+          "Value": 36.0,
+          "Unit": "h",
+          "ValueOrigin": {
+            "Source": "Unknown"
+          }
+        },
+        {
+          "Path": "Organism|Brain|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0041682898325
+        },
+        {
+          "Path": "Organism|Gonads|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.00078691079081
+        },
+        {
+          "Path": "Organism|Kidney|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0053603428126
+        },
+        {
+          "Path": "Organism|Liver|Pericentral|Intracellular|CYP3A4|Relative expression",
+          "Value": 1.0
+        },
+        {
+          "Path": "Organism|Liver|Periportal|Intracellular|CYP3A4|Relative expression",
+          "Value": 1.0
+        },
+        {
+          "Path": "Organism|Lung|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.00042695753798
+        },
+        {
+          "Path": "Organism|SmallIntestine|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|Duodenum|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|LowerIleum|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|LowerJejunum|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|UpperIleum|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|UpperJejunum|Intracellular|CYP3A4|Relative expression",
+          "Value": 0.0727697702
+        }
+      ],
+      "Localization": "Intracellular, BloodCellsIntracellular, VascEndosome",
+      "Ontogeny": {
+        "Name": "CYP3A4"
+      }
+    }
+  ],
+  "Formulations": [
+    {
+      "Name": "Oral IR Formulation",
+      "FormulationType": "Formulation_Tablet_Weibull"
+    }
+  ],
+  "Individuals": [
+    {
+      "Name": "Adult_Standard",
+      "OriginData": {
+        "Species": "Human",
+        "Population": "European_ICRP_2002"
+      }
+    }
+  ],
+  "ObservedData": [
+    {
+      "Name": "Agarwala 2003 - Day 6 - Atazanavir - PO - 400 mg - Plasma - agg. (n=65)",
+      "ExtendedProperties": [
+        {
+          "Name": "DB Version",
+          "Value": "OSP DATABASE",
+          "Type": "String"
+        },
+        {
+          "Name": "ID",
+          "Value": 550.0,
+          "Type": "Double"
+        },
+        {
+          "Name": "Study Id",
+          "Value": "Agarwala 2003",
+          "Type": "String"
+        },
+        {
+          "Name": "Reference",
+          "Value": "http://www.medadvocates.org/resources/conferences/iasconfpath/ias2003/atv%20pk%20past%2024%20hour%20interval.pdf",
+          "Type": "String"
+        },
+        {
+          "Name": "Source",
+          "Value": "Figure",
+          "Type": "String"
+        },
+        {
+          "Name": "Grouping",
+          "Value": "Day 6",
+          "Type": "String"
+        },
+        {
+          "Name": "Data type",
+          "Value": "aggregated",
+          "Type": "String"
+        },
+        {
+          "Name": "N",
+          "Value": 65.0,
+          "Type": "Double"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Atazanavir",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Human",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Peripheral Venous Blood",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Plasma",
+          "Type": "String"
+        },
+        {
+          "Name": "Route",
+          "Value": "PO",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose",
+          "Value": "400 mg",
+          "Type": "String"
+        },
+        {
+          "Name": "Times of Administration [h]",
+          "Value": "0-24-48-72-96-120",
+          "Type": "String"
+        },
+        {
+          "Name": "Formulation",
+          "Value": "Capsule",
+          "Type": "String"
+        },
+        {
+          "Name": "Food state",
+          "Value": "Fed",
+          "Type": "String"
+        },
+        {
+          "Name": "Comment",
+          "Value": ".",
+          "Type": "String"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Avg",
+          "RelatedColumns": [
+            {
+              "Name": "Var",
+              "QuantityInfo": {
+                "Path": "Agarwala 2003 - Day 6 - Atazanavir - PO - 400 mg - Plasma - agg. (n=65)|ObservedData|Peripheral Venous Blood|Plasma|Atazanavir|ArithmeticStdDev"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 704.8555
+              },
+              "Values": [
+                0.263503283,
+                1.484583,
+                2.27686119,
+                1.576696,
+                1.65475,
+                1.192713,
+                1.148153,
+                0.7124585,
+                0.602947354,
+                0.4634066,
+                0.394772321,
+                0.349535018,
+                0.286302626,
+                0.263503283,
+                0.123446494,
+                0.060373053,
+                0.02142831,
+                0.007324659
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "mg/l"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Agarwala 2003 - Day 6 - Atazanavir - PO - 400 mg - Plasma - agg. (n=65)|ObservedData|Peripheral Venous Blood|Plasma|Atazanavir|ArithmeticMean"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 704.8555
+          },
+          "Values": [
+            390.908,
+            1273.196,
+            3204.996,
+            5365.42,
+            5139.912,
+            4058.743,
+            3274.549,
+            2424.462,
+            1719.615,
+            1219.683,
+            963.1257,
+            613.5907,
+            474.2318,
+            390.908,
+            136.5206,
+            49.77024,
+            14.63865,
+            5.003808
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "µg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Agarwala 2003 - Day 6 - Atazanavir - PO - 400 mg - Plasma - agg. (n=65)|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          119.952629,
+          121.046516,
+          121.060005,
+          122.144173,
+          123.220184,
+          124.158791,
+          125.09771,
+          126.169952,
+          128.183624,
+          130.062714,
+          131.943375,
+          136.108749,
+          140.142365,
+          144.176926,
+          156.004547,
+          168.101959,
+          180.196213,
+          192.023529
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    }
+  ],
+  "ObservedDataClassifications": [
+    {
+      "Name": "PO",
+      "Classifications": [
+        {
+          "Name": "1 mg",
+          "Classifiables": [
+            "Greiner 1999 - po Control (Perpetrator Placebo) - Digoxin - PO - 1 mg - Plasma - agg. (n=8)",
+            "Hawyard 1978 - 1mg po - Digoxin - PO - 1 mg - Plasma - agg. (n=5)",
+            "Oosterhuis 1991 - 1mg po - Digoxin - PO - 1 mg - Plasma - agg. (n=10)"
+          ]
+        },
+        {
+          "Name": "0,25 / 0,5 mg",
+          "Classifiables": [
+            "Sanofi-Aventis 2009 - 0.25mg md QD - Digoxin - PO - 0,25 / 0,5 mg - Plasma - agg. (n=20)"
+          ]
+        },
+        {
+          "Name": "0.25 mg",
+          "Classifiables": [
+            "Eckermann 2012 - 0.25mg po - Digoxin - PO - 250 µg - Plasma - agg. (n=16)",
+            "Friedrich 2011 - 0.25mg po md - Digoxin - PO - 0.25 mg - Plasma - agg. (n=20)",
+            "Johne 1999 - 0.25mg po md with placebo day 6 - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Johne 1999 - 0.25mg po md with placebo day 15 - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Kirch 1986 - 2x0.25mg po md - Digoxin - PO - 0.25 mg - Plasma - agg. (n=7)",
+            "Rodin 1988 - 2x0.25mg po md - Digoxin - PO - 0.25 mg - Plasma - agg. (n=10)",
+            "Rodin 1988 - 2x0.25mg po md - Digoxin - PO - 0.25 mg - Plasma - agg. (n=9)",
+            "Vaidyanathan 2008 - 0.25mg po pd - Digoxin - PO - 0.25 mg - Plasma - agg. (n=22)",
+            "Wiebe 2020 - Control digoxin - plasma - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Wiebe 2020 - Control digoxin - urine - Digoxin - PO - 0.25 mg - Urine - agg. (n=12)",
+            "Wiebe 2020 - DDI digoxin + verapamil - plasma - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Wiebe 2020 - DDI digoxin + verapamil - urine - Digoxin - PO - 0.25 mg - Urine - agg. (n=12)",
+            "Klein et al. 1982 - Digoxin and Verapamil in MD setting - Digoxin - PO - 0.25 mg - Serum - agg. (n=7)",
+            "Wiebe 2020 - Digoxin (Cocktail) + Rifampin - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Wiebe 2020 - Digoxin (Cocktail) + Rifampin - Digoxin - PO - 0.25 mg - Urine - agg. (n=12)",
+            "Wiebe 2020 - Digoxin + Placebo - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Wiebe 2020 - Digoxin + Placebo - Digoxin - PO - 0.25 mg - Urine - agg. (n=12)",
+            "Kurata 2002 - G/G2677C/C3435_Digoxin day 16 + Clarithromycin - Digoxin - PO - 0.25 mg - serum - agg. (n=5)",
+            "Kurata 2002 - T/T2677T/T3435_Digoxin day 16 + Clarithromycin - Digoxin - PO - 0.25 mg - serum - agg. (n=5)",
+            "Kurata 2002 - G/T2677C/T3435_Digoxin day 16 + Clarithromycin - Digoxin - PO - 0.25 mg - serum - agg. (n=5)",
+            "Partanen 1995 - Digoxin + Itraconazol in Part 1 - Digoxin - PO - 0.25 mg - serum - agg. (n=10)",
+            "Partanen 1995 - Digoxin + Itraconazol in Part 2 - Digoxin - PO - 0.25 mg - serum - agg. (n=10)",
+            "Gurley 2008b - Digoxin without Hyperforin - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)",
+            "Gurley 2008b - Digoxin with Hyperforin - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)",
+            "Johne 1999 - Digoxin MD with placebo - Digoxin - PO - 0.25 mg - Plasma - agg. (n=12)",
+            "Johne 1999 - Digoxin after SD St John's Wort - Digoxin - PO - 0.25 mg - Plasma - agg. (n=13)",
+            "Johne 1999 - Digoxin after MD St John's Wort - Digoxin - PO - 0.25 mg - Plasma - agg. (n=13)",
+            "Rodin 1988 - 2x0.25mg po md - Digoxin - PO - 0.25 mg - Urine - agg. (n=10)",
+            "Rodin 1988 - 2x0.25mg po md with verapamil - Digoxin - PO - 0.25 mg - Urine - agg. (n=10)",
+            "Rodin 1988 - 2x0.25mg po md - Digoxin - PO - 0.25 mg - Urine - agg. (n=9)",
+            "Rodin 1988 - 2x0.25mg po md with isradipine - Digoxin - PO - 0.25 mg - Urine - agg. (n=9)",
+            "Gurley 2008b - with Perpetrator (Echinacea) - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)",
+            "Gurley 2008b - Control to Perpetrator Rifampicin - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)",
+            "Gurley 2008b - Control to Perpetrator Clarithromycin - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)",
+            "Gurley 2008b - Control to Perpetrator Echinacea - Digoxin - PO - 0.25 mg - Serum - agg. (n=18)"
+          ]
+        },
+        {
+          "Name": "0.5 mg",
+          "Classifiables": [
+            "Jalava 1997 - po Control (Perpetrator Placebo) - Digoxin - PO - 0.5 mg - Serum - agg. (n=10)",
+            "Jalava 1997 - po Control (Perpetrator Placebo) - Digoxin - PO - 0.5 mg - Urine - agg. (n=10)",
+            "Kirby 2012 - Study 1 - Staggered Administration Control - Digoxin - PO - 0.5 mg - Plasma - agg. (n=16)",
+            "Kirby 2012 - Study 2 - Simultaneous Administration Control - Digoxin - PO - 0.5 mg - Plasma - agg. (n=9)",
+            "Larsen 2007 - Control (Perpetrator Placebo) - Digoxin - PO - 0.5 mg - Serum - typical (n=10)",
+            "Reitman 2011 - Week 4 after Perpetrator (Rifampicin) - Digoxin - PO - 0.5 mg - Plasma - agg. (n=11)",
+            "Verstuyft 2003 - 0.5mg with Placebo - Digoxin - PO - 0.5 mg - Plasma - agg. (n=12)",
+            "Verstuyft 2003 - 0.5mg with placebo - Digoxin - PO - 0.5 mg - Urine - agg. (n=12)",
+            "Wagner 1981 - 0.5mg po - Digoxin - PO - 0.5 mg - Urine - agg. (n=6)",
+            "Wagner 1981 - 0.5mg po - Digoxin - PO - 0.5 mg - Plasma - agg. (n=6)",
+            "Becquemont 2001 - 0.5mg po - Digoxin - PO - 0.5 mg - Plasma - agg. (n=12)",
+            "Ragueneau 1999 - 0.5mg po with placebo - Digoxin - PO - 0.5 mg - Plasma - agg. (n=18)",
+            "Tayrouz 2003 - 0.5mg po with placebo - Digoxin - PO - 0.5 mg - Plasma - agg. (n=12)",
+            "Westphal 2000 - 0.5mg po - Digoxin - PO - 0.5 mg - Plasma - agg. (n=10)",
+            "Verstuyft 2003 - 0.5mg with dipyridamole - Digoxin - PO - 0.5 mg - Urine - agg. (n=12)",
+            "Kurata 2002 - G/G2677C/C3435_Digoxin day 1 - Digoxin - PO - 0.5 mg - Serum - agg. (n=5)",
+            "Kurata 2002 - T/T2677T/T3435_Digoxin day 1 - Digoxin - PO - 0.5 mg - serum - agg. (n=5)",
+            "Kurata 2002 - G/T2677C/T3435_Digoxin day 1 - Digoxin - PO - 0.5 mg - serum - agg. (n=5)",
+            "Gurley 2007 - Digoxin + Rifampicin - Digoxin - PO - 0.5 mg - serum - agg. (n=20)",
+            "Gurley 2007 - Digoxin + Clarithromycin - Digoxin - PO - 0.5 mg - serum - agg. (n=20)",
+            "Gurley 2007 - control to Rifampicin - Digoxin - PO - 0.5 mg - serum - agg. (n=20)",
+            "Gurley 2007 - control to Clarithromycin - Digoxin - PO - 0.5 mg - serum - agg. (n=20)"
+          ]
+        },
+        {
+          "Name": "0.75 mg",
+          "Classifiables": [
+            "Rengelshausen 2003 - 0.75mg/kg po with placebo - Digoxin - PO - 0.75 mg - Plasma - agg. (n=12)"
+          ]
+        },
+        {
+          "Name": "0.6 mg",
+          "Classifiables": [
+            "Martin 1997 - 0.6mg po - Digoxin - PO - 0.6 mg - Plasma - agg. (n=12)"
+          ]
+        },
+        {
+          "Name": "0.125 mg",
+          "Classifiables": [
+            "Qiu 2010 - 0.125mg md QD placebo - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Belz et al. 1983 - Digoxin + 80mg Verapamil - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Belz et al. 1983 - Digoxin + 120mg Verapamil - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Doering et al. 1983 - Digoxin control - Digoxin - PO - 0.125 mg - Serum - agg. (n=9)",
+            "Doering et al. 1983 - Digoxin+ 80mg Verapamil - Digoxin - PO - 0.125 mg - Serum - agg. (n=9)",
+            "Belz 1981 - Digoxin + Placebo - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Belz 1981 - Digoxin + Verapamil - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Belz et al. 1983 - Digoxin control to 80mg Verapamil - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)",
+            "Belz et al. 1983 - Digoxin control to 120mg Verapamil - Digoxin - PO - 0.125 mg - Plasma - agg. (n=12)"
+          ]
+        },
+        {
+          "Name": "1/0.0625/0.125 mg",
+          "Classifiables": [
+            "Pedersen et al. 1982 - Digoxin and Verapamil in MD setting - Digoxin - PO - 1/0.0625/0.125 mg - Plasma - agg. (n=7)"
+          ]
+        },
+        {
+          "Name": "0.46 mg",
+          "Classifiables": [
+            "Schwartz et al. 1982 - Digoxin and Verapamil in MD setting - Digoxin - PO - 0.46 mg - Serum - agg. (n=10)"
+          ]
+        },
+        {
+          "Name": "0.4 mg",
+          "Classifiables": [
+            "Gurley 2006 - day 7 plasma + Rifampin - Digoxin - PO - 0.4 mg - serum - agg. (n=16)",
+            "Gurley 2006 - day 7 plasma + Clarithromycin - Digoxin - PO - 0.4 mg - serum - agg. (n=16)",
+            "Gurley 2006 - day 1 plasma before Rifampicin - Digoxin - PO - 0.4 mg - serum - agg. (n=16)",
+            "Gurley 2006 - day 1 plasma before Clarithromycin - Digoxin - PO - 0.4 mg - serum - agg. (n=16)"
+          ]
+        },
+        {
+          "Name": "0.75 (day 1 and 2); 0.25 days 3 (sampling day) mg",
+          "Classifiables": [
+            "Arold 2005 - Study B - Digoxin without Hyperforin (Day 1) - Digoxin - PO - 0.75 (day 1 and 2); 0.25 days 3 (sampling day) mg - Plasma - agg. (n=28)"
+          ]
+        },
+        {
+          "Name": "0.75 (day 1 and 2); 0.25 days 3 to 13 mg",
+          "Classifiables": [
+            "Arold 2005 - Study B - Digoxin with Hyperforin - Digoxin - PO - 0.75 (day 1 and 2); 0.25 days 3 to 13 mg - Plasma - agg. (n=16)",
+            "Arold 2005 - Study B - Digoxin with Placebo - Digoxin - PO - 0.75 (day 1 and 2); 0.25 days 3 to 13 mg - Plasma - agg. (n=12)"
+          ]
+        },
+        {
+          "Name": "unknown, see comment ",
+          "Classifiables": [
+            "Mueller 2004 - study part 1 - Placebo -  before - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=5)",
+            "Mueller 2004 - study part 1 - Placebo -  after - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=5)",
+            "Mueller 2004 - study part 1 - LI160 (~28.9mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=6)",
+            "Mueller 2004 - study part 1 - LI160 (~28.9mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=6)",
+            "Mueller 2004 - study part 1 - Hypericum powder type A, 4 g/d (~21.1mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=5)",
+            "Mueller 2004 - study part 1 - Hypericum powder type A, 4 g/d (~21.1mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=5)",
+            "Mueller 2004 - study part 1 - Hypericum powder type A, 2 g/d (~10.6mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=6)",
+            "Mueller 2004 - study part 1 - Hypericum powder type A, 2 g/d (~10.6mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=6)",
+            "Mueller 2004 - study part 2 - Placebo -  before - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - study part 2 - Placebo -  after - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum powder type A, 1 g/d (~5.3mg/d hyperforin) -  without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum powder type A, 1 g/d (~5.3mg/d hyperforin) -  with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum powder type A, 0.5 g/d (~2.6mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum powder type A, 0.5 g/d (~2.6mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum oil extract (~0.13mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Hypericum oil extract (~0.13mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Tea (~0.04mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - Tea (~0.04mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - study part 3 - Placebo -  before - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=9)",
+            "Mueller 2004 - study part 3 - Placebo -  after - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=9)",
+            "Mueller 2004 - Hypericum powder type B, 2 g/d (~0.3mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=10)",
+            "Mueller 2004 - Hypericum powder type B, 2 g/d (~0.3mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=10)",
+            "Mueller 2004 - Fresh plant juice (~3.56mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=10)",
+            "Mueller 2004 - Fresh plant juice (~3.56mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=10)",
+            "Mueller 2004 - ZE 117 (~ca-0.38mg/d hyperforin) - without hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)",
+            "Mueller 2004 - ZE 117 (~ca-0.38mg/d hyperforin) - with hyperforin - Digoxin - PO - unknown, see comment  - Plasma - agg. (n=7)"
+          ]
+        }
+      ]
+    }
+  ],
+  "Protocols": [
+    {
+      "Name": "Protocol_Main",
+      "Applications": [
+        {
+          "Name": "Application_1",
+          "ApplicationType": "Oral",
+          "FormulationKey": "Formulation",
+          "Parameters": []
+        }
+      ],
+      "Schemas": [
+        {
+          "Name": "Schema 1",
+          "SchemaItems": [
+            {
+              "Name": "Schema Item 1",
+              "ApplicationType": "Oral",
+              "FormulationKey": "Formulation",
+              "Parameters": [
+                {
+                  "Name": "Start time",
+                  "Value": 0.0,
+                  "Unit": "h"
+                },
+                {
+                  "Name": "InputDose",
+                  "Value": 200.0,
+                  "Unit": "mg"
+                },
+                {
+                  "Name": "Volume of water/body weight",
+                  "Value": 3.5,
+                  "Unit": "ml/kg"
+                }
+              ]
+            }
+          ],
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "NumberOfRepetitions",
+              "Value": 1.0
+            },
+            {
+              "Name": "TimeBetweenRepetitions",
+              "Value": 24.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "TimeUnit": "h"
+    }
+  ],
+  "SimulationClassifications": [
+    {
+      "Name": "Atazanavir Single Dose",
+      "Classifiables": [
+        "FDA-ClinPharmReview_AI424-014_400mg_YoungFemales",
+        "FDA-ClinPharmReview_AI424-004_400mg_TreatmentA",
+        "FDA-ClinPharmReview_AI424-014_400mg_YoungMales",
+        "FDA-ClinPharmReview_AI424-015_400mg_NormalSubjects"
+      ]
+    }
+  ],
+  "Simulations": [
+    {
+      "Name": "Metoprolol_Simulation",
+      "Model": "4Comp",
+      "Individual": "Adult_Standard",
+      "Compounds": [
+        {
+          "Name": "Metoprolol",
+          "Protocol": {
+            "Name": "Protocol_Main",
+            "Formulations": [
+              {
+                "Name": "Oral IR Formulation",
+                "Key": "Formulation"
+              }
+            ]
+          }
+        }
+      ],
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 24.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "Resolution",
+              "Value": 4.0,
+              "Unit": "pts/h"
+            }
+          ]
+        }
+      ],
+      "Events": [],
+      "Parameters": []
+    }
+  ]
+}

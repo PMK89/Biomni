@@ -1,0 +1,2072 @@
+{
+  "Version": 80,
+  "Individuals": [
+    {
+      "Name": "Rat",
+      "Seed": 24116796,
+      "OriginData": {
+        "CalculationMethods": [
+          "SurfaceAreaPlsInt_VAR1"
+        ],
+        "Species": "Rat"
+      },
+      "Parameters": [
+        {
+          "Path": "Organism|Bone|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Brain|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Fat|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Gonads|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Heart|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Kidney|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|Caecum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|ColonAscendens|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|ColonDescendens|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|ColonSigmoid|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|ColonTransversum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|LargeIntestine|Mucosa|Rectum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Liver|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Lung|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Muscle|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Pancreas|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Skin|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|Duodenum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|LowerIleum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|LowerJejunum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|UpperIleum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|SmallIntestine|Mucosa|UpperJejunum|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Spleen|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        },
+        {
+          "Path": "Organism|Stomach|Fraction of blood for sampling",
+          "Value": 0.18,
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Niederalt2018 (doi: 10.1007/s10928-017-9559-4)"
+          }
+        }
+      ],
+      "ExpressionProfiles": []
+    }
+  ],
+  "Compounds": [
+    {
+      "Name": "Inulin",
+      "IsSmallMolecule": true,
+      "Lipophilicity": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
+            {
+              "Name": "Lipophilicity",
+              "Value": -10.0,
+              "Unit": "Log Units",
+              "ValueOrigin": {
+                "Source": "Other",
+                "Description": "Highly hydrophilic"
+              }
+            }
+          ]
+        }
+      ],
+      "FractionUnbound": [
+        {
+          "Name": "Measurement",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "Fraction unbound (plasma, reference value)",
+              "Value": 1.0,
+              "ValueOrigin": {
+                "Source": "Other",
+                "Description": "Assumption"
+              }
+            }
+          ]
+        }
+      ],
+      "Solubility": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
+            {
+              "Name": "Solubility at reference pH",
+              "Value": 9999.0,
+              "Unit": "mg/l",
+              "ValueOrigin": {
+                "Source": "Other",
+                "Description": "/Dummy value not used in the simulation"
+              }
+            },
+            {
+              "Name": "Reference pH",
+              "Value": 7.0,
+              "ValueOrigin": {
+                "Source": "Other",
+                "Description": "/Dummy value not used in the simulation"
+              }
+            }
+          ]
+        }
+      ],
+      "Processes": [
+        {
+          "InternalName": "GlomerularFiltration",
+          "DataSource": "GFR",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "GFR fraction",
+              "Value": 1.0,
+              "ValueOrigin": {
+                "Source": "Publication",
+                "Method": "Other",
+                "Description": "Tsuji1983 (DOI: 10.1002/jps.2600721103)"
+              }
+            }
+          ]
+        }
+      ],
+      "CalculationMethods": [
+        "Cellular partition coefficient method - PK-Sim Standard",
+        "Cellular permeability - PK-Sim Standard"
+      ],
+      "Parameters": [
+        {
+          "Name": "Molecular weight",
+          "Value": 5500.0,
+          "Unit": "g/mol",
+          "ValueOrigin": {
+            "Source": "Publication",
+            "Description": "Ohno1978"
+          }
+        },
+        {
+          "Name": "Radius (solute)",
+          "Value": 0.00139,
+          "Unit": "µm",
+          "ValueOrigin": {
+            "Id": 26,
+            "Source": "Publication",
+            "Description": "Ghandehari1997"
+          }
+        }
+      ]
+    }
+  ],
+  "Protocols": [
+    {
+      "Name": "20mgkg_IV",
+      "ApplicationType": "Intravenous",
+      "DosingInterval": "Single",
+      "Parameters": [
+        {
+          "Name": "Start time",
+          "Value": 0.0,
+          "Unit": "h"
+        },
+        {
+          "Name": "InputDose",
+          "Value": 20.0,
+          "Unit": "mg/kg"
+        },
+        {
+          "Name": "Infusion time",
+          "Value": 5.0,
+          "Unit": "s"
+        }
+      ]
+    },
+    {
+      "Name": "200mgkg_IV",
+      "ApplicationType": "Intravenous",
+      "DosingInterval": "Single",
+      "Parameters": [
+        {
+          "Name": "Start time",
+          "Value": 0.0,
+          "Unit": "h"
+        },
+        {
+          "Name": "InputDose",
+          "Value": 200.0,
+          "Unit": "mg/kg"
+        },
+        {
+          "Name": "Infusion time",
+          "Value": 5.0,
+          "Unit": "s"
+        }
+      ]
+    }
+  ],
+  "Simulations": [
+    {
+      "Name": "Inulin_20mgkg",
+      "Model": "TwoPores",
+      "ObservedData": [
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20",
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20"
+      ],
+      "Solver": {},
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 3.0,
+              "Unit": "h",
+              "ValueOrigin": {
+                "Source": "Unknown"
+              }
+            },
+            {
+              "Name": "Resolution",
+              "Value": 120.0,
+              "Unit": "pts/h",
+              "ValueOrigin": {
+                "Source": "Unknown"
+              }
+            }
+          ]
+        }
+      ],
+      "Parameters": [
+        {
+          "Path": "Events|20mgkg_IV|Application_1|ProtocolSchemaItem|Infusion time",
+          "Value": 0.0833333333,
+          "Unit": "min"
+        }
+      ],
+      "OutputSelections": [
+        "Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+        "Organism|Lung|Inulin|Whole Organ",
+        "Organism|Muscle|Inulin|Whole Organ",
+        "Organism|Bone|Inulin|Whole Organ",
+        "Organism|Heart|Inulin|Whole Organ",
+        "Organism|Skin|Inulin|Whole Organ",
+        "Organism|SmallIntestine|Inulin|Whole Organ (Small Intestine)",
+        "Organism|SmallIntestine|Inulin|Whole Organ (Small Intestine) incl. FcRn_Complex-Inulin",
+        "Organism|LargeIntestine|Inulin|Whole Organ (Large Intestine)",
+        "Organism|LargeIntestine|Inulin|Whole Organ (Large Intestine) incl. FcRn_Complex-Inulin"
+      ],
+      "OutputMappings": [
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20"
+        },
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|Bone|Inulin|Whole Organ",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20"
+        },
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|Heart|Inulin|Whole Organ",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20"
+        },
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|Lung|Inulin|Whole Organ",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20"
+        },
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|Muscle|Inulin|Whole Organ",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20"
+        },
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_20mgkg|Organism|Skin|Inulin|Whole Organ",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20"
+        }
+      ],
+      "Individual": "Rat",
+      "Compounds": [
+        {
+          "Name": "Inulin",
+          "CalculationMethods": [
+            "Cellular partition coefficient method - PK-Sim Standard",
+            "Cellular permeability - PK-Sim Standard"
+          ],
+          "Processes": [
+            {
+              "Name": "Glomerular Filtration-GFR",
+              "SystemicProcessType": "GFR"
+            }
+          ],
+          "Protocol": {
+            "Name": "20mgkg_IV"
+          }
+        }
+      ],
+      "HasResults": true,
+      "IndividualAnalyses": [
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Venous Blood-Plasma-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 1
+              }
+            },
+            {
+              "Name": "Tsuji1983.VenousBlood.20-Inulin-VenousBlood-Plasma-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|ObservedData|VenousBlood|Plasma|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 2,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Plasma  (linear scale)",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Tsuji1983.VenousBlood.20-Inulin-VenousBlood-Plasma-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|ObservedData|VenousBlood|Plasma|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 9,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            },
+            {
+              "Name": "Inulin-Venous Blood-Plasma-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 8
+              }
+            }
+          ],
+          "Name": "Plasma (log scale)",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Tsuji1983.Lung.20-Inulin-Lung-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20|ObservedData|Lung|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#0000FF",
+                "LegendIndex": 10,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            },
+            {
+              "Name": "Inulin-Lung-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|Lung|Inulin|Whole Organ",
+              "CurveOptions": {
+                "Color": "#0000FF",
+                "LegendIndex": 9
+              }
+            }
+          ],
+          "Name": "Lung",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Muscle-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|Muscle|Inulin|Whole Organ",
+              "CurveOptions": {
+                "Color": "#800080",
+                "LegendIndex": 6
+              }
+            },
+            {
+              "Name": "Tsuji1983.Muscle.20-Inulin-Muscle-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20|ObservedData|Muscle|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#800080",
+                "LegendIndex": 7,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Muscle",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Bone-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|Bone|Inulin|Whole Organ",
+              "CurveOptions": {
+                "Color": "#0000C0",
+                "LegendIndex": 7
+              }
+            },
+            {
+              "Name": "Tsuji1983.Bone.20-Inulin-Bone-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20|ObservedData|Bone|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#0000C0",
+                "LegendIndex": 8,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Bone",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Tsuji1983.Heart.20-Inulin-Heart-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20|ObservedData|Heart|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF8080",
+                "LegendIndex": 11,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            },
+            {
+              "Name": "Inulin-Heart-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|Heart|Inulin|Whole Organ",
+              "CurveOptions": {
+                "Color": "#FF8080",
+                "LegendIndex": 10
+              }
+            }
+          ],
+          "Name": "Heart",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (mass)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Skin-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|Skin|Inulin|Whole Organ",
+              "CurveOptions": {
+                "Color": "#FF00FF",
+                "LegendIndex": 2
+              }
+            },
+            {
+              "Name": "Tsuji1983.Skin.20-Inulin-Skin-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20|ObservedData|Skin|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF00FF",
+                "LegendIndex": 3,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Skin",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "Min": 0.1,
+              "Max": 60.0,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Tsuji1983.Gut.20-Inulin-Gut-Tissue-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20|ObservedData|Gut|Tissue|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#804040",
+                "LegendIndex": 3,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            },
+            {
+              "Name": "Inulin-Small Intestine-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|SmallIntestine|Inulin|Whole Organ (Small Intestine)",
+              "CurveOptions": {
+                "Color": "#804040",
+                "LegendIndex": 1
+              }
+            },
+            {
+              "Name": "Inulin-Large Intestine-Whole Organ-Concentration",
+              "X": "Time",
+              "Y": "Inulin_20mgkg|Organism|LargeIntestine|Inulin|Whole Organ (Large Intestine)",
+              "CurveOptions": {
+                "Color": "#808080",
+                "LegendIndex": 2
+              }
+            }
+          ],
+          "Name": "Gut",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_20mgkg\n2023-03-15 13:40"
+        }
+      ]
+    },
+    {
+      "Name": "Inulin_200mgkg",
+      "Model": "TwoPores",
+      "ObservedData": [
+        "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200"
+      ],
+      "Solver": {},
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 3.0,
+              "Unit": "h",
+              "ValueOrigin": {
+                "Source": "Unknown"
+              }
+            },
+            {
+              "Name": "Resolution",
+              "Value": 200.0,
+              "Unit": "pts/h",
+              "ValueOrigin": {
+                "Source": "Unknown"
+              }
+            }
+          ]
+        }
+      ],
+      "Parameters": [
+        {
+          "Path": "Events|200mgkg_IV|Application_1|ProtocolSchemaItem|Infusion time",
+          "Value": 0.0833333333,
+          "Unit": "min"
+        }
+      ],
+      "OutputSelections": [
+        "Organism|VenousBlood|Plasma|Inulin|Concentration in container"
+      ],
+      "OutputMappings": [
+        {
+          "Scaling": "Log",
+          "Path": "Inulin_200mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+          "ObservedData": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200"
+        }
+      ],
+      "Individual": "Rat",
+      "Compounds": [
+        {
+          "Name": "Inulin",
+          "CalculationMethods": [
+            "Cellular partition coefficient method - PK-Sim Standard",
+            "Cellular permeability - PK-Sim Standard"
+          ],
+          "Processes": [
+            {
+              "Name": "Glomerular Filtration-GFR",
+              "SystemicProcessType": "GFR"
+            }
+          ],
+          "Protocol": {
+            "Name": "200mgkg_IV"
+          }
+        }
+      ],
+      "HasResults": true,
+      "IndividualAnalyses": [
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Venous Blood-Plasma-Concentration",
+              "X": "Time",
+              "Y": "Inulin_200mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 1
+              }
+            },
+            {
+              "Name": "Tsuji1983.VenousBlood.200-Inulin-VenousBlood-Plasma-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|ObservedData|VenousBlood|Plasma|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 2,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Plasma concentration (linear scale)",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_200mgkg\n2023-03-15 13:39"
+        },
+        {
+          "Axes": [
+            {
+              "Unit": "h",
+              "Dimension": "Time",
+              "Type": "X",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "None",
+              "Scaling": "Linear",
+              "NumberMode": "Normal"
+            },
+            {
+              "Unit": "µmol/l",
+              "Dimension": "Concentration (molar)",
+              "Type": "Y",
+              "GridLines": false,
+              "Visible": true,
+              "DefaultColor": "#FFFFFF",
+              "DefaultLineStyle": "Solid",
+              "Scaling": "Log",
+              "NumberMode": "Normal"
+            }
+          ],
+          "Curves": [
+            {
+              "Name": "Inulin-Venous Blood-Plasma-Concentration",
+              "X": "Time",
+              "Y": "Inulin_200mgkg|Organism|VenousBlood|Plasma|Inulin|Concentration in container",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 1
+              }
+            },
+            {
+              "Name": "Tsuji1983.VenousBlood.200-Inulin-VenousBlood-Plasma-Measurement",
+              "X": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|Time",
+              "Y": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|ObservedData|VenousBlood|Plasma|Inulin|Measurement",
+              "CurveOptions": {
+                "Color": "#FF0000",
+                "LegendIndex": 2,
+                "LineStyle": "None",
+                "Symbol": "Circle"
+              }
+            }
+          ],
+          "Name": "Plasma concentration (log scale)",
+          "FontAndSize": {
+            "Fonts": {
+              "AxisSize": 10,
+              "LegendSize": 8,
+              "TitleSize": 16,
+              "DescriptionSize": 12,
+              "OriginSize": 8,
+              "FontFamilyName": "Microsoft Sans Serif",
+              "WatermarkSize": 32
+            }
+          },
+          "Settings": {
+            "SideMarginsEnabled": true,
+            "LegendPosition": "RightInside",
+            "BackColor": "#00FFFFFF",
+            "DiagramBackColor": "#FFFFFF"
+          },
+          "OriginText": "Inulin\nInulin_200mgkg\n2023-03-15 13:39"
+        }
+      ]
+    }
+  ],
+  "ObservedData": [
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "VenousBlood",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Plasma",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 200.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|ObservedData|VenousBlood|Plasma|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                474.5723,
+                343.3026,
+                214.2051,
+                325.1993,
+                212.6638,
+                87.00407,
+                41.94299,
+                85.25032,
+                19.35951,
+                20.50202,
+                16.8625584
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|ObservedData|VenousBlood|Plasma|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            4204.03467,
+            1705.788,
+            1045.6051,
+            724.2318,
+            549.820068,
+            293.582916,
+            174.39061,
+            166.3671,
+            70.51447,
+            49.48978,
+            24.37755
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.200|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.0134128183,
+          0.0804769,
+          0.156482875,
+          0.245901659,
+          0.3308495,
+          0.496274143,
+          0.7421758,
+          0.988077462,
+          1.4888227,
+          1.98956835,
+          2.99105835
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Lung",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20|ObservedData|Lung|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                4.430878,
+                1.47877991,
+                0.9098053,
+                0.7024961
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20|ObservedData|Lung|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            18.62066,
+            5.111526,
+            4.03579664,
+            1.762393
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Lung.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.175058827,
+          0.5093731,
+          0.996839345,
+          1.9982717
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Bone",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20|ObservedData|Bone|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                2.46541,
+                0.571891963,
+                1.1290561,
+                0.2432594
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20|ObservedData|Bone|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            10.29152,
+            3.11458683,
+            1.75149608,
+            1.049495
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Bone.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.142867669,
+          0.480994672,
+          0.984901,
+          2.00226164
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Muscle",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20|ObservedData|Muscle|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                1.82027,
+                0.7995584,
+                0.3212802,
+                0.240385592
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20|ObservedData|Muscle|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            7.14265776,
+            3.700332,
+            2.14512014,
+            0.6447858
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Muscle.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.160000011,
+          0.48888883,
+          0.9866667,
+          1.9822216
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Gut",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20|ObservedData|Gut|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                1.081695,
+                0.713488042,
+                0.819141567,
+                0.724841058
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20|ObservedData|Gut|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            7.11785269,
+            2.540515,
+            1.735296,
+            1.300451
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Gut.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.142222226,
+          0.48888883,
+          0.973333359,
+          1.97777832
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Heart",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20|ObservedData|Heart|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                1.653185,
+                0.403811485,
+                0.5378056,
+                0.1505991
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20|ObservedData|Heart|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            9.223828,
+            2.252691,
+            1.9151901,
+            0.5096804
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Heart.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.148648649,
+          0.490991,
+          0.981982,
+          1.995495
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "VenousBlood",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Plasma",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|ObservedData|VenousBlood|Plasma|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                38.274292,
+                23.46342,
+                18.2909489,
+                11.42914,
+                9.718702,
+                7.494007,
+                3.90983987,
+                4.315693,
+                1.745024,
+                1.572008,
+                0.8398619
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|ObservedData|VenousBlood|Plasma|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            294.3059,
+            180.4555,
+            94.95115,
+            49.95295,
+            30.60525,
+            26.2456989,
+            17.0873013,
+            12.76478,
+            5.012314,
+            3.161005,
+            1.870406
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.VenousBlood.Plasma.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.0134128164,
+          0.0312965661,
+          0.0804769,
+          0.1609538,
+          0.3308495,
+          0.496274143,
+          0.7421758,
+          0.9925485,
+          1.49329364,
+          1.98956835,
+          2.99553
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    },
+    {
+      "Name": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20",
+      "ExtendedProperties": [
+        {
+          "Name": "Sheet",
+          "Value": "Data",
+          "Type": "String"
+        },
+        {
+          "Name": "Organ",
+          "Value": "Skin",
+          "Type": "String"
+        },
+        {
+          "Name": "Compartment",
+          "Value": "Tissue",
+          "Type": "String"
+        },
+        {
+          "Name": "Molecule",
+          "Value": "Inulin",
+          "Type": "String"
+        },
+        {
+          "Name": "Species",
+          "Value": "Rat",
+          "Type": "String"
+        },
+        {
+          "Name": "Dose_mgKg",
+          "Value": 20.0,
+          "Type": "Double"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "Measurement",
+          "RelatedColumns": [
+            {
+              "Name": "Error",
+              "QuantityInfo": {
+                "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20|ObservedData|Skin|Tissue|Inulin|Error"
+              },
+              "DataInfo": {
+                "Origin": "ObservationAuxiliary",
+                "AuxiliaryType": "ArithmeticStdDev",
+                "MolWeight": 5500.0
+              },
+              "Values": [
+                2.692123,
+                1.588902,
+                1.896984,
+                0.490139723
+              ],
+              "Dimension": "Concentration (mass)",
+              "Unit": "µg/ml"
+            }
+          ],
+          "QuantityInfo": {
+            "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20|ObservedData|Skin|Tissue|Inulin|Measurement"
+          },
+          "DataInfo": {
+            "Origin": "Observation",
+            "AuxiliaryType": "Undefined",
+            "MolWeight": 5500.0
+          },
+          "Values": [
+            17.790041,
+            9.931403,
+            6.606544,
+            2.332633
+          ],
+          "Dimension": "Concentration (mass)",
+          "Unit": "mg/l"
+        }
+      ],
+      "BaseGrid": {
+        "Name": "Time",
+        "QuantityInfo": {
+          "Path": "Tsuji1983_PBPK_Antibiotics_PKSimImport.Skin.20|Time",
+          "Type": "Time"
+        },
+        "DataInfo": {
+          "Origin": "BaseGrid",
+          "AuxiliaryType": "Undefined"
+        },
+        "Values": [
+          0.160555124,
+          0.4888815,
+          0.999599159,
+          1.99415
+        ],
+        "Dimension": "Time",
+        "Unit": "h"
+      }
+    }
+  ]
+}
