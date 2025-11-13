@@ -8,6 +8,7 @@ APP_MODULE=${BIOMNI_APP_MODULE:-}
 readarray -t APP_CANDIDATES <<'CAND'
 biomni.web.app:app
 main:app
+app.main.app
 CAND
 if [[ -n "$APP_MODULE" ]]; then
   APP_CANDIDATES=("$APP_MODULE" "${APP_CANDIDATES[@]}")
