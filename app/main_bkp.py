@@ -1,280 +1,47 @@
 import asyncio
-import contextlib
-import json
-import logging
 import os
-import re
-import shutil
-import threading
 import time
-from dataclasses import dataclass, field
-from typing import List, Optional
-from pathlib import Path
-
+import threading
+import contextlib
+import shutil
+import re
 import gradio as gr
-import requests
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
-from msal import ConfidentialClientApplication
-
 from biomni.agent.a1 import A1
+from . import auth
 from .config import settings
 from .upload import router as upload_router
 
-
-logger = logging.getLogger(__name__)
-
-
-
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_DIR = PROJECT_ROOT / "local_data"
-
-
-def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
-    """Return a writable Biomni data directory, falling back to local_data."""
-
-    candidate = Path(os.path.expanduser(raw_path or str(DEFAULT_DATA_DIR)))
-    if not candidate.is_absolute():
-        candidate = (PROJECT_ROOT / candidate).resolve()
-    try:
-        candidate.mkdir(parents=True, exist_ok=True)
-        test_file = candidate / ".write_test"
-        with test_file.open("w", encoding="utf-8") as temp:
-            temp.write("ok")
-        test_file.unlink(missing_ok=True)
-        return candidate
-    except PermissionError:
-        logger.warning(
-            "Biomni base path %s is not writable; falling back to %s",
-            candidate,
-            DEFAULT_DATA_DIR,
-        )
-    except OSError as exc:
-        logger.warning(
-            "Unable to prepare Biomni base path %s (%s); falling back to %s",
-            candidate,
-            exc,
-            DEFAULT_DATA_DIR,
-        )
-
-    fallback = DEFAULT_DATA_DIR.resolve()
-    fallback.mkdir(parents=True, exist_ok=True)
-    return fallback
-
-
-BIOMNI_DATA_PATH = _ensure_writable_base_path(settings.BIOMNI_BASE_PATH)
-
-OIDC_OBJECT_ID_HEADER = os.getenv("OIDC_OBJECT_ID_HEADER", "x-auth-request-objectid")
-OIDC_USER_HEADER = os.getenv("OIDC_USER_HEADER", "x-auth-request-user")
-OIDC_EMAIL_HEADER = os.getenv("OIDC_EMAIL_HEADER", "x-auth-request-email")
-OIDC_ROLES_HEADER = os.getenv("OIDC_ROLES_HEADER", "x-auth-request-groups")
-FORWARDED_USER_HEADER = "x-forwarded-user"
-FORWARDED_EMAIL_HEADER = "x-forwarded-email"
-_GUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-GRAPH_SCOPE = os.getenv("AZURE_GRAPH_SCOPE", "https://graph.microsoft.com/.default")
-
-
-@dataclass
-class AuthenticatedUser:
-    """Represents an authenticated Biomni user resolved from request headers."""
-
-    user_id: str
-    name: str
-    email: Optional[str] = None
-    roles: List[str] = field(default_factory=list)
-
-
-class GraphResolver:
-    """Resolve Azure AD object IDs using Microsoft Graph."""
-
-    def __init__(self, client_id: str, client_secret: str, tenant_id: str, scope: str) -> None:
-        authority = f"https://login.microsoftonline.com/{tenant_id}"
-        self._app = ConfidentialClientApplication(
-            client_id=client_id,
-            client_credential=client_secret,
-            authority=authority,
-        )
-        self._scopes = [scope]
-        self._cache: dict[str, dict[str, str | float]] = {}
-        self._lock = threading.Lock()
-        self._ttl_seconds = 3600
-
-    def _access_token(self) -> str:
-        result = self._app.acquire_token_silent(self._scopes, account=None)
-        if not result:
-            result = self._app.acquire_token_for_client(scopes=self._scopes)
-        token = result.get("access_token")
-        if not token:
-            raise RuntimeError(result.get("error_description") or "graph token missing")
-        return token
-
-    def resolve(self, email: str) -> Optional[dict[str, str]]:
-        email = (email or "").strip().lower()
-        if not email:
-            return None
-        now = time.time()
-        with self._lock:
-            cached = self._cache.get(email)
-            if cached and cached.get("expires_at", 0) > now:
-                return cached  # type: ignore[return-value]
-        try:
-            token = self._access_token()
-            response = requests.get(
-                f"https://graph.microsoft.com/v1.0/users/{email}",
-                params={"$select": "id,displayName"},
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5,
-            )
-            if response.status_code != 200:
-                logger.warning(
-                    "Graph lookup failed for %s: %s %s",
-                    email,
-                    response.status_code,
-                    response.text,
-                )
-                return None
-            data = response.json()
-            record = {
-                "id": (data.get("id") or "").lower(),
-                "display_name": data.get("displayName") or email,
-                "expires_at": now + self._ttl_seconds,
-            }
-            with self._lock:
-                self._cache[email] = record
-            return record
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Graph resolver error for %s: %s", email, exc)
-            return None
-
-
-GRAPH_RESOLVER: Optional[GraphResolver] = None
-if settings.CLIENT_ID and settings.CLIENT_SECRET and settings.TENANT_ID:
-    try:
-        GRAPH_RESOLVER = GraphResolver(
-            client_id=settings.CLIENT_ID,
-            client_secret=settings.CLIENT_SECRET,
-            tenant_id=settings.TENANT_ID,
-            scope=GRAPH_SCOPE,
-        )
-    except Exception as resolver_exc:  # noqa: BLE001
-        logger.warning("Unable to initialize Graph resolver: %s", resolver_exc)
-
-
-def _get_header(request: Request, name: Optional[str]) -> Optional[str]:
-    if not name:
-        return None
-    return (
-        request.headers.get(name)
-        or request.headers.get(name.lower())
-        or request.headers.get(name.upper())
-    )
-
-
-def _first_non_empty(*values: Optional[str]) -> Optional[str]:
-    for value in values:
-        if not value:
-            continue
-        candidate = value.strip()
-        if candidate:
-            return candidate
-    return None
-
-
-def _is_guid(value: Optional[str]) -> bool:
-    if not value:
-        return False
-    return bool(_GUID_PATTERN.match(value.strip()))
-
-
-def _parse_roles(raw: Optional[str]) -> List[str]:
-    if not raw:
-        return []
-    raw = raw.strip()
-    if not raw:
-        return []
-    if raw.startswith("[") and raw.endswith("]"):
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, list):
-                return [str(item).strip() for item in parsed if str(item).strip()]
-        except json.JSONDecodeError:
-            pass
-    for delimiter in (";", ",", "|"):
-        if delimiter in raw:
-            return [piece.strip() for piece in raw.split(delimiter) if piece.strip()]
-    return [raw]
-
-
-def get_current_user(request: Request) -> AuthenticatedUser:
-    """Resolve the current user from reverse-proxy headers, falling back to Graph."""
-
-    cached = getattr(request.state, "_current_user", None)
-    if cached is not None:
-        return cached  # type: ignore[return-value]
-
-    object_id = _first_non_empty(
-        _get_header(request, OIDC_OBJECT_ID_HEADER),
-        _get_header(request, "x-auth-request-oid"),
-        _get_header(request, "x-ms-client-principal-id"),
-    )
-    email = _first_non_empty(
-        _get_header(request, OIDC_EMAIL_HEADER),
-        _get_header(request, FORWARDED_EMAIL_HEADER),
-    )
-    display_name = _first_non_empty(
-        _get_header(request, OIDC_USER_HEADER),
-        _get_header(request, FORWARDED_USER_HEADER),
-    )
-    roles = _parse_roles(_get_header(request, OIDC_ROLES_HEADER))
-
-    user_id = None
-    if object_id and _is_guid(object_id):
-        user_id = object_id.lower()
-    elif email and GRAPH_RESOLVER:
-        graph_record = GRAPH_RESOLVER.resolve(email)
-        if graph_record and graph_record.get("id"):
-            user_id = graph_record["id"]
-            if not display_name:
-                display_name = graph_record.get("display_name")
-
-    if not user_id:
-        user_id = _first_non_empty(email, display_name)
-
-    if not user_id:
-        logger.warning("Authentication headers missing for path %s", request.url.path)
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    resolved_name = display_name or email or user_id
-    user = AuthenticatedUser(user_id=user_id, name=resolved_name, email=email, roles=roles)
-    setattr(request.state, "_current_user", user)
-    return user
-
 app = FastAPI()
+
+# Add session middleware for handling user sessions
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET,
+    max_age=3600  # Session expires after 1 hour
+)
+
+# Mount the authentication routes (e.g., /login, /callback, /logout)
+app.include_router(auth.router)
 app.include_router(upload_router)
-app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, max_age=3600)
-
-@app.middleware("http")
-async def apply_forwarded_prefix(request: Request, call_next):
-    """Ensure FastAPI knows its external prefix (e.g., /biomni)."""
-
-    forwarded_prefix = request.headers.get("x-forwarded-prefix")
-    if forwarded_prefix:
-        request.scope["root_path"] = forwarded_prefix.rstrip("/") or "/"
-    return await call_next(request)
 
 # Initialize the Biomni agent once when the application starts.
 # The agent's data path is relative to the project root where uvicorn is run.
 agent = None
 try:
+    # Prefer OpenAI GPT-5 by default; requires OPENAI_API_KEY
     if settings.OPENAI_API_KEY:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-        agent = A1(llm="gpt-5", path=settings.BIOMNI_BASE_PATH)
+        agent = A1(
+            llm="gpt-5",
+            path=settings.BIOMNI_BASE_PATH,
+        )
     else:
-        logger.warning("OpenAI API key not found. Agent not initialized.")
-except Exception as exc:  # noqa: BLE001
-    logger.error("Error initializing Biomni agent: %s", exc)
+        print("OpenAI API key not found. Agent not initialized.")
+except Exception as e:
+    print(f"Error initializing Biomni agent: {e}")
     agent = None
 
 # --- Gradio Chat Interface ---
@@ -542,14 +309,38 @@ def create_chat_interface():
 
 # --- FastAPI Endpoints ---
 
-@app.get("/", response_class=RedirectResponse)
+@app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    """Send authenticated users straight to the Gradio UI."""
-
-    get_current_user(request)
-    root_path = (request.scope.get("root_path") or "").rstrip("/")
-    target = f"{root_path}/gradio/" if root_path else "/gradio/"
-    return RedirectResponse(url=target)
+    """Handles the root URL, showing a welcome page or redirecting to login."""
+    user = request.session.get('user')
+    if not user:
+        return RedirectResponse(url='/login')
+    
+    user_name = user.get('name', 'User')
+    return f"""
+    <html>
+        <head>
+            <title>Biomni</title>
+            <style>
+                body {{ font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }}
+                .container {{ text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }}
+                h1 {{ color: #333; }}
+                p {{ color: #555; }}
+                a {{ display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }}
+                a:hover {{ background-color: #0056b3; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Welcome to Biomni</h1>
+                <p>You are logged in as: {user_name}</p>
+                <a href="/gradio">Go to Chat</a>
+                <br><br>
+                <a href="/logout">Logout</a>
+            </div>
+        </body>
+    </html>
+    """
 
 # --- Mount Gradio App ---
 
@@ -557,5 +348,5 @@ async def root(request: Request):
 chat_interface = create_chat_interface()
 
 # Mount the Gradio app on the FastAPI app at the /gradio path.
-# Require authentication by leveraging the header-based resolver.
-app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=get_current_user)
+# The auth_dependency ensures that only authenticated users can access it.
+app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=auth.get_current_user)

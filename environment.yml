@@ -36,6 +36,7 @@ dependencies:
   - pip:
       - uvicorn[standard]
       - orjson
+      - msal
       - python-multipart
       - itsdangerous
       - starlette
