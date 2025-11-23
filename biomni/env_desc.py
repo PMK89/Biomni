@@ -216,6 +216,21 @@ library_content_dict = {
     "fcsparser": "A command-line tool for parsing and analyzing flow cytometry standard (FCS) files. ",
     "plannotate": "[CLI Tool] A tool for annotating plasmid sequences with common features. ",
     "vina": "[CLI Tool] An open-source program for molecular docking and virtual screening, known for its speed and accuracy improvements over AutoDock 4.",
-    "autosite": "[CLI Tool] A binding site detection tool used to identify potential ligand binding pockets on protein structures for molecular docking.",
-    "PyLabRobot": "[Python Package] A Python package for controlling liquid-handling robots and other lab automation equipment.",
+"autosite": "[CLI Tool] A binding site detection tool used to identify potential ligand binding pockets on protein structures for molecular docking.",
+"PyLabRobot": "[Python Package] A Python package for controlling liquid-handling robots and other lab automation equipment.",
 }
+
+
+def merge_additional_descriptors(
+    extra_data_lake: dict[str, str] | None = None,
+    extra_library_content: dict[str, str] | None = None,
+) -> None:
+    """Merge optional descriptors (used by extension hooks)."""
+
+    if extra_data_lake:
+        data_lake_dict.update(extra_data_lake)
+    if extra_library_content:
+        library_content_dict.update(extra_library_content)
+
+
+__all__ = ["data_lake_dict", "library_content_dict", "merge_additional_descriptors"]

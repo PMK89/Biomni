@@ -1,4 +1,5 @@
 import glob
+import json
 import inspect
 import os
 import re
@@ -14,6 +15,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from biomni.agent.extension_hooks import apply_extensions, load_extension_config
 from biomni.config import default_config
 from biomni.know_how import KnowHowLoader
 from biomni.llm import SourceType, get_llm
@@ -65,6 +67,7 @@ class A1:
         api_key: str | None = None,
         commercial_mode: bool | None = None,
         expected_data_lake_files: list | None = None,
+        extension_config: dict[str, Any] | None = None,
     ):
         """Initialize the biomni agent.
 
@@ -77,6 +80,8 @@ class A1:
             base_url: Base URL for custom model serving (e.g., "http://localhost:8000/v1")
             api_key: API key for the custom LLM
             commercial_mode: If True, excludes datasets that require commercial licenses or are non-commercial only
+            extension_config: Optional dictionary describing extension settings. When
+                omitted the agent will attempt to load ``config/esqlabs_agent_config.yaml``.
 
         """
         # Use default_config values for unspecified parameters
@@ -96,6 +101,14 @@ class A1:
             api_key = default_config.api_key if default_config.api_key else "EMPTY"
         if commercial_mode is None:
             commercial_mode = default_config.commercial_mode
+
+        self.extension_config = extension_config or load_extension_config()
+        esqlabs_section = (
+            self.extension_config.get("esqlabs")
+            if isinstance(self.extension_config.get("esqlabs"), dict)
+            else {}
+        )
+        self.esqlabs_extension = esqlabs_section
 
         # Import appropriate env_desc based on commercial_mode
         if commercial_mode:
@@ -162,34 +175,46 @@ class A1:
 
         if expected_data_lake_files is None:
             expected_data_lake_files = list(self.data_lake_dict.keys())
+        else:
+            expected_data_lake_files = list(expected_data_lake_files)
 
-            # Check and download missing data lake files
-            print("Checking and downloading missing data lake files...")
+        extra_expected = []
+        if esqlabs_section:
+            raw = esqlabs_section.get("expected_data_lake_files")
+            if isinstance(raw, list):
+                extra_expected = [str(item) for item in raw]
+            elif isinstance(raw, str):
+                extra_expected = [raw]
+        if extra_expected:
+            merged = list(expected_data_lake_files) + extra_expected
+            # Deduplicate while preserving order
+            seen = set()
+            expected_data_lake_files = [f for f in merged if not (f in seen or seen.add(f))]
+
+        # Check and download missing data lake files
+        print("Checking and downloading missing data lake files...")
+        check_and_download_s3_files(
+            s3_bucket_url="https://biomni-release.s3.amazonaws.com",
+            local_data_lake_path=data_lake_dir,
+            expected_files=expected_data_lake_files,
+            folder="data_lake",
+        )
+
+        # Check if benchmark directory structure is complete
+        benchmark_ok = False
+        if os.path.isdir(benchmark_dir):
+            patient_gene_detection_dir = os.path.join(benchmark_dir, "hle")
+            if os.path.isdir(patient_gene_detection_dir):
+                benchmark_ok = True
+
+        if not benchmark_ok:
+            print("Checking and downloading benchmark files...")
             check_and_download_s3_files(
                 s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-                local_data_lake_path=data_lake_dir,
-                expected_files=expected_data_lake_files,
-                folder="data_lake",
+                local_data_lake_path=benchmark_dir,
+                expected_files=[],  # Empty list - will download entire folder
+                folder="benchmark",
             )
-
-            # Check if benchmark directory structure is complete
-            benchmark_ok = False
-            if os.path.isdir(benchmark_dir):
-                patient_gene_detection_dir = os.path.join(benchmark_dir, "hle")
-                if os.path.isdir(patient_gene_detection_dir):
-                    benchmark_ok = True
-
-            if not benchmark_ok:
-                print("Checking and downloading benchmark files...")
-                check_and_download_s3_files(
-                    s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-                    local_data_lake_path=benchmark_dir,
-                    expected_files=[],  # Empty list - will download entire folder
-                    folder="benchmark",
-                )
-        else:
-            print("Skipping datalake download (load_datalake=False)")
-            print("Note: Some tools may require datalake files to function properly.")
 
         self.path = os.path.join(path, "biomni_data")
         module2api = read_module2api()
@@ -221,6 +246,10 @@ class A1:
         # Add timeout parameter
         self.timeout_seconds = timeout_seconds  # 10 minutes default timeout
         self.configure()
+
+        self.extension_summary = apply_extensions(self, self.extension_config)
+        if self.extension_summary:
+            print("🔌 Extensions loaded:", json.dumps(self.extension_summary))
 
     def add_tool(self, api):
         """Add a new tool to the agent's tool registry and make it available for retrieval.

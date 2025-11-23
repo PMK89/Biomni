@@ -1,0 +1,30 @@
+# Enable ESQlabs extensions when running the Biomni agent locally.
+esqlabs:
+  enable_tools: true
+  enable_data_descriptors: true
+  namespaces:
+    - snapshots
+    - pbpk
+  expected_data_lake_files:
+    - Cosmic_Breakpoints_v101_GRCh38.csv
+    - Cosmic_CancerGeneCensusHallmarksOfCancer_v101_GRCh38.parquet
+    - Cosmic_CancerGeneCensus_v101_GRCh38.parquet
+    - Cosmic_ClassificationPaper_v101_GRCh38.parquet
+    - Cosmic_Classification_v101_GRCh38.parquet
+    - Cosmic_CompleteCNA_v101_GRCh38.tsv.gz
+    - Cosmic_CompleteDifferentialMethylation_v101_GRCh38.tsv.gz
+    - Cosmic_CompleteGeneExpression_v101_GRCh38.tsv.gz
+    - Cosmic_Fusion_v101_GRCh38.csv
+    - Cosmic_Genes_v101_GRCh38.parquet
+    - Cosmic_GenomeScreensMutant_v101_GRCh38.tsv.gz
+    - Cosmic_MutantCensus_v101_GRCh38.csv
+    - Cosmic_ResistanceMutations_v101_GRCh38.parquet
+    - final_knowledge_base.md
+    - MoBi.md
+    - Suite.md
+    - PKSim.md
+    - OSPSuite-R.md
+    - OSP-PBPK-Model-Library.md
+    - OSP-Qualification-Reports.md
+    - osp_forum_0.md
+    - pbpk_modeling.pdf

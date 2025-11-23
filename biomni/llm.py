@@ -1,5 +1,8 @@
+import contextlib
 import os
-from typing import TYPE_CHECKING, Literal, Optional
+import re
+import time
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -9,6 +12,104 @@ if TYPE_CHECKING:
 SourceType = Literal["OpenAI", "AzureOpenAI", "Anthropic", "Ollama", "Gemini", "Bedrock", "Groq", "Custom"]
 ALLOWED_SOURCES: set[str] = set(SourceType.__args__)
 
+
+def _wrap_llm_with_retry(llm: BaseChatModel, max_attempts: int = 8) -> BaseChatModel:
+    """Wrap `invoke`/`ainvoke` with simple 429-aware retry logic."""
+
+    original_invoke: Callable[..., Any] = llm.invoke
+    original_ainvoke: Callable[..., Any] | None = getattr(llm, "ainvoke", None)
+
+    def _parse_retry_after(exc: Exception) -> int | None:
+        try:
+            import openai as _openai
+        except Exception:  # noqa: BLE001
+            _openai = None
+        if _openai and isinstance(exc, getattr(_openai, "RateLimitError", tuple())):
+            response = getattr(exc, "response", None)
+            headers = getattr(response, "headers", {}) or {}
+            retry_after = headers.get("Retry-After") or headers.get("retry-after")
+            if retry_after:
+                with contextlib.suppress(ValueError):
+                    return int(retry_after)
+        match = re.search(r"retry\\s+after\\s+(\\d+)", str(exc), re.IGNORECASE)
+        if match:
+            with contextlib.suppress(ValueError):
+                return int(match.group(1))
+        header = getattr(getattr(exc, "response", None), "headers", {}) or {}
+        retry_after = header.get("Retry-After") or header.get("retry-after")
+        if retry_after:
+            with contextlib.suppress(ValueError):
+                return int(retry_after)
+        return None
+
+    def _is_rate_limit(exc: Exception) -> bool:
+        text = str(exc).lower()
+        if "429" in text or "rate limit" in text or "throttl" in text:
+            return True
+        status = getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None)
+        if status == 429:
+            return True
+        try:
+            import openai as _openai
+        except Exception:  # noqa: BLE001
+            return False
+        return isinstance(exc, getattr(_openai, "RateLimitError", tuple()))
+
+    def _retry_sync(*args: Any, **kwargs: Any):
+        delay = 5
+        attempt = 0
+        last_err: Exception | None = None
+        while attempt < max_attempts:
+            try:
+                return original_invoke(*args, **kwargs)
+            except Exception as exc:  # noqa: BLE001
+                last_err = exc
+                if not _is_rate_limit(exc):
+                    raise
+                wait = _parse_retry_after(exc)
+                if wait is None:
+                    wait = min(delay, 120)
+                    delay = min(int(delay * 1.8) + 1, 120)
+                time.sleep(max(wait, 1))
+                attempt += 1
+        if last_err:
+            raise last_err
+        raise RuntimeError("LLM invocation failed without an exception")
+
+    setattr(llm, "invoke", _retry_sync)
+
+    if original_ainvoke is not None:
+
+        async def _retry_async(*args: Any, **kwargs: Any):
+            delay = 5
+            attempt = 0
+            last_err: Exception | None = None
+            while attempt < max_attempts:
+                try:
+                    return await original_ainvoke(*args, **kwargs)  # type: ignore[misc]
+                except Exception as exc:  # noqa: BLE001
+                    last_err = exc
+                    if not _is_rate_limit(exc):
+                        raise
+                    wait = _parse_retry_after(exc)
+                    if wait is None:
+                        wait = min(delay, 120)
+                        delay = min(int(delay * 1.8) + 1, 120)
+                    await __import__("asyncio").sleep(max(wait, 1))
+                    attempt += 1
+            if last_err:
+                raise last_err
+            raise RuntimeError("LLM async invocation failed without an exception")
+
+        setattr(llm, "ainvoke", _retry_async)
+
+    return llm
+
+
+def _maybe_wrap_with_retry(llm: BaseChatModel) -> BaseChatModel:
+    if os.getenv("BIOMNI_ENABLE_LLM_RETRY", "").lower() in {"1", "true", "yes", "on"}:
+        return _wrap_llm_with_retry(llm)
+    return llm
 
 def get_llm(
     model: str | None = None,
@@ -125,18 +226,22 @@ def get_llm(
                         payload.pop("temperature", None)
                     return payload
 
-            return _ChatOpenAIResponsesNoStop(
+            return _maybe_wrap_with_retry(
+                _ChatOpenAIResponsesNoStop(
                 model=model,
                 temperature=1,  # Set to default value for gpt-5, will be removed in payload
                 stop_sequences=stop_sequences,
                 use_responses_api=True,
                 output_version="v0",
             )
+            )
         else:
-            return ChatOpenAI(
+            return _maybe_wrap_with_retry(
+                ChatOpenAI(
                 model=model,
                 temperature=temperature,
                 stop_sequences=stop_sequences,
+            )
             )
 
     elif source == "AzureOpenAI":
@@ -148,12 +253,14 @@ def get_llm(
             )
         API_VERSION = "2024-12-01-preview"
         model = model.replace("azure-", "")
-        return AzureChatOpenAI(
+        return _maybe_wrap_with_retry(
+            AzureChatOpenAI(
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             azure_endpoint=os.getenv("OPENAI_ENDPOINT"),
             azure_deployment=model,
             openai_api_version=API_VERSION,
             temperature=temperature,
+        )
         )
 
     elif source == "Anthropic":
@@ -181,11 +288,13 @@ def get_llm(
             except Exception as e:
                 print(f"Note: Could not load ANTHROPIC_API_KEY from bash_profile: {e}")
 
-        return ChatAnthropic(
+        return _maybe_wrap_with_retry(
+            ChatAnthropic(
             model=model,
             temperature=temperature,
             max_tokens=8192,
             stop_sequences=stop_sequences,
+        )
         )
 
     elif source == "Gemini":
@@ -201,12 +310,14 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-openai package is required for Gemini models. Install with: pip install langchain-openai"
             )
-        return ChatOpenAI(
+        return _maybe_wrap_with_retry(
+            ChatOpenAI(
             model=model,
             temperature=temperature,
             api_key=os.getenv("GEMINI_API_KEY"),
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             stop_sequences=stop_sequences,
+        )
         )
 
     elif source == "Groq":
@@ -216,12 +327,14 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-openai package is required for Groq models. Install with: pip install langchain-openai"
             )
-        return ChatOpenAI(
+        return _maybe_wrap_with_retry(
+            ChatOpenAI(
             model=model,
             temperature=temperature,
             api_key=os.getenv("GROQ_API_KEY"),
             base_url="https://api.groq.com/openai/v1",
             stop_sequences=stop_sequences,
+        )
         )
 
     elif source == "Ollama":
@@ -231,9 +344,11 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-ollama package is required for Ollama models. Install with: pip install langchain-ollama"
             )
-        return ChatOllama(
+        return _maybe_wrap_with_retry(
+            ChatOllama(
             model=model,
             temperature=temperature,
+        )
         )
 
     elif source == "Bedrock":
@@ -243,11 +358,13 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-aws package is required for Bedrock models. Install with: pip install langchain-aws"
             )
-        return ChatBedrock(
+        return _maybe_wrap_with_retry(
+            ChatBedrock(
             model=model,
             temperature=temperature,
             stop_sequences=stop_sequences,
             region_name=os.getenv("AWS_REGION", "us-east-1"),
+        )
         )
 
     elif source == "Custom":
@@ -267,7 +384,7 @@ def get_llm(
             base_url=base_url,
             api_key=api_key,
         )
-        return llm
+        return _maybe_wrap_with_retry(llm)
 
     else:
         raise ValueError(
