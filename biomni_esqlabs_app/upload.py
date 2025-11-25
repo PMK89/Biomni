@@ -11,11 +11,9 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, B
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/files", tags=["files"])
+from .data_paths import BIOMNI_DATA_PATH, get_chat_dir, get_user_dir
 
-# Base directory for user data
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_DATA_ROOT = _REPO_ROOT / "local_data"
+router = APIRouter(prefix="/files", tags=["files"])
 
 def _get_user_id(request: Request) -> str:
     """Retrieve user_id from request state or default."""
@@ -26,14 +24,25 @@ def _get_user_id(request: Request) -> str:
 
 def _get_chat_dir(user_id: str, chat_id: str, *, create: bool = True) -> Path:
     """Resolve (and optionally create) the chat-specific directory."""
-    # Sanitize inputs to prevent directory traversal
-    s_user = "".join(c for c in user_id if c.isalnum() or c in "-_")
-    s_chat = "".join(c for c in chat_id if c.isalnum() or c in "-_")
-    
-    path = _DATA_ROOT / s_user / s_chat
-    if create:
-        path.mkdir(parents=True, exist_ok=True)
-    return path
+
+    return get_chat_dir(user_id, chat_id, create=create)
+
+
+def list_chat_files(user_id: str, chat_id: str) -> List[dict]:
+    save_dir = _get_chat_dir(user_id, chat_id)
+    files: List[dict] = []
+    ignore = {"metadata.json", "history.json", "runs"}
+    if save_dir.exists():
+        for item in save_dir.iterdir():
+            if item.name in ignore:
+                continue
+            if item.is_file():
+                files.append({
+                    "name": item.name,
+                    "size": item.stat().st_size,
+                    "modified": item.stat().st_mtime,
+                })
+    return sorted(files, key=lambda x: x["modified"], reverse=True)
 
 # --- Chat Persistence Models ---
 class ChatInit(BaseModel):
@@ -92,8 +101,7 @@ def _load_agent_runs(user_id: str, chat_id: str) -> List[Dict[str, Any]]:
 async def list_chats(request: Request) -> List[dict]:
     """List all chats for the current user."""
     user_id = _get_user_id(request)
-    s_user = "".join(c for c in user_id if c.isalnum() or c in "-_")
-    user_dir = _DATA_ROOT / s_user
+    user_dir = get_user_dir(user_id, create=False)
     
     chats = []
     if user_dir.exists():
@@ -257,18 +265,7 @@ async def upload_file(
 async def list_files(request: Request, chat_id: str) -> List[dict]:
     """List all files in the chat directory."""
     user_id = _get_user_id(request)
-    save_dir = _get_chat_dir(user_id, chat_id)
-    
-    files = []
-    if save_dir.exists():
-        for item in save_dir.iterdir():
-            if item.is_file() and item.name not in ["metadata.json", "history.json"]:
-                files.append({
-                    "name": item.name,
-                    "size": item.stat().st_size,
-                    "modified": item.stat().st_mtime
-                })
-    return sorted(files, key=lambda x: x['modified'], reverse=True)
+    return list_chat_files(user_id, chat_id)
 
 @router.get("/download/{chat_id}/{filename}")
 async def download_file(request: Request, chat_id: str, filename: str):

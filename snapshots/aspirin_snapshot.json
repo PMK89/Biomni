@@ -1,135 +1,120 @@
 {
   "Version": 80,
-  "drug": {
-    "name": "Aspirin",
-    "compound": {
+  "Compounds": [
+    {
       "Name": "Aspirin",
-      "MolecularWeight": {
-        "value": 180.16,
-        "unit": "g/mol",
-        "description": "Acetylsalicylic acid molecular weight"
-      },
-      "LogP": {
-        "value": 1.2,
-        "unit": "log10",
-        "description": "Octanol/water partition coefficient (approximate)"
-      },
-      "pKa": [
+      "Parameters": [
         {
-          "value": 3.5,
-          "type": "acid",
-          "description": "Carboxylic acid pKa (approximate)"
+          "Name": "Molecular weight",
+          "Value": 180.16,
+          "Unit": "g/mol",
+          "Description": "Molecular weight of acetylsalicylic acid (C9H8O4).",
+          "Source": {
+            "Citation": "PubChem Compound Summary for CID 2244 (Aspirin).",
+            "URL": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+          }
         }
       ],
-      "Solubility": {
-        "value": 4.0,
-        "unit": "mg/mL",
-        "pH": 7.4,
-        "description": "Approximate aqueous solubility at physiological pH"
-      },
-      "FractionUnboundPlasma": {
-        "value": 0.1,
-        "unit": "fraction",
-        "description": "Unbound fraction in plasma (90% protein bound)"
-      },
-      "BloodPlasmaRatio": {
-        "value": 1.0,
-        "unit": "ratio",
-        "description": "Assumed blood-to-plasma ratio"
-      },
-      "VolumeOfDistribution": {
-        "value": 0.15,
-        "unit": "L/kg",
-        "description": "Apparent volume of distribution"
-      },
-      "Absorption": {
-        "FractionAbsorbed": {
-          "value": 0.9,
-          "unit": "fraction",
-          "description": "Approximate fraction absorbed after oral dosing"
-        },
-        "Ka": {
-          "value": 1.5,
-          "unit": "1/h",
-          "description": "First-order absorption rate constant (approximate)"
-        },
-        "EffectivePermeability": {
-          "value": 0.0002,
-          "unit": "cm/s",
-          "description": "Estimated human intestinal effective permeability"
-        }
-      },
-      "Elimination": {
-        "HalfLife": {
-          "value": 0.3,
-          "unit": "h",
-          "description": "Plasma half-life for acetylsalicylic acid"
-        },
-        "Clearance": {
-          "value": 10.0,
-          "unit": "L/h",
-          "description": "Systemic clearance (approximate for a 70-kg adult)"
-        },
-        "RenalFraction": {
-          "value": 0.3,
-          "unit": "fraction",
-          "description": "Estimated renal contribution to total clearance"
-        },
-        "Metabolism": {
-          "Enzymes": [
+      "Lipophilicity": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
             {
-              "name": "Esterases (plasma/tissue)",
-              "role": "Hydrolysis of aspirin to salicylic acid"
-            },
-            {
-              "name": "UGT",
-              "role": "Glucuronidation of salicylate"
+              "Name": "Lipophilicity",
+              "Value": 1.23,
+              "Unit": "Log Units",
+              "Description": "Approximate logP (octanol/water) for aspirin at neutral pH.",
+              "Source": {
+                "Citation": "DrugBank / PubChem estimated XlogP3-AA for Aspirin.",
+                "URL": "https://go.drugbank.com/drugs/DB00945"
+              }
             }
           ]
         }
-      }
-    },
-    "sources": [
-      {
-        "parameter": "MolecularWeight",
-        "citation": "DrugBank/chemistry databases (acetylsalicylic acid MW 180.16 g/mol)",
-        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
-      },
-      {
-        "parameter": "LogP",
-        "citation": "Approximate logP from drug information databases",
-        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
-      },
-      {
-        "parameter": "pKa",
-        "citation": "Typical reported pKa for acetylsalicylic acid",
-        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
-      },
-      {
-        "parameter": "Solubility",
-        "citation": "Approximate aqueous solubility data from drug monographs",
-        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
-      },
-      {
-        "parameter": "FractionUnboundPlasma",
-        "citation": "Aspirin is ~90% protein bound",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/"
-      },
-      {
-        "parameter": "VolumeOfDistribution",
-        "citation": "Typical Vd reported for aspirin in adults (~0.1–0.2 L/kg)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/"
-      },
-      {
-        "parameter": "HalfLife",
-        "citation": "Plasma half-life of aspirin ~15–20 min (~0.3 h)",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/"
-      }
-    ]
-  },
-  "Compounds": [
+      ],
+      "FractionUnbound": [
+        {
+          "Name": "Measurement",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "Fraction unbound (plasma, reference value)",
+              "Value": 0.1,
+              "Description": "Estimated fraction of unbound aspirin in human plasma, assuming ~90% protein binding.",
+              "Source": {
+                "Citation": "Aspirin prescribing information and pharmacology texts reporting 80–90% plasma protein binding.",
+                "URL": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=cf7c54b9-855f-4fb5-a9f2-4c3b209d292b"
+              }
+            }
+          ]
+        }
+      ],
+      "Solubility": [
+        {
+          "Name": "Assumption",
+          "Parameters": [
+            {
+              "Name": "Solubility at reference pH",
+              "Value": 300.0,
+              "Unit": "mg/l",
+              "Description": "Approximate aqueous solubility of aspirin at physiological pH 7.4 (assumed, low-solubility weak acid).",
+              "Source": {
+                "Citation": "Approximation based on reported low aqueous solubility of aspirin; to be refined with dedicated solubility data.",
+                "URL": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+              }
+            },
+            {
+              "Name": "Reference pH",
+              "Value": 7.4
+            }
+          ]
+        }
+      ],
+      "IsSmallMolecule": true
+    }
+  ],
+  "Simulations": [
     {
-      "Name": "Compound_1"
+      "Name": "Aspirin_Simulation",
+      "Model": "4Comp",
+      "Individual": "Individual_1",
+      "Compounds": [
+        {
+          "Name": "Aspirin",
+          "Protocol": {
+            "Name": "Protocol_Main",
+            "Formulations": [
+              {
+                "Name": "Oral IR Formulation",
+                "Key": "Formulation"
+              }
+            ]
+          }
+        }
+      ],
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 24.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "Resolution",
+              "Value": 4.0,
+              "Unit": "pts/h"
+            }
+          ]
+        }
+      ],
+      "Events": [],
+      "Parameters": []
     }
   ],
   "Events": [],
@@ -228,49 +213,5 @@
       "TimeUnit": "h"
     }
   ],
-  "SimulationClassifications": [],
-  "Simulations": [
-    {
-      "Name": "Compound_1_Simulation",
-      "Model": "4Comp",
-      "Individual": "Individual_1",
-      "Compounds": [
-        {
-          "Name": "Compound_1",
-          "Protocol": {
-            "Name": "Protocol_Main",
-            "Formulations": [
-              {
-                "Name": "Oral IR Formulation",
-                "Key": "Formulation"
-              }
-            ]
-          }
-        }
-      ],
-      "OutputSchema": [
-        {
-          "Parameters": [
-            {
-              "Name": "Start time",
-              "Value": 0.0,
-              "Unit": "h"
-            },
-            {
-              "Name": "End time",
-              "Value": 24.0,
-              "Unit": "h"
-            },
-            {
-              "Name": "Resolution",
-              "Value": 4.0,
-              "Unit": "pts/h"
-            }
-          ]
-        }
-      ],
-      "Events": [],
-      "Parameters": []
-    }
-  ]
+  "SimulationClassifications": []
 }

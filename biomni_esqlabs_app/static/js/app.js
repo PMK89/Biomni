@@ -653,6 +653,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (currentSolution) {
                             addMessageToStorage(chatId, 'bot', currentSolution);
                         }
+                        if (chatId) {
+                             fetchFiles(chatId);
+                        }
                     }
                 } catch (e) {
                     console.error('Error parsing SSE event:', e, eventChunk);

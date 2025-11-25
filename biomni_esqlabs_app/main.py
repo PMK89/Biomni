@@ -24,6 +24,7 @@ from pydantic import BaseModel
 
 from biomni.agent.a1 import A1
 from .config import settings
+from .data_paths import BIOMNI_DATA_PATH, get_chat_dir, sanitize_segment
 from .upload import router as upload_router, save_agent_run_record
 from biomni.tool.literature import (
     query_pubmed,
@@ -32,18 +33,6 @@ from biomni.tool.literature import (
     search_google,
     advanced_web_search_claude
 )
-
-
-def _sanitize_id(value: Optional[str]) -> str:
-    if not value:
-        return "default"
-    return "".join(c for c in value if c.isalnum() or c in "-_") or "default"
-
-
-def _ensure_chat_dir(user_id: str, chat_id: str) -> Path:
-    path = _CHAT_DATA_ROOT / _sanitize_id(user_id) / _sanitize_id(chat_id)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def _resolve_user_id(request: Request) -> str:
@@ -101,7 +90,7 @@ def _maybe_save_snapshot(solution: str, user_id: str, chat_id: Optional[str]) ->
     if not snapshot_json:
         return solution, None
 
-    chat_dir = _ensure_chat_dir(user_id, chat_id)
+    chat_dir = get_chat_dir(user_id, chat_id)
 
     compound_name = "snapshot"
     try:
@@ -110,23 +99,42 @@ def _maybe_save_snapshot(solution: str, user_id: str, chat_id: Optional[str]) ->
             compound = compounds[0]
             name = compound.get("Name") if isinstance(compound, dict) else None
             if name:
-                compound_name = _sanitize_id(name.lower()) or compound_name
+                compound_name = sanitize_segment(name.lower()) or compound_name
     except Exception:
         pass
 
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     filename = f"{compound_name}_{timestamp}.json"
     file_path = chat_dir / filename
-    file_path.write_text(json.dumps(snapshot_json, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    note = f"Snapshot saved as `{filename}`. You can download it from the Files panel."
+    moved_existing = False
+    source_file = SNAPSHOT_REPO_DIR / filename
+    if source_file.exists():
+        try:
+            source_file.replace(file_path)
+            moved_existing = True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to move snapshot %s into chat dir: %s", source_file, exc)
+
+    if not moved_existing:
+        file_path.write_text(json.dumps(snapshot_json, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    try:
+        relative_path = file_path.relative_to(BIOMNI_DATA_PATH)
+    except ValueError:
+        relative_path = file_path.relative_to(PROJECT_ROOT)
+
+    note = (
+        "Snapshot saved in the chat files directory as "
+        f"`{relative_path}`. You can download it from the Files panel."
+    )
     cleaned_text = cleaned_solution.strip()
     if (cleaned_text):
         cleaned_text = f"{cleaned_text}\n\n{note}"
     else:
         cleaned_text = note
 
-    return cleaned_text, {"filename": filename}
+    return cleaned_text, {"filename": filename, "path": str(relative_path)}
 
 try:
     from biomni_esqlabs_tools.snapshots.create_drug_snapshot import create_drug_snapshot
@@ -230,43 +238,7 @@ logger = logging.getLogger(__name__)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_DIR = PROJECT_ROOT / "local_data"
-_CHAT_DATA_ROOT = PROJECT_ROOT / "local_data"
-
-
-def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
-    """Return a writable Biomni data directory, falling back to local_data."""
-
-    candidate = Path(os.path.expanduser(raw_path or str(DEFAULT_DATA_DIR)))
-    if not candidate.is_absolute():
-        candidate = (PROJECT_ROOT / candidate).resolve()
-    try:
-        candidate.mkdir(parents=True, exist_ok=True)
-        test_file = candidate / ".write_test"
-        with test_file.open("w", encoding="utf-8") as temp:
-            temp.write("ok")
-        test_file.unlink(missing_ok=True)
-        return candidate
-    except PermissionError:
-        logger.warning(
-            "Biomni base path %s is not writable; falling back to %s",
-            candidate,
-            DEFAULT_DATA_DIR,
-        )
-    except OSError as exc:
-        logger.warning(
-            "Unable to prepare Biomni base path %s (%s); falling back to %s",
-            candidate,
-            exc,
-            DEFAULT_DATA_DIR,
-        )
-
-    fallback = DEFAULT_DATA_DIR.resolve()
-    fallback.mkdir(parents=True, exist_ok=True)
-    return fallback
-
-
-BIOMNI_DATA_PATH = _ensure_writable_base_path(settings.BIOMNI_BASE_PATH)
+SNAPSHOT_REPO_DIR = PROJECT_ROOT / "snapshots"
 
 OIDC_OBJECT_ID_HEADER = os.getenv("OIDC_OBJECT_ID_HEADER", "x-auth-request-objectid")
 OIDC_USER_HEADER = os.getenv("OIDC_USER_HEADER", "x-auth-request-user")
@@ -474,7 +446,7 @@ agent = None
 try:
     if settings.OPENAI_API_KEY:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-        agent = A1(path=settings.BIOMNI_BASE_PATH)
+        agent = A1(path=str(BIOMNI_DATA_PATH))
         
         # Register standard literature/research tools globally once
         for tool_func in [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search_claude]:
@@ -541,10 +513,19 @@ async def chat_stream(req: ChatRequest, request: Request):
 
     user_id = _resolve_user_id(request)
     chat_id = req.chat_id
-    
+
+    storage_chat_id = chat_id or "default_chat"
+    chat_dir = get_chat_dir(user_id, storage_chat_id, create=True)
+
     _apply_selected_tools(req.tools)
-    
-    prompt = req.prompt
+
+    prompt_prefix = (
+        "IMPORTANT: You must treat the following directory as your working directory for this chat.\n"
+        f"Directory: {chat_dir.resolve()}\n"
+        "All files you create MUST be written inside this directory (or its subdirectories).\n"
+        "Do NOT write files anywhere else in the repository.\n\n"
+    )
+    prompt = prompt_prefix + (req.prompt or "")
 
     async def event_generator():
         # Helper to capture logs
@@ -623,21 +604,20 @@ async def chat_stream(req: ChatRequest, request: Request):
             else:
                 solution = (final_content or "").strip()
 
-            cleaned_solution, snapshot_info = _maybe_save_snapshot(solution, user_id, chat_id)
+            cleaned_solution, snapshot_info = _maybe_save_snapshot(solution, user_id, storage_chat_id)
 
-            if chat_id:
-                run_payload = {
-                    "chat_id": chat_id,
-                    "prompt": prompt,
-                    "solution": cleaned_solution,
-                    "log": getattr(agent, "log", []),
-                    "records": getattr(agent, "_last_run_records", []),
-                    "duration_seconds": time.time() - start_time,
-                }
-                try:
-                    save_agent_run_record(user_id, chat_id, run_payload)
-                except Exception:
-                    logging.exception("Failed to persist agent run record", exc_info=True)
+            run_payload = {
+                "chat_id": storage_chat_id,
+                "prompt": prompt,
+                "solution": cleaned_solution,
+                "log": getattr(agent, "log", []),
+                "records": getattr(agent, "_last_run_records", []),
+                "duration_seconds": time.time() - start_time,
+            }
+            try:
+                save_agent_run_record(user_id, storage_chat_id, run_payload)
+            except Exception:
+                logging.exception("Failed to persist agent run record", exc_info=True)
 
             yield f"data: {json.dumps({'type': 'solution', 'content': cleaned_solution})}\n\n"
             if snapshot_info:
@@ -705,7 +685,7 @@ def create_chat_interface():
                 description = original_name or os.path.basename(file_path)
 
                 # Determine destination directory from settings and ensure it exists
-                dest_dir = os.path.abspath(os.path.expanduser(settings.BIOMNI_BASE_PATH))
+                dest_dir = str(BIOMNI_DATA_PATH)
                 os.makedirs(dest_dir, exist_ok=True)
 
                 # Build a safe destination path and avoid collisions
