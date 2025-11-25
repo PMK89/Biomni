@@ -21,11 +21,12 @@ RUN mkdir -p "${TMPDIR}"
 
 # Cache-friendly: copy env spec first
 COPY --chown=${USERNAME}:${USERNAME} environment.yml /workspace/
-COPY --chown=${USERNAME}:${USERNAME} pyproject.toml /workspace/
 
 # Single-shot env solve (must include Web UI deps)
 RUN micromamba create -y -n ${ENV_NAME} -f /workspace/environment.yml && \
     micromamba clean --all --yes
+
+COPY --chown=${USERNAME}:${USERNAME} pyproject.toml /workspace/
 
 SHELL ["bash", "-lc"]
 ENV MAMBA_DOCKERFILE_ACTIVATE=1
@@ -35,7 +36,10 @@ RUN echo "micromamba activate ${ENV_NAME}" >> ~/.bashrc
 COPY --chown=${USERNAME}:${USERNAME} . /workspace
 
 # Optional local install if present
-RUN if [[ -f pyproject.toml ]]; then \
+RUN if [[ -f biomni_esqlabs_app/requirements.txt ]]; then \
+      micromamba run -n ${ENV_NAME} pip install -r biomni_esqlabs_app/requirements.txt ; \
+    fi && \
+    if [[ -f pyproject.toml ]]; then \
       micromamba run -n ${ENV_NAME} pip install -e . ; \
     elif [[ -f requirements.txt ]]; then \
       micromamba run -n ${ENV_NAME} pip install -r requirements.txt ; \

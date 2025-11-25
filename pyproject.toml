@@ -13,7 +13,14 @@ authors = [
     {name = "Biomni Team", email = "kexinh@cs.stanford.edu"}
 ]
 requires-python = ">=3.11"
-dependencies = ["pydantic", "langchain", "python-dotenv"]
+dependencies = [
+    "pydantic",
+    "langchain",
+    "langgraph==0.3.18",
+    "python-dotenv",
+    "PyPDF2",
+    "googlesearch-python",
+]
 
 [project.urls]
 Homepage = "https://github.com/snap-stanford/biomni"
@@ -26,6 +33,7 @@ include-package-data = true
 version = {attr = "biomni.version.__version__"}
 
 [tool.setuptools.packages.find]
+include = ["biomni*", "biomni_esqlabs_app*"]
 exclude = ["test*", "tutorials*"]
 
 [tool.ruff]

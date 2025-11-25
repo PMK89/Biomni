@@ -7,6 +7,8 @@ python-jose[cryptography]
 python-dotenv
 gradio
 pypdf
+PyPDF2
+googlesearch-python
 
 # Biomni Dependencies (from environment.yml)
 numpy==2.1
