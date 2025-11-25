@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 from typing import Optional
@@ -25,6 +26,12 @@ class Settings(BaseSettings):
 
     # Biomni base data directory (parent of biomni_data). Defaults to ./local_data
     BIOMNI_BASE_PATH: str = "./local_data"
+
+    @field_validator("BIOMNI_BASE_PATH", mode="before")
+    @classmethod
+    def use_docker_data_dir(cls, v: Optional[str]) -> str:
+        # In Docker, use the explicitly mounted directory if available, ignoring .env
+        return os.getenv("BIOMNI_DATA_DIR") or v or "./local_data"
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(project_dir, '.env'),
