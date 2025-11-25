@@ -7,7 +7,7 @@ DATA_DIR = "./data/esqlabs/snapshot_files"
 SNAPSHOT_OUT_DIR = "./data/esqlabs/generated_snapshot_files"
 
 def main(drug: str = "Aspirin") -> None:
-    agent = A1(llm="gpt-5", path=BIOMNI_BASE_PATH)
+    agent = A1(path=BIOMNI_BASE_PATH)
     for tool in iter_esqlabs_tools():
         agent.add_tool(tool)
     agent.go(

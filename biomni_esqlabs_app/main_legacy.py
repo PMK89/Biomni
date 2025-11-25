@@ -31,11 +31,10 @@ app.include_router(upload_router)
 # The agent's data path is relative to the project root where uvicorn is run.
 agent = None
 try:
-    # Prefer OpenAI GPT-5 by default; requires OPENAI_API_KEY
+    # Prefer OpenAI GPT-5.1 by default; requires OPENAI_API_KEY
     if settings.OPENAI_API_KEY:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
         agent = A1(
-            llm="gpt-5",
             path=settings.BIOMNI_BASE_PATH,
         )
     else:

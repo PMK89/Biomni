@@ -1,0 +1,177 @@
+Row 1: only 1 numeric tokens detected; padding 15 empties.
+Row 1: could not validate a split into two valid SMILES; used naive split at 59.
+Row 1: SMILES validation failed (orig_valid=True, final_valid=False).
+Row 2: only 1 numeric tokens detected; padding 15 empties.
+Row 2: could not validate a split into two valid SMILES; used naive split at 59.
+Row 2: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 3: only 1 numeric tokens detected; padding 15 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 119.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 4: only 0 numeric tokens detected; padding 16 empties.
+Row 4: could not validate a split into two valid SMILES; used naive split at 83.
+Row 4: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 3: only 0 numeric tokens detected; padding 16 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 95.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 5: only 1 numeric tokens detected; padding 15 empties.
+Row 5: could not validate a split into two valid SMILES; used naive split at 40.
+Row 5: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 6: only 0 numeric tokens detected; padding 16 empties.
+Row 6: could not validate a split into two valid SMILES; used naive split at 122.
+Row 6: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 7: only 0 numeric tokens detected; padding 16 empties.
+Row 7: could not validate a split into two valid SMILES; used naive split at 115.
+Row 7: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 8: only 0 numeric tokens detected; padding 16 empties.
+Row 8: could not validate a split into two valid SMILES; used naive split at 130.
+Row 8: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 9: only 0 numeric tokens detected; padding 16 empties.
+Row 9: could not validate a split into two valid SMILES; used naive split at 68.
+Row 9: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 10: only 1 numeric tokens detected; padding 15 empties.
+Row 10: could not validate a split into two valid SMILES; used naive split at 70.
+Row 10: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 11: only 1 numeric tokens detected; padding 15 empties.
+Row 11: could not validate a split into two valid SMILES; used naive split at 80.
+Row 11: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 12: only 1 numeric tokens detected; padding 15 empties.
+Row 12: could not validate a split into two valid SMILES; used naive split at 78.
+Row 12: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 13: only 0 numeric tokens detected; padding 16 empties.
+Row 3: only 0 numeric tokens detected; padding 16 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 34.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 14: only 0 numeric tokens detected; padding 16 empties.
+Row 3: only 0 numeric tokens detected; padding 16 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 22.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 1: only 1 numeric tokens detected; padding 15 empties.
+Row 1: could not validate a split into two valid SMILES; used naive split at 54.
+Row 1: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 16: only 1 numeric tokens detected; padding 15 empties.
+Row 16: could not validate a split into two valid SMILES; used naive split at 180.
+Row 16: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 17: only 1 numeric tokens detected; padding 15 empties.
+Row 17: could not validate a split into two valid SMILES; used naive split at 78.
+Row 17: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 18: only 0 numeric tokens detected; padding 16 empties.
+Row 18: could not validate a split into two valid SMILES; used naive split at 17.
+Row 18: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 1: only 1 numeric tokens detected; padding 15 empties.
+Row 1: could not validate a split into two valid SMILES; used naive split at 49.
+Row 1: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 19: only 0 numeric tokens detected; padding 16 empties.
+Row 19: could not validate a split into two valid SMILES; used naive split at 98.
+Row 19: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 2: only 2 numeric tokens detected; padding 14 empties.
+Row 2: could not validate a split into two valid SMILES; used naive split at 48.
+Row 2: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 21: only 0 numeric tokens detected; padding 16 empties.
+Row 21: could not validate a split into two valid SMILES; used naive split at 63.
+Row 21: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 2: only 1 numeric tokens detected; padding 15 empties.
+Row 2: could not validate a split into two valid SMILES; used naive split at 56.
+Row 2: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 23: only 1 numeric tokens detected; padding 15 empties.
+Row 23: could not validate a split into two valid SMILES; used naive split at 88.
+Row 23: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 2: only 1 numeric tokens detected; padding 15 empties.
+Row 2: could not validate a split into two valid SMILES; used naive split at 59.
+Row 2: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 25: only 0 numeric tokens detected; padding 16 empties.
+Row 25: could not validate a split into two valid SMILES; used naive split at 60.
+Row 25: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 26: only 0 numeric tokens detected; padding 16 empties.
+Row 26: could not validate a split into two valid SMILES; used naive split at 82.
+Row 26: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 27: only 0 numeric tokens detected; padding 16 empties.
+Row 27: could not validate a split into two valid SMILES; used naive split at 90.
+Row 27: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 28: only 1 numeric tokens detected; padding 15 empties.
+Row 28: could not validate a split into two valid SMILES; used naive split at 61.
+Row 28: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 29: only 1 numeric tokens detected; padding 15 empties.
+Row 29: could not validate a split into two valid SMILES; used naive split at 70.
+Row 29: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 30: only 1 numeric tokens detected; padding 15 empties.
+Row 30: could not validate a split into two valid SMILES; used naive split at 84.
+Row 30: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 31: only 0 numeric tokens detected; padding 16 empties.
+Row 3: only 1 numeric tokens detected; padding 15 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 63.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 32: only 0 numeric tokens detected; padding 16 empties.
+Row 32: could not validate a split into two valid SMILES; used naive split at 52.
+Row 32: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 2: only 0 numeric tokens detected; padding 16 empties.
+Row 2: could not validate a split into two valid SMILES; used naive split at 38.
+Row 2: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 33: only 0 numeric tokens detected; padding 16 empties.
+Row 33: could not validate a split into two valid SMILES; used naive split at 33.
+Row 33: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 5: only 1 numeric tokens detected; padding 15 empties.
+Row 5: could not validate a split into two valid SMILES; used naive split at 77.
+Row 5: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 34: only 1 numeric tokens detected; padding 15 empties.
+Row 34: could not validate a split into two valid SMILES; used naive split at 66.
+Row 34: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 35: only 0 numeric tokens detected; padding 16 empties.
+Row 35: could not validate a split into two valid SMILES; used naive split at 49.
+Row 35: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 7: only 1 numeric tokens detected; padding 15 empties.
+Row 7: could not validate a split into two valid SMILES; used naive split at 122.
+Row 7: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 36: only 0 numeric tokens detected; padding 16 empties.
+Row 36: could not validate a split into two valid SMILES; used naive split at 16.
+Row 36: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 4: only 0 numeric tokens detected; padding 16 empties.
+Row 4: could not validate a split into two valid SMILES; used naive split at 92.
+Row 4: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 37: only 1 numeric tokens detected; padding 15 empties.
+Row 37: could not validate a split into two valid SMILES; used naive split at 71.
+Row 37: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 38: only 0 numeric tokens detected; padding 16 empties.
+Row 38: could not validate a split into two valid SMILES; used naive split at 92.
+Row 38: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 39: only 1 numeric tokens detected; padding 15 empties.
+Row 39: could not validate a split into two valid SMILES; used naive split at 85.
+Row 39: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 40: only 1 numeric tokens detected; padding 15 empties.
+Row 40: could not validate a split into two valid SMILES; used naive split at 81.
+Row 40: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 41: only 1 numeric tokens detected; padding 15 empties.
+Row 41: could not validate a split into two valid SMILES; used naive split at 66.
+Row 41: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 42: only 1 numeric tokens detected; padding 15 empties.
+Row 42: could not validate a split into two valid SMILES; used naive split at 67.
+Row 42: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 4: only 1 numeric tokens detected; padding 15 empties.
+Row 4: could not validate a split into two valid SMILES; used naive split at 53.
+Row 4: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 44: only 0 numeric tokens detected; padding 16 empties.
+Row 44: could not validate a split into two valid SMILES; used naive split at 103.
+Row 44: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 45: only 0 numeric tokens detected; padding 16 empties.
+Row 45: could not validate a split into two valid SMILES; used naive split at 72.
+Row 45: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 46: only 0 numeric tokens detected; padding 16 empties.
+Row 46: could not validate a split into two valid SMILES; used naive split at 105.
+Row 46: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 47: only 0 numeric tokens detected; padding 16 empties.
+Row 47: could not validate a split into two valid SMILES; used naive split at 44.
+Row 47: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 3: only 1 numeric tokens detected; padding 15 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 34.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 48: only 0 numeric tokens detected; padding 16 empties.
+Row 48: could not validate a split into two valid SMILES; used naive split at 18.
+Row 48: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 3: only 1 numeric tokens detected; padding 15 empties.
+Row 3: could not validate a split into two valid SMILES; used naive split at 61.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 49: only 0 numeric tokens detected; padding 16 empties.
+Row 49: could not validate a split into two valid SMILES; used naive split at 80.
+Row 49: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 50: only 0 numeric tokens detected; padding 16 empties.
+Row 50: could not validate a split into two valid SMILES; used naive split at 67.
+Row 50: SMILES validation failed (orig_valid=False, final_valid=False).

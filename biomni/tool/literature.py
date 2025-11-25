@@ -254,10 +254,10 @@ def advanced_web_search_claude(
         api_key = os.getenv("ANTHROPIC_API_KEY")
 
     if "claude" not in model:
-        raise ValueError("Model must be a Claude model.")
+        return "This tool requires a Claude model (e.g., claude-3-opus). The current model is not supported."
 
     if not api_key:
-        raise ValueError("Set your api_key explicitly.")
+        return "Anthropic API key is missing. Please set ANTHROPIC_API_KEY environment variable."
 
     client = anthropic.Anthropic(api_key=api_key)
     tool_def = {

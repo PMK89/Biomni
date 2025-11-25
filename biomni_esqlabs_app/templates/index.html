@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomni - ESQ Labs</title>
+    <link rel="icon" type="image/png" href="/static/img/esq.png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Add Font Awesome or similar for icons if needed, using simple text chars for now or SVG -->
+</head>
+<body>
+    <div id="sidebar">
+        <div id="sidebar-header">
+            <img src="/static/img/esq.png" alt="ESQ Logo" id="logo">
+            <span class="brand-text">Biomni</span>
+        </div>
+        <div id="nav-links">
+            <a href="https://ai.esqlabs.com" class="nav-link" target="_blank">
+                <span>ESQai</span>
+            </a>
+            <a href="#" class="nav-link active" data-target="chat">
+                <span>Biomni</span>
+            </a>
+            <a href="#" class="nav-link" data-target="docs">
+                <span>Docs</span>
+            </a>
+            <!-- Settings moved to right panel, but maybe we want a global settings page? keeping this for nav consistency if needed, or removing -->
+        </div>
+        <div id="chat-history">
+            <div class="history-title">Chat History</div>
+            <div id="history-list">
+                <!-- Chat items will be populated here -->
+                <div class="chat-item active" id="new-chat-btn">New Chat</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-center">
+        <!-- View: Chat (Default) -->
+        <div id="view-chat" class="main-view active">
+            <div id="tabs-header">
+                <button class="tab-btn active" data-tab="answer">Answer</button>
+                <button class="tab-btn" data-tab="thoughts">Thoughts</button>
+                <button class="tab-btn" data-tab="variables">Variables</button>
+            </div>
+
+            <div id="tab-content">
+                <div id="answer-tab" class="tab-pane active">
+                    <div id="chat-messages">
+                        <!-- Messages go here -->
+                        <div class="message bot-message">
+                            Hello! I am Biomni, your biomedical AI assistant. How can I help you today?
+                        </div>
+                    </div>
+                </div>
+                <div id="thoughts-tab" class="tab-pane">
+                    <div id="thoughts-log">
+                        <!-- Logs go here -->
+                    </div>
+                </div>
+                <div id="variables-tab" class="tab-pane">
+                    <div id="variables-view">
+                        <!-- JSON view goes here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="input-area">
+                <div id="input-container">
+                    <textarea id="chat-input" placeholder="Type a message..." rows="1"></textarea>
+                    <button id="send-btn" title="Send">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Docs -->
+        <div id="view-docs" class="main-view" style="display: none; padding: 40px; overflow-y: auto;">
+            <h1>Documentation</h1>
+            <p>Documentation content will appear here.</p>
+        </div>
+    </div>
+
+    <div id="right-panel">
+        <div id="files-section">
+            <div class="panel-header">Files</div>
+            <div id="drop-zone">
+                Drag & drop files here<br>or click to upload
+                <input type="file" id="file-upload" style="display: none;" multiple>
+            </div>
+            <div id="files-list">
+                <!-- File items go here -->
+            </div>
+        </div>
+        <div id="settings-section">
+            <div class="panel-header">Agent Run Settings</div>
+            <div class="setting-item">
+                <label class="setting-label">Reasoning Level</label>
+                <input type="range" min="0" max="3" value="2" id="reasoning-level">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: var(--muted); margin-top: 4px;">
+                    <span>None</span>
+                    <span>Fast</span>
+                    <span>Bal.</span>
+                    <span>Deep</span>
+                </div>
+            </div>
+            <div class="setting-item" aria-live="polite">
+                <div class="tools-container">
+                    <div class="tools-header">
+                        <label class="setting-label" style="margin-bottom: 0;">Tools</label>
+                        <button class="secondary-toggle-btn" id="secondary-tools-toggle" type="button">Show more tools</button>
+                    </div>
+                    <div class="tool-group" id="primary-tools">
+                        <div class="tool-placeholder">Loading tools…</div>
+                    </div>
+                    <div class="tool-group tool-secondary collapsed" id="secondary-tools"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

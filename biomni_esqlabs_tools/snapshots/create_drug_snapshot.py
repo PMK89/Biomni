@@ -28,6 +28,9 @@ def create_drug_snapshot(
     Returns:
         dict with status and instructions for next steps
     """
+    repo_snapshots_dir = "/home/pmk/Biomni/snapshots"
+    absolute_target = str(Path(repo_snapshots_dir) / Path(out_path).name)
+
     return {
         "status": "requires_research",
         "drug_name": drug_name,
@@ -47,6 +50,8 @@ To complete this task, you need to:
    - Search: "{drug_name} LogP lipophilicity"
    - Search: "{drug_name} fraction unbound plasma protein binding"
    - Search: "{drug_name} solubility pH 7.4"
+
+   ✅ For every value include the numeric value, units, and a verifiable URL + short citation in your notes before moving on.
 
 3. **After gathering data**, call rag_json_build with this structure:
 ```python
@@ -94,12 +99,23 @@ rag_json_build(
 )
 ```
 
+⚠️ **Do not skip this step. You must actually execute `rag_json_build` once the parameters are populated.**
+
+4. **Snapshot location requirements**
+   - The `out_path` above (`{out_path}`) is relative to the repository root and resolves to the absolute file `{absolute_target}`.
+   - Confirm in your final response that the snapshot was written to *both* `snapshots/{Path(out_path).name}` (relative) and `{absolute_target}` (absolute path on disk).
+   - If the file was not created, continue working until it exists.
+
 **Important notes:**
 - Molecular weight: typically 100-1000 g/mol for small molecules
 - LogP: typically -2 to +6 (negative = hydrophilic, positive = lipophilic)
 - Fraction unbound: value between 0 and 1 (e.g., 0.01 = 1% unbound, 99% bound)
 - Solubility: in mg/L at pH 7.4 (physiological pH)
 
-If you cannot find exact values, use reasonable estimates based on similar drugs or chemical structure.
+**Completion checklist before responding:**
+1. `create_drug_snapshot` (this tool) has been run (already done).
+2. PK values + sources have been collected.
+3. `rag_json_build` has been executed with those values.
+4. `{absolute_target}` exists and contains the final snapshot JSON.
 """
     }

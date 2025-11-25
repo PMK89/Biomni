@@ -136,7 +136,7 @@ def get_llm(
     # Use config values for any unspecified parameters
     if config is not None:
         if model is None:
-            model = config.llm_model
+            model = config.llm
         if temperature is None:
             temperature = config.temperature
         if source is None:
@@ -205,7 +205,7 @@ def get_llm(
             )
         # Newer OpenAI models (e.g., gpt-5-*) require the Responses API and may reject
         # legacy Chat Completions parameters like `stop`. Force Responses API when
-        # using gpt-5 models to avoid 400 errors such as: "Unsupported parameter: 'stop'".
+        # using gpt-5 (family) models to avoid 400 errors such as: "Unsupported parameter: 'stop'".
         use_responses = model.startswith("gpt-5")
 
         if use_responses:

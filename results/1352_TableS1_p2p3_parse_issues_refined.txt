@@ -1,0 +1,81 @@
+Row 3: could not split SMILES into two valid molecules; used naive split.
+Row 3: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 4: insufficient numeric tokens; found <16.
+Row 4: could not split SMILES into two valid molecules; used naive split.
+Row 4: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 5: insufficient numeric tokens; found <16.
+Row 5: could not split SMILES into two valid molecules; used naive split.
+Row 5: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 6: could not split SMILES into two valid molecules; used naive split.
+Row 6: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 8: could not split SMILES into two valid molecules; used naive split.
+Row 8: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 9: insufficient numeric tokens; found <16.
+Row 9: could not split SMILES into two valid molecules; used naive split.
+Row 9: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 10: could not split SMILES into two valid molecules; used naive split.
+Row 10: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 11: could not split SMILES into two valid molecules; used naive split.
+Row 11: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 12: could not split SMILES into two valid molecules; used naive split.
+Row 12: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 13: insufficient numeric tokens; found <16.
+Row 14: insufficient numeric tokens; found <16.
+Row 18: insufficient numeric tokens; found <16.
+Row 18: could not split SMILES into two valid molecules; used naive split.
+Row 18: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 19: could not split SMILES into two valid molecules; used naive split.
+Row 19: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 21: insufficient numeric tokens; found <16.
+Row 21: could not split SMILES into two valid molecules; used naive split.
+Row 21: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 25: insufficient numeric tokens; found <16.
+Row 25: could not split SMILES into two valid molecules; used naive split.
+Row 25: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 26: could not split SMILES into two valid molecules; used naive split.
+Row 26: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 27: could not split SMILES into two valid molecules; used naive split.
+Row 27: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 29: could not split SMILES into two valid molecules; used naive split.
+Row 29: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 30: could not split SMILES into two valid molecules; used naive split.
+Row 30: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 31: insufficient numeric tokens; found <16.
+Row 32: insufficient numeric tokens; found <16.
+Row 32: could not split SMILES into two valid molecules; used naive split.
+Row 32: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 33: insufficient numeric tokens; found <16.
+Row 33: could not split SMILES into two valid molecules; used naive split.
+Row 33: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 35: insufficient numeric tokens; found <16.
+Row 35: could not split SMILES into two valid molecules; used naive split.
+Row 35: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 36: insufficient numeric tokens; found <16.
+Row 36: could not split SMILES into two valid molecules; used naive split.
+Row 36: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 37: insufficient numeric tokens; found <16.
+Row 37: could not split SMILES into two valid molecules; used naive split.
+Row 37: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 39: could not split SMILES into two valid molecules; used naive split.
+Row 39: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 40: could not split SMILES into two valid molecules; used naive split.
+Row 40: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 41: could not split SMILES into two valid molecules; used naive split.
+Row 41: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 42: could not split SMILES into two valid molecules; used naive split.
+Row 42: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 44: could not split SMILES into two valid molecules; used naive split.
+Row 44: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 45: insufficient numeric tokens; found <16.
+Row 45: could not split SMILES into two valid molecules; used naive split.
+Row 45: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 46: could not split SMILES into two valid molecules; used naive split.
+Row 46: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 47: insufficient numeric tokens; found <16.
+Row 47: could not split SMILES into two valid molecules; used naive split.
+Row 47: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 48: insufficient numeric tokens; found <16.
+Row 48: could not split SMILES into two valid molecules; used naive split.
+Row 48: SMILES validation failed (orig_valid=False, final_valid=False).
+Row 50: could not split SMILES into two valid molecules; used naive split.
+Row 50: SMILES validation failed (orig_valid=False, final_valid=False).

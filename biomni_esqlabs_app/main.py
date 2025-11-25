@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import inspect
 import json
 import logging
 import os
@@ -8,19 +9,219 @@ import shutil
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
+from datetime import datetime
 from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
 
 import gradio as gr
 import requests
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from msal import ConfidentialClientApplication
+from pydantic import BaseModel
 
 from biomni.agent.a1 import A1
 from .config import settings
-from .upload import router as upload_router
+from .upload import router as upload_router, save_agent_run_record
+from biomni.tool.literature import (
+    query_pubmed,
+    query_scholar,
+    query_arxiv,
+    search_google,
+    advanced_web_search_claude
+)
+
+
+def _sanitize_id(value: Optional[str]) -> str:
+    if not value:
+        return "default"
+    return "".join(c for c in value if c.isalnum() or c in "-_") or "default"
+
+
+def _ensure_chat_dir(user_id: str, chat_id: str) -> Path:
+    path = _CHAT_DATA_ROOT / _sanitize_id(user_id) / _sanitize_id(chat_id)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _resolve_user_id(request: Request) -> str:
+    user = getattr(request.state, "_current_user", None)
+    if user:
+        return user.user_id
+    return "default_user"
+
+
+def _looks_like_snapshot(payload: dict) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if "Version" in payload:
+        return True
+    # Snapshot usually has compounds/individuals or similar building blocks
+    snapshot_keys = {"Compounds", "Individuals", "Simulations", "BuildingBlocks"}
+    return any(k in payload for k in snapshot_keys)
+
+
+_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*([\s\S]+?)\s*```", re.MULTILINE)
+
+
+def _extract_snapshot_json(solution: str) -> Tuple[Optional[dict], Optional[str]]:
+    if not solution:
+        return None, solution
+
+    def _attempt_parse(candidate: str) -> Optional[dict]:
+        try:
+            data = json.loads(candidate)
+            return data if _looks_like_snapshot(data) else None
+        except json.JSONDecodeError:
+            return None
+
+    # Prefer explicit code blocks
+    for match in _JSON_BLOCK_RE.finditer(solution):
+        candidate = match.group(1)
+        data = _attempt_parse(candidate)
+        if data:
+            cleaned = (solution[:match.start()] + solution[match.end():]).strip()
+            return data, cleaned
+
+    trimmed = solution.strip()
+    data = _attempt_parse(trimmed)
+    if data:
+        return data, ""
+
+    return None, solution
+
+
+def _maybe_save_snapshot(solution: str, user_id: str, chat_id: Optional[str]) -> Tuple[str, Optional[dict]]:
+    if not chat_id:
+        return solution, None
+
+    snapshot_json, cleaned_solution = _extract_snapshot_json(solution)
+    if not snapshot_json:
+        return solution, None
+
+    chat_dir = _ensure_chat_dir(user_id, chat_id)
+
+    compound_name = "snapshot"
+    try:
+        compounds = snapshot_json.get("Compounds") or snapshot_json.get("BuildingBlocks", {}).get("Compounds")
+        if isinstance(compounds, list) and compounds:
+            compound = compounds[0]
+            name = compound.get("Name") if isinstance(compound, dict) else None
+            if name:
+                compound_name = _sanitize_id(name.lower()) or compound_name
+    except Exception:
+        pass
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"{compound_name}_{timestamp}.json"
+    file_path = chat_dir / filename
+    file_path.write_text(json.dumps(snapshot_json, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    note = f"Snapshot saved as `{filename}`. You can download it from the Files panel."
+    cleaned_text = cleaned_solution.strip()
+    if (cleaned_text):
+        cleaned_text = f"{cleaned_text}\n\n{note}"
+    else:
+        cleaned_text = note
+
+    return cleaned_text, {"filename": filename}
+
+try:
+    from biomni_esqlabs_tools.snapshots.create_drug_snapshot import create_drug_snapshot
+    from biomni_esqlabs_tools.snapshots.json_rag_builder import (
+        rag_json_sections,
+        rag_json_template,
+        rag_json_answer,
+        rag_json_build,
+        rag_snapshot_autobuild,
+    )
+    from biomni_esqlabs_tools.snapshots.biomni_snapshot_tool import run_biomni_snapshot
+    from biomni_esqlabs_tools.pbpk.pksim_runner import run_pksim_snapshot
+except ImportError:
+    create_drug_snapshot = None
+    rag_json_sections = None
+    rag_json_template = None
+    rag_json_answer = None
+    rag_json_build = None
+    rag_snapshot_autobuild = None
+    run_biomni_snapshot = None
+    run_pksim_snapshot = None
+
+
+REGISTERABLE_TOOLS: Dict[str, Callable[..., object]] = {}
+
+
+def _register_callable(func: Optional[Callable[..., object]]) -> None:
+    if func is None:
+        return
+    REGISTERABLE_TOOLS[func.__name__] = func
+
+
+for _tool in (
+    create_drug_snapshot,
+    rag_json_sections,
+    rag_json_template,
+    rag_json_answer,
+    rag_json_build,
+    rag_snapshot_autobuild,
+    run_biomni_snapshot,
+    run_pksim_snapshot,
+):
+    _register_callable(_tool)
+
+
+PRIMARY_TOOL_NAMES = {
+    "vectordb",
+    "create_drug_snapshot",
+    "rag_json_build",
+    "run_biomni_snapshot",
+}
+
+
+def _pretty_label(name: str) -> str:
+    return name.replace("_", " ").title()
+
+
+def _doc_summary(func: Optional[Callable[..., object]]) -> str:
+    if not func:
+        return ""
+    doc = inspect.getdoc(func)
+    if not doc:
+        return ""
+    return doc.strip().splitlines()[0][:200]
+
+
+def _build_tool_metadata() -> List[dict]:
+    tools: List[dict] = [
+        {
+            "name": "vectordb",
+            "label": "Vector DB",
+            "description": "Use the Biomni vector database for broader context retrieval.",
+            "category": "Core",
+            "importance": "primary",
+            "default_enabled": True,
+        }
+    ]
+
+    for name, func in REGISTERABLE_TOOLS.items():
+        tools.append(
+            {
+                "name": name,
+                "label": _pretty_label(name),
+                "description": _doc_summary(func),
+                "category": (func.__module__ if func else "Custom"),
+                "importance": "primary" if name in PRIMARY_TOOL_NAMES else "secondary",
+                "default_enabled": name in {"create_drug_snapshot", "rag_json_build"},
+            }
+        )
+
+    tools.sort(key=lambda item: (0 if item.get("importance") == "primary" else 1, item["label"].lower()))
+    return tools
+
+
+TOOL_METADATA = _build_tool_metadata()
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +231,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "local_data"
+_CHAT_DATA_ROOT = PROJECT_ROOT / "local_data"
 
 
 def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
@@ -272,12 +474,181 @@ agent = None
 try:
     if settings.OPENAI_API_KEY:
         os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-        agent = A1(llm="gpt-5", path=settings.BIOMNI_BASE_PATH)
+        agent = A1(path=settings.BIOMNI_BASE_PATH)
+        
+        # Register standard literature/research tools globally once
+        for tool_func in [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search_claude]:
+            try:
+                agent.add_tool(tool_func)
+            except Exception as e:
+                logger.warning(f"Failed to register tool {tool_func.__name__}: {e}")
+                
     else:
         logger.warning("OpenAI API key not found. Agent not initialized.")
 except Exception as exc:  # noqa: BLE001
     logger.error("Error initializing Biomni agent: %s", exc)
     agent = None
+
+
+def _apply_selected_tools(selected: Optional[dict]) -> None:
+    if not selected or not agent:
+        return
+    for name, enabled in selected.items():
+        if not enabled:
+            continue
+        func = REGISTERABLE_TOOLS.get(name)
+        if not func:
+            continue
+        try:
+            agent.add_tool(func)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to add tool %s: %s", name, exc)
+
+
+# --- Custom UI & API ---
+
+app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "biomni_esqlabs_app" / "static")), name="static")
+
+class ChatRequest(BaseModel):
+    prompt: str
+    tools: Optional[dict] = None
+    chat_id: Optional[str] = None
+
+@app.get("/app", response_class=HTMLResponse)
+async def app_ui(request: Request):
+    """Serve the custom UI."""
+    if not DISABLE_AUTH:
+        get_current_user(request)
+    
+    index_path = PROJECT_ROOT / "biomni_esqlabs_app" / "templates" / "index.html"
+    with open(index_path, "r") as f:
+        return HTMLResponse(content=f.read())
+
+
+@app.get("/api/tools")
+async def list_tools(request: Request):
+    if not DISABLE_AUTH:
+        get_current_user(request)
+    return JSONResponse({"tools": TOOL_METADATA})
+
+@app.post("/api/chat_stream")
+async def chat_stream(req: ChatRequest, request: Request):
+    if not DISABLE_AUTH:
+        get_current_user(request)
+    
+    if not agent:
+        raise HTTPException(503, "Agent not initialized")
+
+    user_id = _resolve_user_id(request)
+    chat_id = req.chat_id
+    
+    _apply_selected_tools(req.tools)
+    
+    prompt = req.prompt
+
+    async def event_generator():
+        # Helper to capture logs
+        _lock = threading.Lock()
+        live_logs = []
+
+        class _Tee:
+            def __init__(self, orig, sink_list, lock):
+                self.orig = orig
+                self.sink = sink_list
+                self.lock = lock
+            def write(self, data):
+                try:
+                    self.orig.write(data)
+                    with self.lock:
+                        self.sink.append(str(data))
+                except Exception:
+                    pass
+            def flush(self):
+                try:
+                    self.orig.flush()
+                except Exception:
+                    pass
+
+        loop = asyncio.get_running_loop()
+        
+        def _run_agent():
+            import sys
+            import contextlib
+            orig_out, orig_err = sys.stdout, sys.stderr
+            tee_out = _Tee(orig_out, live_logs, _lock)
+            tee_err = _Tee(orig_err, live_logs, _lock)
+            with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
+                return agent.go(prompt)
+
+        # Start agent in thread
+        future = loop.run_in_executor(None, _run_agent)
+        
+        last_idx = 0
+        start_time = time.time()
+        
+        while not future.done():
+            # Check logs
+            with _lock:
+                current_len = len(live_logs)
+                new_logs = live_logs[last_idx:]
+                last_idx = current_len
+            
+            if new_logs:
+                content = "".join(new_logs)
+                yield f"data: {json.dumps({'type': 'log', 'content': content})}\n\n"
+            
+            await asyncio.sleep(0.2)
+
+        # Collect remaining logs
+        with _lock:
+            new_logs = live_logs[last_idx:]
+            if new_logs:
+                content = "".join(new_logs)
+                yield f"data: {json.dumps({'type': 'log', 'content': content})}\n\n"
+
+        try:
+            log, final_content = await future
+            
+            # Parse solution like in Gradio interface
+            start_tag = "<solution>"
+            end_tag = "</solution>"
+            solution = ""
+            if final_content and start_tag in final_content:
+                s = final_content.find(start_tag)
+                e = final_content.find(end_tag, s + len(start_tag))
+                if s != -1 and e != -1:
+                    solution = final_content[s + len(start_tag):e].strip()
+                else:
+                    solution = final_content.split(start_tag)[-1].strip()
+            else:
+                solution = (final_content or "").strip()
+
+            cleaned_solution, snapshot_info = _maybe_save_snapshot(solution, user_id, chat_id)
+
+            if chat_id:
+                run_payload = {
+                    "chat_id": chat_id,
+                    "prompt": prompt,
+                    "solution": cleaned_solution,
+                    "log": getattr(agent, "log", []),
+                    "records": getattr(agent, "_last_run_records", []),
+                    "duration_seconds": time.time() - start_time,
+                }
+                try:
+                    save_agent_run_record(user_id, chat_id, run_payload)
+                except Exception:
+                    logging.exception("Failed to persist agent run record", exc_info=True)
+
+            yield f"data: {json.dumps({'type': 'solution', 'content': cleaned_solution})}\n\n"
+            if snapshot_info:
+                yield f"data: {json.dumps({'type': 'file_created', 'content': snapshot_info})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'log', 'content': f'Error: {str(e)}'})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'content': 'error'})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 # --- Gradio Chat Interface ---
 def create_chat_interface():
@@ -546,13 +917,14 @@ def create_chat_interface():
 
 @app.get("/", response_class=RedirectResponse)
 async def root(request: Request):
-    """Send authenticated users straight to the Gradio UI."""
+    """Send authenticated users straight to the custom UI."""
 
     if not DISABLE_AUTH:
         get_current_user(request)
     root_path = (request.scope.get("root_path") or "").rstrip("/")
-    target = f"{root_path}/gradio/" if root_path else "/gradio/"
+    target = f"{root_path}/app/" if root_path else "/app/"
     return RedirectResponse(url=target)
+
 
 # --- Mount Gradio App ---
 

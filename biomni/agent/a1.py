@@ -169,6 +169,13 @@ class A1:
         benchmark_dir = os.path.join(path, "biomni_data", "benchmark")
         data_lake_dir = os.path.join(path, "biomni_data", "data_lake")
 
+        self.skip_s3_downloads = os.getenv("BIOMNI_SKIP_DOWNLOADS", "false").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        self.s3_bucket_url = os.getenv("BIOMNI_S3_BASE_URL", "https://biomni-release.s3.amazonaws.com")
+
         # Create the biomni_data directory structure
         os.makedirs(benchmark_dir, exist_ok=True)
         os.makedirs(data_lake_dir, exist_ok=True)
@@ -192,13 +199,16 @@ class A1:
             expected_data_lake_files = [f for f in merged if not (f in seen or seen.add(f))]
 
         # Check and download missing data lake files
-        print("Checking and downloading missing data lake files...")
-        check_and_download_s3_files(
-            s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-            local_data_lake_path=data_lake_dir,
-            expected_files=expected_data_lake_files,
-            folder="data_lake",
-        )
+        if self.skip_s3_downloads:
+            print("BIOMNI_SKIP_DOWNLOADS=1 -> skipping data_lake downloads (expecting files to exist locally).")
+        else:
+            print("Checking and downloading missing data lake files...")
+            check_and_download_s3_files(
+                s3_bucket_url=self.s3_bucket_url,
+                local_data_lake_path=data_lake_dir,
+                expected_files=expected_data_lake_files,
+                folder="data_lake",
+            )
 
         # Check if benchmark directory structure is complete
         benchmark_ok = False
@@ -208,13 +218,19 @@ class A1:
                 benchmark_ok = True
 
         if not benchmark_ok:
-            print("Checking and downloading benchmark files...")
-            check_and_download_s3_files(
-                s3_bucket_url="https://biomni-release.s3.amazonaws.com",
-                local_data_lake_path=benchmark_dir,
-                expected_files=[],  # Empty list - will download entire folder
-                folder="benchmark",
-            )
+            if self.skip_s3_downloads:
+                print(
+                    "BIOMNI_SKIP_DOWNLOADS=1 -> skipping benchmark downloads."
+                    " Make sure benchmark files already exist locally."
+                )
+            else:
+                print("Checking and downloading benchmark files...")
+                check_and_download_s3_files(
+                    s3_bucket_url=self.s3_bucket_url,
+                    local_data_lake_path=benchmark_dir,
+                    expected_files=[],  # Empty list - will download entire folder
+                    folder="benchmark",
+                )
 
         self.path = os.path.join(path, "biomni_data")
         module2api = read_module2api()
@@ -250,6 +266,9 @@ class A1:
         self.extension_summary = apply_extensions(self, self.extension_config)
         if self.extension_summary:
             print("🔌 Extensions loaded:", json.dumps(self.extension_summary))
+
+        # Storage for latest run records
+        self._last_run_records: list[dict[str, Any]] = []
 
     def add_tool(self, api):
         """Add a new tool to the agent's tool registry and make it available for retrieval.
@@ -1457,7 +1476,7 @@ Each library is listed with its description to help you understand its functiona
 
             # Add the message to the state before checking for errors
             state["messages"].append(AIMessage(content=msg.strip()))
-
+            
             if answer_match:
                 state["next_step"] = "end"
             elif execute_match:
@@ -1779,6 +1798,61 @@ Each library is listed with its description to help you understand its functiona
 
         return selected_resources_names
 
+    def _record_message(self, message: BaseMessage) -> None:
+        """Store a JSON-serializable representation of the latest message."""
+
+        def _serialize_content(content):
+            if isinstance(content, list):
+                serialized = []
+                for block in content:
+                    try:
+                        serialized.append(json.loads(json.dumps(block, default=str)))
+                    except Exception:
+                        serialized.append({"type": str(type(block)), "value": str(block)})
+                return serialized
+            try:
+                return json.loads(json.dumps(content, default=str))
+            except Exception:
+                return str(content)
+
+        record: dict[str, Any] = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "name": getattr(message, "name", None),
+            "type": getattr(message, "type", None),
+            "role": getattr(message, "type", None),
+            "content": _serialize_content(getattr(message, "content", "")),
+            "tool_calls": [],
+            "tool_call_id": getattr(message, "tool_call_id", None),
+        }
+
+        tool_calls = getattr(message, "tool_calls", None)
+        if tool_calls:
+            serialized_calls = []
+            for call in tool_calls:
+                if isinstance(call, dict):
+                    serialized_calls.append(
+                        {
+                            "id": call.get("id"),
+                            "name": call.get("name"),
+                            "args": call.get("args"),
+                            "type": call.get("type"),
+                        }
+                    )
+                else:
+                    serialized_calls.append(
+                        {
+                            "id": getattr(call, "id", None),
+                            "name": getattr(call, "name", None),
+                            "args": getattr(call, "args", None),
+                            "type": getattr(call, "type", None),
+                        }
+                    )
+            record["tool_calls"] = serialized_calls
+
+        if not hasattr(self, "_last_run_records"):
+            self._last_run_records = []
+        self._last_run_records.append(record)
+
     def go(self, prompt):
         """Execute the agent with the given prompt.
 
@@ -1788,6 +1862,7 @@ Each library is listed with its description to help you understand its functiona
         """
         self.critic_count = 0
         self.user_task = prompt
+        self._last_run_records = []
 
         if self.use_tool_retriever:
             selected_resources_names = self._prepare_resources_for_retrieval(prompt)
@@ -1805,6 +1880,7 @@ Each library is listed with its description to help you understand its functiona
             out = pretty_print(message)
             self.log.append(out)
             final_state = s  # Store the latest state
+            self._record_message(message)
 
         # Store the conversation state for markdown generation
         self._conversation_state = final_state
@@ -1842,6 +1918,7 @@ Each library is listed with its description to help you understand its functiona
             out = pretty_print(message)
             self.log.append(out)
             final_state = s  # Store the latest state
+            self._record_message(message)
 
             # Yield the current step
             yield {"output": out}

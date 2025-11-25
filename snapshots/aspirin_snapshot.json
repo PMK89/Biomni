@@ -1,0 +1,276 @@
+{
+  "Version": 80,
+  "drug": {
+    "name": "Aspirin",
+    "compound": {
+      "Name": "Aspirin",
+      "MolecularWeight": {
+        "value": 180.16,
+        "unit": "g/mol",
+        "description": "Acetylsalicylic acid molecular weight"
+      },
+      "LogP": {
+        "value": 1.2,
+        "unit": "log10",
+        "description": "Octanol/water partition coefficient (approximate)"
+      },
+      "pKa": [
+        {
+          "value": 3.5,
+          "type": "acid",
+          "description": "Carboxylic acid pKa (approximate)"
+        }
+      ],
+      "Solubility": {
+        "value": 4.0,
+        "unit": "mg/mL",
+        "pH": 7.4,
+        "description": "Approximate aqueous solubility at physiological pH"
+      },
+      "FractionUnboundPlasma": {
+        "value": 0.1,
+        "unit": "fraction",
+        "description": "Unbound fraction in plasma (90% protein bound)"
+      },
+      "BloodPlasmaRatio": {
+        "value": 1.0,
+        "unit": "ratio",
+        "description": "Assumed blood-to-plasma ratio"
+      },
+      "VolumeOfDistribution": {
+        "value": 0.15,
+        "unit": "L/kg",
+        "description": "Apparent volume of distribution"
+      },
+      "Absorption": {
+        "FractionAbsorbed": {
+          "value": 0.9,
+          "unit": "fraction",
+          "description": "Approximate fraction absorbed after oral dosing"
+        },
+        "Ka": {
+          "value": 1.5,
+          "unit": "1/h",
+          "description": "First-order absorption rate constant (approximate)"
+        },
+        "EffectivePermeability": {
+          "value": 0.0002,
+          "unit": "cm/s",
+          "description": "Estimated human intestinal effective permeability"
+        }
+      },
+      "Elimination": {
+        "HalfLife": {
+          "value": 0.3,
+          "unit": "h",
+          "description": "Plasma half-life for acetylsalicylic acid"
+        },
+        "Clearance": {
+          "value": 10.0,
+          "unit": "L/h",
+          "description": "Systemic clearance (approximate for a 70-kg adult)"
+        },
+        "RenalFraction": {
+          "value": 0.3,
+          "unit": "fraction",
+          "description": "Estimated renal contribution to total clearance"
+        },
+        "Metabolism": {
+          "Enzymes": [
+            {
+              "name": "Esterases (plasma/tissue)",
+              "role": "Hydrolysis of aspirin to salicylic acid"
+            },
+            {
+              "name": "UGT",
+              "role": "Glucuronidation of salicylate"
+            }
+          ]
+        }
+      }
+    },
+    "sources": [
+      {
+        "parameter": "MolecularWeight",
+        "citation": "DrugBank/chemistry databases (acetylsalicylic acid MW 180.16 g/mol)",
+        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+      },
+      {
+        "parameter": "LogP",
+        "citation": "Approximate logP from drug information databases",
+        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+      },
+      {
+        "parameter": "pKa",
+        "citation": "Typical reported pKa for acetylsalicylic acid",
+        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+      },
+      {
+        "parameter": "Solubility",
+        "citation": "Approximate aqueous solubility data from drug monographs",
+        "url": "https://pubchem.ncbi.nlm.nih.gov/compound/aspirin"
+      },
+      {
+        "parameter": "FractionUnboundPlasma",
+        "citation": "Aspirin is ~90% protein bound",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/"
+      },
+      {
+        "parameter": "VolumeOfDistribution",
+        "citation": "Typical Vd reported for aspirin in adults (~0.1–0.2 L/kg)",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/"
+      },
+      {
+        "parameter": "HalfLife",
+        "citation": "Plasma half-life of aspirin ~15–20 min (~0.3 h)",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/"
+      }
+    ]
+  },
+  "Compounds": [
+    {
+      "Name": "Compound_1"
+    }
+  ],
+  "Events": [],
+  "ExpressionProfiles": [],
+  "Formulations": [
+    {
+      "Name": "Oral IR Formulation",
+      "FormulationType": "Formulation_Tablet_Weibull"
+    }
+  ],
+  "Individuals": [
+    {
+      "Name": "Individual_1",
+      "Age": {
+        "Value": 30,
+        "Unit": "years"
+      },
+      "Weight": {
+        "Value": 70,
+        "Unit": "kg"
+      },
+      "Height": {
+        "Value": 175,
+        "Unit": "cm"
+      },
+      "OriginData": {
+        "Species": "Human",
+        "Population": "European_ICRP_2002"
+      }
+    }
+  ],
+  "ObservedData": [],
+  "ObservedDataClassifications": [],
+  "Protocols": [
+    {
+      "Name": "Protocol_Main",
+      "Applications": [
+        {
+          "Name": "Application_1",
+          "ApplicationType": "Oral",
+          "FormulationKey": "Formulation",
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "Schemas": [
+        {
+          "Name": "Schema 1",
+          "SchemaItems": [
+            {
+              "Name": "Schema Item 1",
+              "ApplicationType": "Oral",
+              "FormulationKey": "Formulation",
+              "Parameters": [
+                {
+                  "Name": "Start time",
+                  "Value": 0.0,
+                  "Unit": "h"
+                },
+                {
+                  "Name": "InputDose",
+                  "Value": 200.0,
+                  "Unit": "mg"
+                },
+                {
+                  "Name": "Volume of water/body weight",
+                  "Value": 3.5,
+                  "Unit": "ml/kg"
+                }
+              ]
+            }
+          ],
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "NumberOfRepetitions",
+              "Value": 1.0
+            },
+            {
+              "Name": "TimeBetweenRepetitions",
+              "Value": 24.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "TimeUnit": "h"
+    }
+  ],
+  "SimulationClassifications": [],
+  "Simulations": [
+    {
+      "Name": "Compound_1_Simulation",
+      "Model": "4Comp",
+      "Individual": "Individual_1",
+      "Compounds": [
+        {
+          "Name": "Compound_1",
+          "Protocol": {
+            "Name": "Protocol_Main",
+            "Formulations": [
+              {
+                "Name": "Oral IR Formulation",
+                "Key": "Formulation"
+              }
+            ]
+          }
+        }
+      ],
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 24.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "Resolution",
+              "Value": 4.0,
+              "Unit": "pts/h"
+            }
+          ]
+        }
+      ],
+      "Events": [],
+      "Parameters": []
+    }
+  ]
+}

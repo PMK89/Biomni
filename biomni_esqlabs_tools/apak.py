@@ -56,7 +56,7 @@ Your entire output MUST be a single, valid JSON object with the following struct
 }
 """
 
-    def __init__(self, model: str = "gpt-5", temperature: float = 1.0):
+    def __init__(self, model: str | None = None, temperature: float = 1.0):
         """
         Initializes the APKA_Agent with a live LLM.
 
