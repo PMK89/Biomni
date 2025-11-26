@@ -24,14 +24,14 @@ class Settings(BaseSettings):
     OPENAI_ENDPOINT: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
 
-    # Biomni base data directory (parent of biomni_data). Defaults to ./local_data
-    BIOMNI_BASE_PATH: str = "./local_data"
+    # Biomni base data directory (parent of biomni_data). Defaults to ./data
+    BIOMNI_BASE_PATH: str = "./data"
 
     @field_validator("BIOMNI_BASE_PATH", mode="before")
     @classmethod
     def use_docker_data_dir(cls, v: Optional[str]) -> str:
         # In Docker, use the explicitly mounted directory if available, ignoring .env
-        return os.getenv("BIOMNI_DATA_DIR") or v or "./local_data"
+        return os.getenv("BIOMNI_DATA_DIR") or v or "./data"
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(project_dir, '.env'),

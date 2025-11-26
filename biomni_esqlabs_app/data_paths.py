@@ -11,11 +11,11 @@ from .config import settings
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_DIR = PROJECT_ROOT / "local_data"
+DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 
 
 def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
-    """Resolve a writable Biomni base directory, falling back to local_data."""
+    """Resolve a writable Biomni base directory, falling back to data."""
 
     candidate = Path(os.path.expanduser(raw_path or str(DEFAULT_DATA_DIR)))
     if not candidate.is_absolute():
@@ -47,13 +47,8 @@ def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
 
 
 BIOMNI_DATA_PATH = _ensure_writable_base_path(settings.BIOMNI_BASE_PATH)
-# Users should be in the parent directory of BIOMNI_DATA_PATH if it ends in biomni_data?
-# Or simply decoupled.
-# User request: "Users should be directly in data". "data_lake... in data/biomni_data".
-# If BIOMNI_DATA_PATH points to `.../data/biomni_data`.
-# Then USERS_ROOT should be `BIOMNI_DATA_PATH.parent / "users"`?
-# Let's verify the path.
-
+# If BIOMNI_DATA_PATH points to `.../data/biomni_data`, then USERS_ROOT is `.../data/users`.
+# Otherwise, it defaults to `BIOMNI_DATA_PATH / "users"`.
 USERS_ROOT = BIOMNI_DATA_PATH.parent / "users" if BIOMNI_DATA_PATH.name == "biomni_data" else BIOMNI_DATA_PATH / "users"
 USERS_ROOT.mkdir(parents=True, exist_ok=True)
 
