@@ -539,6 +539,14 @@ async def app_ui(request: Request):
     for old, new in replacements:
         content = content.replace(old, new)
 
+    # Inject the root path for frontend scripts (e.g., API calls, downloads)
+    root_path_value = request.scope.get("root_path", "").rstrip("/")
+    root_path_script = f'<script>window.BIOMNI_ROOT_PATH = {json.dumps(root_path_value)};</script>'
+    if "</body>" in content:
+        content = content.replace("</body>", f"{root_path_script}\n</body>", 1)
+    else:
+        content += root_path_script
+
     return HTMLResponse(content=content)
 
 
