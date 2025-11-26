@@ -12,7 +12,7 @@ services:
       BIOMNI_APP_MODULE: biomni_esqlabs_app.main:app
       PORT: 8001
     volumes:
-      - ./data:/workspace/data:rw
+      - .:/workspace:rw
       - ./.env:/workspace/.env:ro
     user: "1000:1000"
     healthcheck:

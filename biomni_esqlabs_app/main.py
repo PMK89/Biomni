@@ -16,7 +16,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import gradio as gr
 import requests
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from msal import ConfidentialClientApplication
@@ -238,6 +238,7 @@ logger = logging.getLogger(__name__)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+STATIC_ASSETS_DIR = PROJECT_ROOT / "biomni_esqlabs_app" / "static"
 SNAPSHOT_REPO_DIR = PROJECT_ROOT / "snapshots"
 
 OIDC_OBJECT_ID_HEADER = os.getenv("OIDC_OBJECT_ID_HEADER", "x-auth-request-objectid")
@@ -479,7 +480,33 @@ def _apply_selected_tools(selected: Optional[dict]) -> None:
 
 # --- Custom UI & API ---
 
-app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "biomni_esqlabs_app" / "static")), name="static")
+def _serve_authenticated_asset(asset_path: str, request: Request) -> FileResponse:
+    """Return a FileResponse for assets after enforcing auth and path safety."""
+
+    if not DISABLE_AUTH:
+        get_current_user(request)
+
+    candidate_path = (STATIC_ASSETS_DIR / asset_path).resolve()
+    static_root = STATIC_ASSETS_DIR.resolve()
+
+    if not str(candidate_path).startswith(str(static_root)) or not candidate_path.is_file():
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    return FileResponse(candidate_path)
+
+
+@app.get("/app/assets/{asset_path:path}")
+async def authenticated_asset(asset_path: str, request: Request):
+    """Serve static assets through the authenticated /app route."""
+
+    return _serve_authenticated_asset(asset_path, request)
+
+
+@app.get("/static/{asset_path:path}")
+async def legacy_static_asset(asset_path: str, request: Request):
+    """Fallback for legacy /static paths behind authentication."""
+
+    return _serve_authenticated_asset(asset_path, request)
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -498,13 +525,19 @@ async def app_ui(request: Request):
 
     # Dynamically inject the correct root path for static assets
     root_path = request.scope.get("root_path", "").rstrip("/")
-    if root_path:
-        # Replace relative "static/" with absolute "{root_path}/static/"
-        # Also handle potential "/static/" if the file wasn't updated perfectly
-        content = content.replace('href="static/', f'href="{root_path}/static/')
-        content = content.replace('src="static/', f'src="{root_path}/static/')
-        content = content.replace('href="/static/', f'href="{root_path}/static/')
-        content = content.replace('src="/static/', f'src="{root_path}/static/')
+    assets_prefix = f"{root_path}/app/assets" if root_path else "/app/assets"
+    assets_prefix = assets_prefix.rstrip("/") or "/app/assets"
+    if not assets_prefix.startswith("/"):
+        assets_prefix = "/" + assets_prefix
+
+    replacements = (
+        ('href="static/', f'href="{assets_prefix}/'),
+        ('src="static/', f'src="{assets_prefix}/'),
+        ('href="/static/', f'href="{assets_prefix}/'),
+        ('src="/static/', f'src="{assets_prefix}/'),
+    )
+    for old, new in replacements:
+        content = content.replace(old, new)
 
     return HTMLResponse(content=content)
 

@@ -106,7 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    fetch('/api/tools')
+    const apiBase = (window.BIOMNI_ROOT_PATH || '').replace(/\/$/, '');
+    const withRootPath = (path) => `${apiBase}${path.startsWith('/') ? path : `/${path}`}`;
+
+    fetch(withRootPath('/api/tools'))
         .then((res) => res.json())
         .then((payload) => {
             populateTools(payload?.tools || []);
@@ -289,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Optimistic UI update & get status element
             const statusSpan = addFileToList(file.name, 'uploading...', null);
 
-            fetch('/files/upload', {
+            fetch(withRootPath('/files/upload'), {
                 method: 'POST',
                 body: formData
             })
@@ -337,18 +340,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function makeFileItemClickable(div, chatId, filename) {
          div.style.cursor = 'pointer';
-         div.onclick = () => window.open(`/files/download/${chatId}/${filename}`, '_blank');
+         div.onclick = () => window.open(withRootPath(`/files/download/${chatId}/${filename}`), '_blank');
     }
 
     function fetchFiles(chatId) {
         const fileList = document.getElementById('files-list');
         fileList.innerHTML = ''; // Clear list
         
-        fetch(`/files/list/${chatId}`)
+        fetch(withRootPath(`/files/list/${chatId}`))
         .then(res => res.json())
         .then(files => {
             files.forEach(f => {
-                const url = `/files/download/${chatId}/${f.name}`;
+                const url = withRootPath(`/files/download/${chatId}/${f.name}`);
                 addFileToList(f.name, '', url);
             });
         })

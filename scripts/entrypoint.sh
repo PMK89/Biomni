@@ -2,8 +2,11 @@
 set -euo pipefail
 
 ENV_NAME=${ENV_NAME:-biomni_e1}
-DATA_DIR="${BIOMNI_DATA_DIR:-/workspace/data/biomni_data}"
+DATA_DIR="${BIOMNI_DATA_DIR:-/workspace/data}"
 APP_MODULE=${BIOMNI_APP_MODULE:-}
+TMPDIR=${TMPDIR:-/workspace/.tmp}
+
+mkdir -p "$TMPDIR"
 
 readarray -t APP_CANDIDATES <<'CAND'
 biomni_esqlabs_app.main:app
