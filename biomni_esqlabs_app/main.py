@@ -494,7 +494,19 @@ async def app_ui(request: Request):
     
     index_path = PROJECT_ROOT / "biomni_esqlabs_app" / "templates" / "index.html"
     with open(index_path, "r") as f:
-        return HTMLResponse(content=f.read())
+        content = f.read()
+
+    # Dynamically inject the correct root path for static assets
+    root_path = request.scope.get("root_path", "").rstrip("/")
+    if root_path:
+        # Replace relative "static/" with absolute "{root_path}/static/"
+        # Also handle potential "/static/" if the file wasn't updated perfectly
+        content = content.replace('href="static/', f'href="{root_path}/static/')
+        content = content.replace('src="static/', f'src="{root_path}/static/')
+        content = content.replace('href="/static/', f'href="{root_path}/static/')
+        content = content.replace('src="/static/', f'src="{root_path}/static/')
+
+    return HTMLResponse(content=content)
 
 
 @app.get("/api/tools")
