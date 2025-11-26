@@ -58,7 +58,7 @@ class AgentState(TypedDict):
 class A1:
     def __init__(
         self,
-        path: str | None = None,
+        path: str = "./local_data",
         llm: str | None = None,
         source: SourceType | None = None,
         use_tool_retriever: bool | None = None,

@@ -7,12 +7,12 @@ services:
     env_file:
       - .env
     environment:
-      BIOMNI_DATA_DIR: /workspace/data/biomni_data
-      BIOMNI_BASE_PATH: /workspace/data/biomni_data
+      BIOMNI_DATA_DIR: /workspace/data
+      BIOMNI_BASE_PATH: /workspace/data
       BIOMNI_APP_MODULE: biomni_esqlabs_app.main:app
       PORT: 8001
     volumes:
-      - ./data/biomni_data:/workspace/data/biomni_data:rw
+      - ./data:/workspace/data:rw
       - ./.env:/workspace/.env:ro
     user: "1000:1000"
     healthcheck:
