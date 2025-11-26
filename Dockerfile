@@ -34,6 +34,7 @@ RUN echo "micromamba activate ${ENV_NAME}" >> ~/.bashrc
 
 # Copy source (exclude data via .dockerignore)
 COPY --chown=${USERNAME}:${USERNAME} . /workspace
+RUN chmod -R 755 /workspace/biomni_esqlabs_app
 
 # Optional local install if present
 RUN if [[ -f biomni_esqlabs_app/requirements.txt ]]; then \
