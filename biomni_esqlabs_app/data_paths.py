@@ -47,7 +47,14 @@ def _ensure_writable_base_path(raw_path: Optional[str]) -> Path:
 
 
 BIOMNI_DATA_PATH = _ensure_writable_base_path(settings.BIOMNI_BASE_PATH)
-USERS_ROOT = BIOMNI_DATA_PATH / "users"
+# Users should be in the parent directory of BIOMNI_DATA_PATH if it ends in biomni_data?
+# Or simply decoupled.
+# User request: "Users should be directly in data". "data_lake... in data/biomni_data".
+# If BIOMNI_DATA_PATH points to `.../data/biomni_data`.
+# Then USERS_ROOT should be `BIOMNI_DATA_PATH.parent / "users"`?
+# Let's verify the path.
+
+USERS_ROOT = BIOMNI_DATA_PATH.parent / "users" if BIOMNI_DATA_PATH.name == "biomni_data" else BIOMNI_DATA_PATH / "users"
 USERS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
