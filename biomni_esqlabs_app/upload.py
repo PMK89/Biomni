@@ -31,17 +31,22 @@ def _get_chat_dir(user_id: str, chat_id: str, *, create: bool = True) -> Path:
 def list_chat_files(user_id: str, chat_id: str) -> List[dict]:
     save_dir = _get_chat_dir(user_id, chat_id)
     files: List[dict] = []
-    ignore = {"metadata.json", "history.json", "runs"}
+    # Only ignore metadata/history, keep "runs" and "snapshots" visible
+    ignore = {"metadata.json", "history.json"}
     if save_dir.exists():
-        for item in save_dir.iterdir():
-            if item.name in ignore:
-                continue
+        for item in save_dir.rglob("*"):
             if item.is_file():
-                files.append({
-                    "name": item.name,
-                    "size": item.stat().st_size,
-                    "modified": item.stat().st_mtime,
-                })
+                try:
+                    rel = item.relative_to(save_dir)
+                    if rel.parts[0] in ignore:
+                        continue
+                    files.append({
+                        "name": str(rel),
+                        "size": item.stat().st_size,
+                        "modified": item.stat().st_mtime,
+                    })
+                except ValueError:
+                    continue
     return sorted(files, key=lambda x: x["modified"], reverse=True)
 
 # --- Chat Persistence Models ---
@@ -267,7 +272,7 @@ async def list_files(request: Request, chat_id: str) -> List[dict]:
     user_id = _get_user_id(request)
     return list_chat_files(user_id, chat_id)
 
-@router.get("/download/{chat_id}/{filename}")
+@router.get("/download/{chat_id}/{filename:path}")
 async def download_file(request: Request, chat_id: str, filename: str):
     """Download a specific file from the chat directory."""
     user_id = _get_user_id(request)

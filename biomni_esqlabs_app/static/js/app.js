@@ -320,42 +320,100 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addFileToList(name, status, downloadUrl) {
-        const fileList = document.getElementById('files-list');
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        if (downloadUrl) {
-            div.style.cursor = 'pointer';
-            div.onclick = () => window.open(downloadUrl, '_blank');
-        }
-        
-        div.innerHTML = `
-            <span>📄</span>
-            <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${name}</span>
-            <span class="file-status" style="font-size:0.8em; color:var(--muted);">${status || ''}</span>
-        `;
-        fileList.appendChild(div);
-        return div.querySelector('.file-status');
+    // --- File Tree Logic ---
+    function buildFileTree(files) {
+        const root = {};
+        files.forEach(file => {
+            const parts = file.name.split('/');
+            let current = root;
+            parts.forEach((part, index) => {
+                if (!current[part]) {
+                    current[part] = (index === parts.length - 1) ? { __file__: file } : {};
+                }
+                current = current[part];
+            });
+        });
+        return root;
     }
-    
-    function makeFileItemClickable(div, chatId, filename) {
-         div.style.cursor = 'pointer';
-         div.onclick = () => window.open(withRootPath(`/files/download/${chatId}/${filename}`), '_blank');
+
+    function renderFileTree(tree, container, chatId, level = 0) {
+        const sortedKeys = Object.keys(tree).sort((a, b) => {
+            const aIsFile = tree[a].__file__;
+            const bIsFile = tree[b].__file__;
+            if (aIsFile && !bIsFile) return 1;
+            if (!aIsFile && bIsFile) return -1;
+            return a.localeCompare(b);
+        });
+
+        sortedKeys.forEach(key => {
+            const node = tree[key];
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'file-tree-item';
+            itemDiv.style.paddingLeft = `${level * 12}px`;
+            itemDiv.style.marginBottom = '4px';
+
+            if (node.__file__) {
+                itemDiv.style.display = 'flex';
+                itemDiv.style.alignItems = 'center';
+                itemDiv.innerHTML = `
+                    <span style="margin-right:6px">📄</span>
+                    <span class="file-link" style="flex:1; cursor:pointer; overflow:hidden; text-overflow:ellipsis;">${key}</span>
+                `;
+                itemDiv.querySelector('.file-link').onclick = () => window.open(withRootPath(`/files/download/${chatId}/${node.__file__.name}`), '_blank');
+                container.appendChild(itemDiv);
+            } else {
+                // Folder
+                const folderHeader = document.createElement('div');
+                folderHeader.style.display = 'flex';
+                folderHeader.style.alignItems = 'center';
+                folderHeader.style.cursor = 'pointer';
+                folderHeader.innerHTML = `
+                    <span style="margin-right:6px">📂</span>
+                    <span style="font-weight:600">${key}</span>
+                `;
+                itemDiv.appendChild(folderHeader);
+                container.appendChild(itemDiv);
+
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'folder-children';
+                folderHeader.onclick = () => {
+                    childrenContainer.style.display = childrenContainer.style.display === 'none' ? 'block' : 'none';
+                };
+                renderFileTree(node, childrenContainer, chatId, level + 1);
+                container.appendChild(childrenContainer);
+            }
+        });
     }
 
     function fetchFiles(chatId) {
         const fileList = document.getElementById('files-list');
-        fileList.innerHTML = ''; // Clear list
+        fileList.innerHTML = ''; 
         
         fetch(withRootPath(`/files/list/${chatId}`))
         .then(res => res.json())
         .then(files => {
-            files.forEach(f => {
-                const url = withRootPath(`/files/download/${chatId}/${f.name}`);
-                addFileToList(f.name, '', url);
-            });
+            if (!files || files.length === 0) {
+                fileList.innerHTML = '<div style="color:var(--muted); padding:8px;">No files</div>';
+                return;
+            }
+            const tree = buildFileTree(files);
+            renderFileTree(tree, fileList, chatId);
         })
         .catch(err => console.error('Error fetching files:', err));
+    }
+
+    function addFileToList(name, status, downloadUrl) {
+         const fileList = document.getElementById('files-list');
+         const div = document.createElement('div');
+         div.className = 'file-item';
+         div.style.padding = '4px 0';
+         div.innerHTML = `<span>📄 ${name}</span> <span style="font-size:0.8em; margin-left:8px; color:var(--muted)">${status}</span>`;
+         fileList.prepend(div);
+         return div.querySelector('span:last-child');
+    }
+    
+    function makeFileItemClickable(div, chatId, filename) {
+        setTimeout(() => fetchFiles(chatId), 500);
     }
 
     // --- Chat History Logic ---
@@ -413,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function loadHistoryFromStorage() {
         // Load from server instead of localStorage
-        fetch('/files/chats')
+        fetch(withRootPath('/files/chats'))
         .then(res => res.json())
         .then(chats => {
             // Clear existing items except "New Chat"
@@ -434,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteChatHistory(chatId, itemElement) {
-        fetch(`/files/chat/${chatId}`, { method: 'DELETE' })
+        fetch(withRootPath(`/files/chat/${chatId}`), { method: 'DELETE' })
         .then(res => {
             if (!res.ok) throw new Error('Failed to delete chat');
             itemElement?.remove();
@@ -449,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentChatId = chatId;
         setActiveChatItem(chatId);
         
-        fetch(`/files/chat/${chatId}/history`)
+        fetch(withRootPath(`/files/chat/${chatId}/history`))
         .then(res => res.json())
         .then(messages => {
             messagesContainer.innerHTML = '';
@@ -468,7 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             thoughtsLog.innerHTML = ''; 
             renderVariablesPanel(chatId, messages);
-            fetchFiles(chatId); // Load files for this chat
+            // Force reload of files list for this chat
+            fetchFiles(chatId);
             switchTab('answer');
         })
         .catch(err => console.error('Failed to load chat history:', err));
@@ -502,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Metadata section
-        fetch(`/files/chat/${chatId}/metadata`)
+        fetch(withRootPath(`/files/chat/${chatId}/metadata`))
             .then(res => res.json())
             .then(meta => {
                 const metaList = document.createElement('dl');
@@ -545,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveChatToStorage(chatId, title, messages) {
         // Server-side init
-        fetch('/files/chat/init', {
+        fetch(withRootPath('/files/chat/init'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ chat_id: chatId, title: title })
@@ -554,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function addMessageToStorage(chatId, role, content) {
         // Server-side append
-        fetch('/files/chat/append', {
+        fetch(withRootPath('/files/chat/append'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ chat_id: chatId, role: role, content: content })
@@ -601,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tools = gatherSelectedTools();
 
         try {
-            const response = await fetch('/api/chat_stream', {
+            const response = await fetch(withRootPath('/api/chat_stream'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

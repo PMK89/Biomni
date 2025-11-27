@@ -14,12 +14,10 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import gradio as gr
-import requests
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from msal import ConfidentialClientApplication
 from pydantic import BaseModel
 
 from biomni.agent.a1 import A1
@@ -31,6 +29,7 @@ from biomni.tool.literature import (
     query_scholar,
     query_arxiv,
     search_google,
+    advanced_web_search,
     advanced_web_search_claude
 )
 
@@ -248,7 +247,6 @@ OIDC_ROLES_HEADER = os.getenv("OIDC_ROLES_HEADER", "x-auth-request-groups")
 FORWARDED_USER_HEADER = "x-forwarded-user"
 FORWARDED_EMAIL_HEADER = "x-forwarded-email"
 _GUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-GRAPH_SCOPE = os.getenv("AZURE_GRAPH_SCOPE", "https://graph.microsoft.com/.default")
 DISABLE_AUTH = os.getenv("BIOMNI_DISABLE_AUTH", os.getenv("DISABLE_AUTH", "0"))
 DISABLE_AUTH = (DISABLE_AUTH or "0").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -263,80 +261,6 @@ class AuthenticatedUser:
     roles: List[str] = field(default_factory=list)
 
 
-class GraphResolver:
-    """Resolve Azure AD object IDs using Microsoft Graph."""
-
-    def __init__(self, client_id: str, client_secret: str, tenant_id: str, scope: str) -> None:
-        authority = f"https://login.microsoftonline.com/{tenant_id}"
-        self._app = ConfidentialClientApplication(
-            client_id=client_id,
-            client_credential=client_secret,
-            authority=authority,
-        )
-        self._scopes = [scope]
-        self._cache: dict[str, dict[str, str | float]] = {}
-        self._lock = threading.Lock()
-        self._ttl_seconds = 3600
-
-    def _access_token(self) -> str:
-        result = self._app.acquire_token_silent(self._scopes, account=None)
-        if not result:
-            result = self._app.acquire_token_for_client(scopes=self._scopes)
-        token = result.get("access_token")
-        if not token:
-            raise RuntimeError(result.get("error_description") or "graph token missing")
-        return token
-
-    def resolve(self, email: str) -> Optional[dict[str, str]]:
-        email = (email or "").strip().lower()
-        if not email:
-            return None
-        now = time.time()
-        with self._lock:
-            cached = self._cache.get(email)
-            if cached and cached.get("expires_at", 0) > now:
-                return cached  # type: ignore[return-value]
-        try:
-            token = self._access_token()
-            response = requests.get(
-                f"https://graph.microsoft.com/v1.0/users/{email}",
-                params={"$select": "id,displayName"},
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5,
-            )
-            if response.status_code != 200:
-                logger.warning(
-                    "Graph lookup failed for %s: %s %s",
-                    email,
-                    response.status_code,
-                    response.text,
-                )
-                return None
-            data = response.json()
-            record = {
-                "id": (data.get("id") or "").lower(),
-                "display_name": data.get("displayName") or email,
-                "expires_at": now + self._ttl_seconds,
-            }
-            with self._lock:
-                self._cache[email] = record
-            return record
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Graph resolver error for %s: %s", email, exc)
-            return None
-
-
-GRAPH_RESOLVER: Optional[GraphResolver] = None
-if settings.CLIENT_ID and settings.CLIENT_SECRET and settings.TENANT_ID:
-    try:
-        GRAPH_RESOLVER = GraphResolver(
-            client_id=settings.CLIENT_ID,
-            client_secret=settings.CLIENT_SECRET,
-            tenant_id=settings.TENANT_ID,
-            scope=GRAPH_SCOPE,
-        )
-    except Exception as resolver_exc:  # noqa: BLE001
-        logger.warning("Unable to initialize Graph resolver: %s", resolver_exc)
 
 
 def _get_header(request: Request, name: Optional[str]) -> Optional[str]:
@@ -409,12 +333,6 @@ def get_current_user(request: Request) -> AuthenticatedUser:
     user_id = None
     if object_id and _is_guid(object_id):
         user_id = object_id.lower()
-    elif email and GRAPH_RESOLVER:
-        graph_record = GRAPH_RESOLVER.resolve(email)
-        if graph_record and graph_record.get("id"):
-            user_id = graph_record["id"]
-            if not display_name:
-                display_name = graph_record.get("display_name")
 
     if not user_id:
         user_id = _first_non_empty(email, display_name)
@@ -429,7 +347,10 @@ def get_current_user(request: Request) -> AuthenticatedUser:
     return user
 
 app = FastAPI()
-app.include_router(upload_router)
+if DISABLE_AUTH:
+    app.include_router(upload_router)
+else:
+    app.include_router(upload_router, dependencies=[Depends(get_current_user)])
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, max_age=3600)
 
 @app.middleware("http")
@@ -450,7 +371,7 @@ try:
         agent = A1(path=str(BIOMNI_DATA_PATH))
         
         # Register standard literature/research tools globally once
-        for tool_func in [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search_claude]:
+        for tool_func in [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search, advanced_web_search_claude]:
             try:
                 agent.add_tool(tool_func)
             except Exception as e:
@@ -460,6 +381,13 @@ try:
         logger.warning("OpenAI API key not found. Agent not initialized.")
 except Exception as exc:  # noqa: BLE001
     logger.error("Error initializing Biomni agent: %s", exc)
+    try:
+        with open(BIOMNI_DATA_PATH / "init_error.log", "w") as f:
+            f.write(f"Error: {exc}\n")
+            import traceback
+            traceback.print_exc(file=f)
+    except Exception:
+        pass
     agent = None
 
 

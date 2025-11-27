@@ -215,89 +215,125 @@ def search_google(query: str, num_results: int = 3, language: str = "en") -> lis
     return results_string
 
 
-def advanced_web_search_claude(
+def advanced_web_search(
     query: str,
-    max_searches: int = 1,
+    max_searches: int = 3,
     max_retries: int = 3,
-) -> tuple[str, list[dict[str, str]], list]:
+) -> str:
     """
     Initiate an advanced web search by launching a specialized agent to collect relevant information and citations through multiple rounds of web searches for a given query.
-    Craft the query carefully for the search agent to find the most relevant information.
 
     Parameters
     ----------
     query : str
-        The search phrase you want Claude to look up.
+        The search phrase to look up.
     max_searches : int, optional
-        Upper-bound on searches Claude may issue inside this request.
+        Upper-bound on searches inside this request.
     max_retries : int, optional
-        Maximum number of retry attempts with exponential backoff.
+        Maximum number of retry attempts.
 
     Returns
     -------
-    full_text : str
-        A formatted string containing the full text response from Claude and the citations.
+    str
+        A formatted string containing the response and citations.
     """
-    import random
-
-    import anthropic
+    from biomni.llm import get_llm
+    from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
     try:
-        from biomni.config import default_config
+        llm = get_llm()
+    except Exception as e:
+        return f"Error initializing LLM: {str(e)}"
 
-        model = default_config.llm
-        api_key = default_config.api_key
-        if not api_key:
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-    except ImportError:
-        model = "claude-4-sonnet-latest"
-        api_key = os.getenv("ANTHROPIC_API_KEY")
+    prompt = """You are a research assistant. Your goal is to answer the user's query by performing web searches.
 
-    if "claude" not in model:
-        return "This tool requires a Claude model (e.g., claude-3-opus). The current model is not supported."
+TOOLS:
+1. SEARCH: <query>
+   - Use this to search the web.
+   - Example: SEARCH: population of France
+2. ANSWER: <text>
+   - Use this to provide the final answer.
+   - Example: ANSWER: The population of France is ...
 
-    if not api_key:
-        return "Anthropic API key is missing. Please set ANTHROPIC_API_KEY environment variable."
+INSTRUCTIONS:
+- You can perform up to {max_searches} searches.
+- After each search, you will receive the results.
+- Always cite your sources in the ANSWER using the URLs provided in the search results.
+- If you have enough information, output ANSWER: followed by your answer.
+- Only output one action at a time.
+"""
 
-    client = anthropic.Anthropic(api_key=api_key)
-    tool_def = {
-        "type": "web_search_20250305",
-        "name": "web_search",
-        "max_uses": max_searches,
-    }
+    messages = [
+        SystemMessage(content=prompt.format(max_searches=max_searches)),
+        HumanMessage(content=f"User Query: {query}")
+    ]
+    
+    searches_performed = 0
 
-    delay = random.randint(1, 10)
-
-    for attempt in range(1, max_retries + 1):
+    while searches_performed < max_searches:
         try:
-            response = client.messages.create(
-                model=model,
-                max_tokens=4096,
-                messages=[{"role": "user", "content": query}],
-                tools=[tool_def],
-            )
-
-            paragraphs, citations = [], []
-            response.content = response.content
-            formatted_response = ""
-            for blk in response.content:
-                if blk.type == "text":
-                    paragraphs.append(blk.text)
-                    formatted_response += blk.text
-
-                    if blk.citations:
-                        for cite in blk.citations:
-                            citations.append({"url": cite.url, "title": cite.title, "cited_text": cite.cited_text})
-                            formatted_response += f"(Citation: {cite.title} - {cite.url})"
-            return formatted_response
+            response = llm.invoke(messages)
+            content = response.content.strip()
+            messages.append(AIMessage(content=content))
+            
+            if content.startswith("SEARCH:"):
+                search_query = content[7:].strip()
+                # Use existing search_google function
+                try:
+                    search_results = search_google(search_query, num_results=3)
+                except Exception as e:
+                    search_results = f"Error performing search: {str(e)}"
+                
+                messages.append(HumanMessage(content=f"Search Results:\n{search_results}"))
+                searches_performed += 1
+            
+            elif content.startswith("ANSWER:"):
+                return content[7:].strip()
+            
+            else:
+                # If the model didn't follow the format, treat it as an answer if it looks like one, 
+                # or ask it to retry.
+                # For robustness, if it contains "ANSWER:", extract it.
+                if "ANSWER:" in content:
+                    return content.split("ANSWER:", 1)[1].strip()
+                
+                # Fallback: return content
+                return content
 
         except Exception as e:
-            if attempt < max_retries:
-                time.sleep(delay)
-                delay *= 2
-                continue
-            print(f"Error performing web search after {max_retries} attempts: {str(e)}")
-            return f"Error performing web search after {max_retries} attempts: {str(e)}"
+             return f"Error during search execution: {str(e)}"
+
+    # If we reached here, ask for final answer
+    messages.append(HumanMessage(content="Please provide a final answer based on the information gathered so far."))
+    final_response = llm.invoke(messages)
+    return final_response.content
+
+
+def advanced_web_search_claude(
+    query: str,
+    max_searches: int = 3,
+    max_retries: int = 3,
+) -> str:
+    """
+    Legacy alias for advanced_web_search, specific to Claude models if needed.
+    
+    Parameters
+    ----------
+    query : str
+        The search phrase to look up.
+    max_searches : int, optional
+        Upper-bound on searches inside this request.
+    max_retries : int, optional
+        Maximum number of retry attempts.
+
+    Returns
+    -------
+    str
+        A formatted string containing the response and citations.
+    """
+    return advanced_web_search(query, max_searches, max_retries)
+
+
 
 
 def extract_url_content(url: str) -> str:

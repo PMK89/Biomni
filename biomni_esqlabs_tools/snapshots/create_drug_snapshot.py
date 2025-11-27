@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 import json
 
@@ -28,8 +29,33 @@ def create_drug_snapshot(
     Returns:
         dict with status and instructions for next steps
     """
-    repo_snapshots_dir = "/home/pmk/Biomni/snapshots"
-    absolute_target = str(Path(repo_snapshots_dir) / Path(out_path).name)
+    # Create the base snapshot file immediately if it doesn't exist
+    base_snapshot = {
+        "Compounds": [{"Name": drug_name}],
+        "Individuals": [{"Name": individual_name}],
+        "Formulations": [{"Name": formulation_name}],
+        "Protocols": [{"Name": protocol_name}],
+        "Version": "1.0"
+    }
+    
+    try:
+        # Ensure directory exists
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write base snapshot
+        with open(out_path, 'w') as f:
+            json.dump(base_snapshot, f, indent=2)
+            
+        project_root = Path(__file__).resolve().parents[2]
+        repo_snapshots_dir = project_root / "snapshots"
+        # Just for display in instructions
+        absolute_target = str((repo_snapshots_dir / Path(out_path).name).resolve())
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Failed to create base snapshot: {str(e)}",
+            "out_path": out_path
+        }
 
     return {
         "status": "requires_research",
