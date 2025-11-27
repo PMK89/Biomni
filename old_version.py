@@ -918,6 +918,10 @@ def rag_json_build(
     _sanitize_snapshot(result, data_dir_p)
 
     # Write output
+    # Sanitize output path to avoid writing to root /snapshots
+    if out_path.startswith("/snapshots") or out_path.startswith("/data"):
+        out_path = out_path.lstrip("/")
+    
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -964,6 +968,10 @@ def rag_snapshot_autobuild(
 
     # PK-Sim compatibility sanitation (uses example-driven knowledge via data_dir)
     _sanitize_snapshot(result, data_dir_p)
+
+    # Sanitize output path to avoid writing to root /snapshots
+    if out_path.startswith("/snapshots") or out_path.startswith("/data"):
+        out_path = out_path.lstrip("/")
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
