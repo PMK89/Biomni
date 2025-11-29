@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import traceback
 import zipfile
+from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urljoin
 
@@ -19,6 +20,23 @@ from langchain_core.messages.base import get_msg_title_repr
 from langchain_core.tools import StructuredTool
 from langchain_core.utils.interactive_env import is_interactive_env
 from pydantic import BaseModel, Field, ValidationError
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _inject_project_root_into_env(env: dict[str, str]) -> None:
+    """Ensure PYTHONPATH contains the project root so local packages are importable."""
+
+    root_str = str(PROJECT_ROOT)
+    existing = env.get("PYTHONPATH")
+    if not existing:
+        env["PYTHONPATH"] = root_str
+        return
+
+    paths = existing.split(os.pathsep)
+    if root_str not in paths:
+        paths.insert(0, root_str)
+        env["PYTHONPATH"] = os.pathsep.join([p for p in paths if p])
 
 
 # Add these new functions for running R code and CLI commands
@@ -116,6 +134,7 @@ def run_bash_script(script: str) -> str:
 
         # Get current environment variables and working directory
         env = os.environ.copy()
+        _inject_project_root_into_env(env)
         cwd = os.getcwd()
 
         # Run the Bash script with the current environment and working directory
@@ -169,7 +188,9 @@ def run_cli_command(command: str) -> str:
         args = shlex.split(command)
 
         # Run the command
-        result = subprocess.run(args, capture_output=True, text=True, check=False)
+        env = os.environ.copy()
+        _inject_project_root_into_env(env)
+        result = subprocess.run(args, capture_output=True, text=True, check=False, env=env)
 
         # Return the output
         if result.returncode != 0:

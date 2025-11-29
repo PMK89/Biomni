@@ -42,6 +42,10 @@ class BiomniConfig:
     # Data licensing settings
     commercial_mode: bool = False  # If True, excludes non-commercial datasets
 
+    # OpenAI Responses API controls
+    responses_memory_enabled: bool = True
+    responses_store: bool = True
+
     # Custom model settings (for custom LLM serving)
     base_url: str | None = None
     api_key: str | None = None  # Only for custom models, not provider API keys
@@ -74,6 +78,15 @@ class BiomniConfig:
             self.api_key = os.getenv("BIOMNI_CUSTOM_API_KEY")
         if os.getenv("BIOMNI_SOURCE"):
             self.source = os.getenv("BIOMNI_SOURCE")
+
+        # Responses API toggles
+        resp_memory_env = os.getenv("BIOMNI_RESPONSES_MEMORY_ENABLED")
+        if resp_memory_env is not None:
+            self.responses_memory_enabled = resp_memory_env.strip().lower() in {"1", "true", "yes", "on"}
+
+        resp_store_env = os.getenv("BIOMNI_RESPONSES_STORE")
+        if resp_store_env is not None:
+            self.responses_store = resp_store_env.strip().lower() in {"1", "true", "yes", "on"}
 
         # Protocols.io access token (prefer specific env vars)
         env_token = os.getenv("PROTOCOLS_IO_ACCESS_TOKEN") or os.getenv("BIOMNI_PROTOCOLS_IO_ACCESS_TOKEN")
