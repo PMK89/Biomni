@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 from biomni.agent.a1 import A1
 from .config import settings
+from biomni.config import default_config
 from .data_paths import BIOMNI_DATA_PATH, get_chat_dir, sanitize_segment
 from .upload import router as upload_router, save_agent_run_record
 from biomni.tool.literature import (
@@ -146,6 +147,11 @@ try:
     )
     from biomni_esqlabs_tools.snapshots.biomni_snapshot_tool import run_biomni_snapshot
     from biomni_esqlabs_tools.pbpk.pksim_runner import run_pksim_snapshot
+    from biomni_esqlabs_tools.pbpk.pbpk_workflow import (
+        create_pbpk_snapshot,
+        run_pbpk_simulation,
+        get_drug_pk_parameters,
+    )
 except ImportError:
     create_drug_snapshot = None
     rag_json_sections = None
@@ -155,6 +161,9 @@ except ImportError:
     rag_snapshot_autobuild = None
     run_biomni_snapshot = None
     run_pksim_snapshot = None
+    create_pbpk_snapshot = None
+    run_pbpk_simulation = None
+    get_drug_pk_parameters = None
 
 
 REGISTERABLE_TOOLS: Dict[str, Callable[..., object]] = {}
@@ -175,6 +184,9 @@ for _tool in (
     rag_snapshot_autobuild,
     run_biomni_snapshot,
     run_pksim_snapshot,
+    create_pbpk_snapshot,
+    run_pbpk_simulation,
+    get_drug_pk_parameters,
 ):
     _register_callable(_tool)
 
@@ -182,6 +194,8 @@ for _tool in (
 PRIMARY_TOOL_NAMES = {
     "vectordb",
     "create_drug_snapshot",
+    "create_pbpk_snapshot",
+    "run_pbpk_simulation",
     "rag_json_build",
     "run_biomni_snapshot",
 }
@@ -220,7 +234,7 @@ def _build_tool_metadata() -> List[dict]:
                 "description": _doc_summary(func),
                 "category": (func.__module__ if func else "Custom"),
                 "importance": "primary" if name in PRIMARY_TOOL_NAMES else "secondary",
-                "default_enabled": name in {"create_drug_snapshot", "rag_json_build"},
+                "default_enabled": name in {"create_pbpk_snapshot", "run_pbpk_simulation", "get_drug_pk_parameters"},
             }
         )
 
@@ -371,7 +385,11 @@ try:
         agent = A1(path=str(BIOMNI_DATA_PATH))
         
         # Register standard literature/research tools globally once
-        for tool_func in [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search, advanced_web_search_claude]:
+        tools_to_register = [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search]
+        if "claude" in default_config.llm.lower():
+            tools_to_register.append(advanced_web_search_claude)
+            
+        for tool_func in tools_to_register:
             try:
                 agent.add_tool(tool_func)
             except Exception as e:
@@ -503,7 +521,10 @@ async def chat_stream(req: ChatRequest, request: Request):
     prompt_prefix = (
         "IMPORTANT: You must treat the following directory as your working directory for this chat.\n"
         f"Directory: {chat_dir.resolve()}\n"
-        "All files you create MUST be written inside this directory (or its subdirectories).\n"
+        "The Python environment's current working directory is NOT set to this path.\n"
+        f"You MUST define `CHAT_DIR = Path('{chat_dir.resolve()}')` at the start of your code "
+        "and use it for ALL file operations.\n"
+        "Example: `out_path = str(CHAT_DIR / 'my_file.json')`\n"
         "Do NOT write files anywhere else in the repository.\n\n"
     )
     prompt = prompt_prefix + (req.prompt or "")
@@ -885,6 +906,179 @@ async def root(request: Request):
     root_path = (request.scope.get("root_path") or "").rstrip("/")
     target = f"{root_path}/app/" if root_path else "/app/"
     return RedirectResponse(url=target)
+
+
+# --- Console Testing API Endpoints ---
+
+class SnapshotRequest(BaseModel):
+    """Request model for creating a PBPK snapshot."""
+    drug_name: str
+    dose_mg: float = 100.0
+    molecular_weight: Optional[float] = None
+    log_p: Optional[float] = None
+    fraction_unbound: Optional[float] = None
+    solubility_mg_l: Optional[float] = None
+    reference_ph: float = 7.4
+    individual_name: str = "HealthyAdult"
+    population: str = "European_ICRP_2002"
+    age_years: float = 30.0
+    weight_kg: float = 70.0
+    height_cm: float = 175.0
+    formulation_type: str = "Formulation_Tablet_Weibull"
+    simulation_duration_h: float = 24.0
+    out_path: Optional[str] = None
+
+
+class SimulationRequest(BaseModel):
+    """Request model for running a PBPK simulation."""
+    snapshot_path: str
+    output_dir: Optional[str] = None
+    export_pkml: bool = True
+    timeout_seconds: int = 300
+
+
+@app.post("/api/pbpk/snapshot")
+async def api_create_snapshot(req: SnapshotRequest, request: Request):
+    """
+    Create a PBPK snapshot file via API.
+
+    This endpoint allows direct creation of PK-Sim snapshot files
+    for testing and automation purposes.
+
+    Example curl command:
+        curl -X POST http://localhost:8000/api/pbpk/snapshot \
+            -H "Content-Type: application/json" \
+            -d '{
+                "drug_name": "Bupropion",
+                "dose_mg": 150.0,
+                "molecular_weight": 239.74,
+                "log_p": 3.6,
+                "fraction_unbound": 0.16,
+                "solubility_mg_l": 312.0
+            }'
+    """
+    if not DISABLE_AUTH:
+        get_current_user(request)
+
+    if create_pbpk_snapshot is None:
+        raise HTTPException(503, "PBPK tools not available")
+
+    try:
+        result = create_pbpk_snapshot(
+            drug_name=req.drug_name,
+            dose_mg=req.dose_mg,
+            molecular_weight=req.molecular_weight,
+            log_p=req.log_p,
+            fraction_unbound=req.fraction_unbound,
+            solubility_mg_l=req.solubility_mg_l,
+            reference_ph=req.reference_ph,
+            individual_name=req.individual_name,
+            population=req.population,
+            age_years=req.age_years,
+            weight_kg=req.weight_kg,
+            height_cm=req.height_cm,
+            formulation_type=req.formulation_type,
+            simulation_duration_h=req.simulation_duration_h,
+            out_path=req.out_path,
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.exception("Error creating snapshot")
+        raise HTTPException(500, f"Error creating snapshot: {str(e)}")
+
+
+@app.post("/api/pbpk/simulate")
+async def api_run_simulation(req: SimulationRequest, request: Request):
+    """
+    Run a PBPK simulation via API.
+
+    This endpoint runs a PK-Sim simulation from a snapshot file.
+    Requires PK-Sim to be installed on the server.
+
+    Example curl command:
+        curl -X POST http://localhost:8000/api/pbpk/simulate \
+            -H "Content-Type: application/json" \
+            -d '{"snapshot_path": "/path/to/snapshot.json"}'
+    """
+    if not DISABLE_AUTH:
+        get_current_user(request)
+
+    if run_pbpk_simulation is None:
+        raise HTTPException(503, "PBPK simulation tools not available")
+
+    try:
+        result = run_pbpk_simulation(
+            snapshot_path=req.snapshot_path,
+            output_dir=req.output_dir,
+            export_pkml=req.export_pkml,
+            timeout_seconds=req.timeout_seconds,
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.exception("Error running simulation")
+        raise HTTPException(500, f"Error running simulation: {str(e)}")
+
+
+@app.get("/api/pbpk/parameters/{drug_name}")
+async def api_get_parameters(drug_name: str, request: Request):
+    """
+    Get guidance on finding PK parameters for a drug.
+
+    This endpoint provides information about where to find
+    the required pharmacokinetic parameters for PBPK modeling.
+
+    Example curl command:
+        curl http://localhost:8000/api/pbpk/parameters/Bupropion
+    """
+    if not DISABLE_AUTH:
+        get_current_user(request)
+
+    if get_drug_pk_parameters is None:
+        raise HTTPException(503, "PBPK tools not available")
+
+    result = get_drug_pk_parameters(drug_name)
+    return JSONResponse(result)
+
+
+@app.get("/api/pbpk/test")
+async def api_pbpk_test(request: Request):
+    """
+    Test endpoint that creates a sample Bupropion snapshot.
+
+    This is a convenience endpoint for testing the PBPK workflow
+    with known parameters.
+
+    Example curl command:
+        curl http://localhost:8000/api/pbpk/test
+    """
+    if not DISABLE_AUTH:
+        get_current_user(request)
+
+    if create_pbpk_snapshot is None:
+        raise HTTPException(503, "PBPK tools not available")
+
+    # Create a test snapshot with known Bupropion parameters
+    # Reference: DrugBank DB01156
+    result = create_pbpk_snapshot(
+        drug_name="Bupropion",
+        dose_mg=150.0,
+        molecular_weight=239.74,  # g/mol
+        log_p=3.6,  # Lipophilicity
+        fraction_unbound=0.16,  # 84% protein bound
+        solubility_mg_l=312.0,  # at pH 7.4
+        individual_name="HealthyAdult",
+        population="European_ICRP_2002",
+        simulation_duration_h=24.0,
+    )
+
+    return JSONResponse({
+        "test_name": "Bupropion PBPK Snapshot",
+        "result": result,
+        "usage": {
+            "next_step": "To run simulation, POST to /api/pbpk/simulate with the snapshot_path",
+            "agent_prompt": "Create and run a PBPK simulation of 150mg Bupropion in a healthy adult population",
+        }
+    })
 
 
 # --- Mount Gradio App ---

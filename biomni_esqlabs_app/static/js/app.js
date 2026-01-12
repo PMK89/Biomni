@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Source Attribution Toggle ---
+    const sourceToggle = document.getElementById('source-toggle');
+    if (sourceToggle) {
+        sourceToggle.addEventListener('change', () => {
+            document.body.classList.toggle('show-sources', sourceToggle.checked);
+        });
+    }
+
     // --- Tab Switching ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
@@ -321,6 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- File Tree Logic ---
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
     function buildFileTree(files) {
         const root = {};
         files.forEach(file => {
@@ -355,9 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (node.__file__) {
                 itemDiv.style.display = 'flex';
                 itemDiv.style.alignItems = 'center';
+                itemDiv.style.position = 'relative';
+                
+                const sizeStr = formatSize(node.__file__.size || 0);
+
                 itemDiv.innerHTML = `
                     <span style="margin-right:6px">📄</span>
-                    <span class="file-link" style="flex:1; cursor:pointer; overflow:hidden; text-overflow:ellipsis;">${key}</span>
+                    <span class="file-link" style="flex:1; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${key}">${key}</span>
+                    <span style="font-size:0.75em; color:var(--muted); background:var(--bg); padding-left:4px; position:absolute; right:0; z-index:1;">${sizeStr}</span>
                 `;
                 itemDiv.querySelector('.file-link').onclick = () => window.open(withRootPath(`/files/download/${chatId}/${node.__file__.name}`), '_blank');
                 container.appendChild(itemDiv);
@@ -387,11 +408,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function fetchFiles(chatId) {
         const fileList = document.getElementById('files-list');
-        fileList.innerHTML = ''; 
         
         fetch(withRootPath(`/files/list/${chatId}`))
         .then(res => res.json())
         .then(files => {
+            fileList.innerHTML = ''; 
             if (!files || files.length === 0) {
                 fileList.innerHTML = '<div style="color:var(--muted); padding:8px;">No files</div>';
                 return;
@@ -759,11 +780,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- Source Attribution Parsing ---
+// Parse source annotations in the format: [[source:type|description]]text[[/source]]
+// Types: web, literature, database, tool, internal, user
+function parseSourceAttributions(html) {
+    // Pattern: [[source:type|description]]content[[/source]]
+    const sourcePattern = /\[\[source:(web|literature|database|tool|internal|user)\|([^\]]*)\]\](.*?)\[\[\/source\]\]/gs;
+
+    return html.replace(sourcePattern, (match, type, description, content) => {
+        const escapedDesc = description.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<span class="source-highlight source-${type}">` +
+               `${content}` +
+               `<span class="source-tooltip">${escapedDesc}</span>` +
+               `</span>`;
+    });
+}
+
+// Alternative pattern for inline source markers: [source:type]text[/source] with source info in data attributes
+function parseInlineSourceMarkers(html) {
+    // Pattern for simple source markers with type info embedded
+    // Format: <source type="web" info="URL or description">text</source>
+    const xmlPattern = /<source\s+type="(web|literature|database|tool|internal|user)"\s+info="([^"]*)">(.*?)<\/source>/gs;
+
+    return html.replace(xmlPattern, (match, type, info, content) => {
+        return `<span class="source-highlight source-${type}">` +
+               `${content}` +
+               `<span class="source-tooltip">${info}</span>` +
+               `</span>`;
+    });
+}
+
 // Simple Markdown parser placeholder if marked.js isn't available
 const marked = {
     parse: (text) => {
-        return text
+        let html = text
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+        // Apply source attribution parsing
+        html = parseSourceAttributions(html);
+        html = parseInlineSourceMarkers(html);
+
+        return html;
     }
 };

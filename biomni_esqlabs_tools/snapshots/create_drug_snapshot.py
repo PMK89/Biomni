@@ -5,30 +5,67 @@ import json
 def create_drug_snapshot(
     drug_name: str,
     out_path: str,
-    data_dir: str = "./data/snapshot_files",
+    data_dir: str = "./data/esqlabs/snapshot_files",
     individual_name: str = "Individual_1",
     formulation_name: str = "Oral IR Formulation",
     protocol_name: str = "Protocol_Main",
 ) -> dict:
     """
-    Creates a complete PK-Sim snapshot file for a given drug.
-    
-    This tool orchestrates the entire process:
-    1. Searches the web for pharmacokinetic properties of the drug
-    2. Extracts relevant parameters (MW, LogP, Fu, Solubility)
-    3. Builds a valid PK-Sim snapshot using rag_json_build
-    
+    [DEPRECATED] Legacy tool for creating PK-Sim snapshots.
+
+    IMPORTANT: This tool is deprecated and has known reliability issues.
+    Use create_pbpk_snapshot instead, which is simpler and more reliable.
+
+    create_pbpk_snapshot provides:
+    - Direct snapshot creation without multi-step orchestration
+    - Clear parameter validation with helpful error messages
+    - No dependency on example files
+    - Guaranteed valid PK-Sim snapshot output
+
+    This legacy tool orchestrates:
+    1. Web search for pharmacokinetic properties
+    2. Parameter extraction
+    3. RAG-based snapshot building (requires example files)
+
     Args:
         drug_name: Name of the drug/compound (e.g., "Ibuprofen", "Aspirin")
         out_path: Output path for the snapshot JSON file
-        data_dir: Directory containing example snapshot files for RAG
+        data_dir: Directory containing example snapshot files for RAG (default: ./data/esqlabs/snapshot_files)
         individual_name: Name for the individual (default: "Individual_1")
         formulation_name: Name for the formulation (default: "Oral IR Formulation")
         protocol_name: Name for the protocol (default: "Protocol_Main")
-    
+
     Returns:
         dict with status and instructions for next steps
     """
+    # Sanitize out_path: if it starts with /snapshots/ or /data/, make it relative
+    # This handles cases where the agent interprets instructions as absolute system paths
+    if out_path.startswith("/snapshots/") or out_path.startswith("/data/"):
+        out_path = out_path.lstrip("/")
+
+    # Ensure data_dir is absolute or correct relative path
+    project_root = Path(__file__).resolve().parents[2]
+    if data_dir.startswith("./"):
+        data_dir_path = project_root / data_dir[2:]
+    elif data_dir.startswith("/"):
+        data_dir_path = Path(data_dir)
+    else:
+        data_dir_path = project_root / data_dir
+        
+    # Fallback if default doesn't exist, check for common alternatives
+    if not data_dir_path.exists():
+        alternatives = [
+            project_root / "data/esqlabs/snapshot_files",
+            project_root / "data/snapshot_files",
+        ]
+        for alt in alternatives:
+            if alt.exists():
+                data_dir_path = alt
+                break
+    
+    # Update data_dir string for instructions
+    data_dir = str(data_dir_path.resolve())
+
     # Create the base snapshot file immediately if it doesn't exist
     base_snapshot = {
         "Compounds": [{"Name": drug_name}],

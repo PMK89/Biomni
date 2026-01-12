@@ -824,7 +824,25 @@ class _JsonRAG:
 
 @lru_cache(maxsize=8)
 def _load(data_dir: str) -> _JsonRAG:
-    return _JsonRAG(Path(data_dir))
+    path = Path(data_dir)
+    if not path.exists():
+        # Try to find it relative to project root if it looks like an absolute path that failed
+        project_root = Path(__file__).resolve().parents[2]
+        alternatives = [
+            project_root / "data/esqlabs/snapshot_files",
+            project_root / "data/snapshot_files",
+            project_root / "biomni_data/data_lake/snapshot_files"
+        ]
+        # If data_dir looks like a relative path from root but was passed as absolute /data/...
+        if str(path).startswith("/data/"):
+             rel = str(path)[1:] # strip leading /
+             alternatives.insert(0, project_root / rel)
+             
+        for alt in alternatives:
+            if alt.exists():
+                path = alt
+                break
+    return _JsonRAG(path)
 
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -887,8 +905,12 @@ def rag_json_build(
     - rebuild_simulations=True: ignoriert übernommene Simulationen und erzeugt eine minimale,
       gültige Simulation, die auf die aktuellen Building Blocks verweist.
     """
-    data_dir_p = Path(data_dir)
+    # Sanitize out_path: if it starts with /snapshots/ or /data/, make it relative
+    if out_path.startswith("/snapshots/") or out_path.startswith("/data/"):
+        out_path = out_path.lstrip("/")
+
     rag = _load(data_dir)
+    data_dir_p = rag.data_dir
 
     # Start with the requested section only
     result: Dict[str, Any] = {"Version": 80, section: values}
@@ -943,7 +965,7 @@ def rag_snapshot_autobuild(
     sections = [s for s in sections if s in all_secs]
 
     result: Dict[str, Any] = {"Version": 80}
-    data_dir_p = Path(data_dir)
+    data_dir_p = rag.data_dir
 
     for sec in sections:
         if strategy == "template":

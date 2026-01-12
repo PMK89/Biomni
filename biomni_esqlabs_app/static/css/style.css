@@ -476,3 +476,166 @@ select, input[type="range"] {
 .hidden {
     display: none !important;
 }
+
+/* ===== Source Attribution (APAK) Styles ===== */
+
+/* Source attribution container */
+.source-attribution-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-subtle);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.85em;
+}
+
+.source-attribution-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+.source-attribution-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Source types with color coding */
+.source-highlight {
+    position: relative;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin: 0 1px;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.source-highlight:hover {
+    filter: brightness(0.9);
+}
+
+/* Web search source - blue */
+.source-web {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.6);
+}
+
+/* Literature/PubMed source - green */
+.source-literature {
+    background-color: rgba(34, 197, 94, 0.2);
+    border-bottom: 2px solid rgba(34, 197, 94, 0.6);
+}
+
+/* Database/Vector DB source - purple */
+.source-database {
+    background-color: rgba(168, 85, 247, 0.2);
+    border-bottom: 2px solid rgba(168, 85, 247, 0.6);
+}
+
+/* Tool output source - orange */
+.source-tool {
+    background-color: rgba(249, 115, 22, 0.2);
+    border-bottom: 2px solid rgba(249, 115, 22, 0.6);
+}
+
+/* Internal knowledge source - gray */
+.source-internal {
+    background-color: rgba(156, 163, 175, 0.2);
+    border-bottom: 2px solid rgba(156, 163, 175, 0.6);
+}
+
+/* User input source - teal */
+.source-user {
+    background-color: rgba(20, 184, 166, 0.2);
+    border-bottom: 2px solid rgba(20, 184, 166, 0.6);
+}
+
+/* Source tooltip */
+.source-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+    max-width: 300px;
+    white-space: normal;
+    text-align: left;
+}
+
+.source-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--text);
+}
+
+.source-highlight:hover .source-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Source legend */
+.source-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.8em;
+}
+
+.source-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.source-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.source-legend-color.web { background: rgba(59, 130, 246, 0.6); }
+.source-legend-color.literature { background: rgba(34, 197, 94, 0.6); }
+.source-legend-color.database { background: rgba(168, 85, 247, 0.6); }
+.source-legend-color.tool { background: rgba(249, 115, 22, 0.6); }
+.source-legend-color.internal { background: rgba(156, 163, 175, 0.6); }
+.source-legend-color.user { background: rgba(20, 184, 166, 0.6); }
+
+/* Hide source highlights when toggle is off */
+body:not(.show-sources) .source-highlight {
+    background: none;
+    border-bottom: none;
+    padding: 0;
+    margin: 0;
+}
+
+body:not(.show-sources) .source-tooltip {
+    display: none;
+}
+
+body:not(.show-sources) .source-legend {
+    display: none;
+}

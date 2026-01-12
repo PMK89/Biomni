@@ -30,8 +30,18 @@ def _snapshot_tools() -> list[ToolCallable]:
 
 def _pbpk_tools() -> list[ToolCallable]:
     from .pbpk.pksim_runner import run_pksim_snapshot
+    from .pbpk.pbpk_workflow import (
+        create_pbpk_snapshot,
+        run_pbpk_simulation,
+        get_drug_pk_parameters,
+    )
 
-    return [run_pksim_snapshot]
+    return [
+        run_pksim_snapshot,
+        create_pbpk_snapshot,
+        run_pbpk_simulation,
+        get_drug_pk_parameters,
+    ]
 
 
 _TOOLSETS: dict[str, Callable[[], list[ToolCallable]]] = {
