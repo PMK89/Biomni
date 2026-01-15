@@ -11,6 +11,7 @@ pypdf
 PyPDF2
 googlesearch-python
 pymed
+biopython
 scholarly
 
 # Biomni Dependencies (from environment.yml)

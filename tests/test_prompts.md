@@ -8,11 +8,23 @@ These prompts are designed to test the full spectrum of the Biomni agent's capab
 
 **Prompt:**
 ```
-Perform a complete pharmacokinetic analysis for Venetoclax (BCL-2 inhibitor). Search PubMed and databases for physicochemical properties (MW, logP, pKa, solubility), ADME data, clinical PK parameters (Cmax, Tmax, AUC, half-life, clearance, Vd), DDIs, and protein binding. Save all papers you find.
+Deliver a full PK research + PBPK simulation dossier for Venetoclax (BCL-2 inhibitor).
 
-Create a PBPK model for Venetoclax with adult physiology, 400 mg oral dose, and CYP3A4 metabolism. Run the simulation for 48 hours. Analyze the results to calculate Cmax, Tmax, and AUC0-24h. Plot the concentration-time profile.
+1) Literature research (save all papers):
+- Search PubMed and web sources for physicochemical properties (MW, logP, pKa, solubility), ADME, clinical PK (Cmax, Tmax, AUC, t1/2, CL, Vd), DDIs, and protein binding.
+- Extract key numeric values into a structured table with citations and record URLs/PMIDs/DOIs.
+- Save all available open-access PDFs and include a download report.
 
-Compare your predicted PK parameters with the clinical data from literature. Write a comprehensive report summarizing the literature findings, model structure, simulation results, and comparison with clinical data. Include all plots and data tables.
+2) PBPK model + simulation:
+- Build an adult PBPK model for Venetoclax, 400 mg oral dose, CYP3A4 metabolism.
+- Simulate 48 hours with appropriate time step and output concentrations.
+- Compute Cmax, Tmax, AUC0-24h and save metrics as CSV.
+- Plot the concentration–time profile (linear + semi-log if possible).
+
+3) Reporting:
+- Compare predicted PK parameters with clinical literature values (cite each source).
+- Produce a comprehensive report with methods, parameters, results tables, plots, and a discussion of discrepancies/assumptions.
+- Include a file index listing all generated outputs.
 ```
 
 ---
@@ -21,11 +33,22 @@ Compare your predicted PK parameters with the clinical data from literature. Wri
 
 **Prompt:**
 ```
-Perform a pediatric dose optimization study for Oseltamivir (Tamiflu) across age groups 2-5 years (15 kg), 6-8 years (25 kg), 9-12 years (40 kg), and adults (70 kg). Search literature for oseltamivir PK data including MW (312.4 g/mol), logP (1.1), bioavailability (80%), protein binding (3%), half-life (6-10 h), and the active metabolite oseltamivir carboxylate. Save all papers.
+Perform a pediatric dose optimization study for Oseltamivir (Tamiflu) across age groups 2–5 years (15 kg), 6–8 years (25 kg), 9–12 years (40 kg), and adults (70 kg).
 
-Create PBPK models for each age group with age-appropriate physiology. Simulate current weight-based dosing (30-75 mg BID) over 5 days. Calculate Cmax, AUC, and Tmax for each group. Plot concentration-time profiles for all age groups on the same graph for comparison.
+1) Literature research (save all papers):
+- Collect oseltamivir PK/PD data, MW (312.4 g/mol), logP (1.1), bioavailability (80%), protein binding (3%), half-life (6–10 h), and metabolite (oseltamivir carboxylate) parameters.
+- Extract pediatric and adult PK datasets, dosing regimens, and exposure targets (AUC/Cmax) with citations.
 
-Analyze dose proportionality across ages and compare pediatric exposure to adult targets. Generate a report with literature review, model methodology, comparative plots, PK parameter tables by age, and dosing recommendations for regulatory submission.
+2) PBPK modeling + simulation:
+- Create PBPK models for each age group with age-appropriate physiology.
+- Simulate weight-based dosing (30–75 mg BID) over 5 days; include steady-state assessment.
+- Calculate Cmax, AUC, and Tmax for each group and save results as a table.
+- Plot all age-group concentration–time profiles on a single figure (legend by age).
+
+3) Analysis + reporting:
+- Evaluate dose proportionality and pediatric exposure vs adult targets.
+- Provide dosing recommendations and rationale with citations.
+- Produce a regulatory-style report including methods, assumptions, sensitivity notes, tables, plots, and a references section.
 ```
 
 ---
@@ -34,11 +57,45 @@ Analyze dose proportionality across ages and compare pediatric exposure to adult
 
 **Prompt:**
 ```
-Assess the drug-drug interaction between Rifampicin (CYP3A4 inducer) and Midazolam (CYP3A4 substrate). Search for clinical DDI studies and extract properties: Midazolam (MW 325.8, logP 3.9, high first-pass, t½ 2-4h) and Rifampicin (MW 822.9, CYP3A4 inducer). Find CYP3A4 induction kinetics data and clinical PK for both drugs alone and combined. Save all papers.
+Assess the drug–drug interaction between Rifampicin (CYP3A4 inducer) and Midazolam (CYP3A4 substrate).
 
-Build PBPK models for both drugs. For midazolam: oral administration with extensive hepatic metabolism. For rifampicin: oral with enzyme induction properties. Simulate four scenarios: (1) midazolam 5 mg alone, (2) midazolam after 7 days rifampicin 600 mg daily, (3) midazolam after 14 days rifampicin, (4) midazolam 7 days post-rifampicin (recovery).
+1) Literature research (save all papers):
+- Find clinical DDI studies and induction kinetics data.
+- Extract properties: Midazolam (MW 325.8, logP 3.9, high first-pass, t½ 2–4 h), Rifampicin (MW 822.9, CYP3A4 inducer), and exposure changes (AUC/Cmax ratios) from clinical data.
 
-Calculate AUC and Cmax ratios for each scenario. Plot all concentration-time profiles overlaid. Create plots showing enzyme induction time course. Compare predictions with published clinical DDI data. Write a comprehensive report with executive summary, methods, validation plots, DDI comparison plots, statistical tables, dose adjustment recommendations, and full references.
+2) PBPK modeling + simulation:
+- Build PBPK models for both drugs (midazolam oral, rifampicin oral with enzyme induction).
+- Simulate four scenarios: (1) midazolam 5 mg alone, (2) midazolam after 7 days rifampicin 600 mg daily, (3) midazolam after 14 days rifampicin, (4) midazolam 7 days post-rifampicin (recovery).
+- Compute AUC and Cmax ratios and save as CSV.
+- Plot all concentration–time profiles overlaid and an induction time-course plot.
+
+3) Reporting:
+- Compare predictions with published clinical DDI ratios.
+- Write a comprehensive report (executive summary, methods, assumptions, results tables, validation plots, DDI comparison, dose adjustment recommendations, and full references).
+```
+
+---
+
+## Test Prompt 4: Bupropion Adult PBPK Simulation & Reporting
+
+**Prompt:**
+```
+Build a full PBPK simulation and report for Bupropion (adult, 70 kg).
+
+1) Literature research (save all papers):
+- Collect physicochemical properties (MW, logP, pKa, solubility), protein binding, clearance, and clinical PK metrics (Cmax, Tmax, AUC, t1/2).
+- Identify metabolite considerations (hydroxybupropion) and CYP2B6 metabolism references.
+- Save all available open-access PDFs and list key citations with PMIDs/DOIs.
+
+2) PBPK modeling + simulation:
+- Create an adult PBPK model for Bupropion with a 150 mg oral dose.
+- Simulate 72 hours with appropriate resolution.
+- Compute Cmax, Tmax, AUC0–24h, AUC0–72h and save results as CSV.
+- Plot concentration–time profiles for parent (and metabolite if supported).
+
+3) Reporting:
+- Compare simulated PK to literature values and discuss discrepancies.
+- Produce a publication-ready report with methods, parameters table, results, plots, sensitivity notes, and a references section.
 ```
 
 ---

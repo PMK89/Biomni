@@ -55,6 +55,7 @@ dependencies:
       - python-multipart
       - itsdangerous
       - starlette
+      - biopython
       - pymed
       - scholarly
       - langchain
