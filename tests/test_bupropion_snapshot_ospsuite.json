@@ -1,0 +1,195 @@
+{
+  "Version": 80,
+  "Compounds": [
+    {
+      "Name": "Bupropion",
+      "IsSmallMolecule": true,
+      "Parameters": [
+        {
+          "Name": "Molecular weight",
+          "Value": 239.74,
+          "Unit": "g/mol"
+        }
+      ],
+      "Lipophilicity": [
+        {
+          "Name": "Measurement",
+          "Parameters": [
+            {
+              "Name": "Lipophilicity",
+              "Value": 3.6,
+              "Unit": "Log Units"
+            }
+          ]
+        }
+      ],
+      "FractionUnbound": [
+        {
+          "Name": "Measurement",
+          "Species": "Human",
+          "Parameters": [
+            {
+              "Name": "Fraction unbound (plasma, reference value)",
+              "Value": 0.16
+            }
+          ]
+        }
+      ],
+      "Solubility": [
+        {
+          "Name": "Assumption",
+          "Parameters": [
+            {
+              "Name": "Solubility at reference pH",
+              "Value": 312.0,
+              "Unit": "mg/l"
+            },
+            {
+              "Name": "Reference pH",
+              "Value": 7.4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "Individuals": [
+    {
+      "Name": "HealthyAdult",
+      "Age": {
+        "Value": 30.0,
+        "Unit": "year(s)"
+      },
+      "Weight": {
+        "Value": 70.0,
+        "Unit": "kg"
+      },
+      "Height": {
+        "Value": 175.0,
+        "Unit": "cm"
+      },
+      "OriginData": {
+        "Species": "Human",
+        "Population": "European_ICRP_2002"
+      }
+    }
+  ],
+  "Formulations": [
+    {
+      "Name": "Oral_Formulation",
+      "FormulationType": "Formulation_Tablet_Weibull"
+    }
+  ],
+  "Protocols": [
+    {
+      "Name": "Protocol_Main",
+      "Applications": [
+        {
+          "Name": "Application_1",
+          "ApplicationType": "Oral",
+          "FormulationKey": "Formulation",
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "Schemas": [
+        {
+          "Name": "Schema 1",
+          "SchemaItems": [
+            {
+              "Name": "Schema Item 1",
+              "ApplicationType": "Oral",
+              "FormulationKey": "Formulation",
+              "Parameters": [
+                {
+                  "Name": "Start time",
+                  "Value": 0.0,
+                  "Unit": "h"
+                },
+                {
+                  "Name": "InputDose",
+                  "Value": 150.0,
+                  "Unit": "mg"
+                },
+                {
+                  "Name": "Volume of water/body weight",
+                  "Value": 3.5,
+                  "Unit": "ml/kg"
+                }
+              ]
+            }
+          ],
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "NumberOfRepetitions",
+              "Value": 1.0
+            },
+            {
+              "Name": "TimeBetweenRepetitions",
+              "Value": 24.0,
+              "Unit": "h"
+            }
+          ]
+        }
+      ],
+      "TimeUnit": "h"
+    }
+  ],
+  "Simulations": [
+    {
+      "Name": "Bupropion_Simulation",
+      "Model": "4Comp",
+      "Individual": "HealthyAdult",
+      "Compounds": [
+        {
+          "Name": "Bupropion",
+          "Protocol": {
+            "Name": "Protocol_Main",
+            "Formulations": [
+              {
+                "Name": "Oral_Formulation",
+                "Key": "Formulation"
+              }
+            ]
+          }
+        }
+      ],
+      "OutputSchema": [
+        {
+          "Parameters": [
+            {
+              "Name": "Start time",
+              "Value": 0.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "End time",
+              "Value": 24.0,
+              "Unit": "h"
+            },
+            {
+              "Name": "Resolution",
+              "Value": 4.0,
+              "Unit": "pts/h"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "Events": [],
+  "ExpressionProfiles": [],
+  "ObservedData": [],
+  "ObservedDataClassifications": [],
+  "SimulationClassifications": []
+}

@@ -1,6 +1,19 @@
-"""Registration helpers for ESQlabs toolsets."""
+"""
+Registration helpers for ESQlabs toolsets.
+
+NOTE: For improved startup performance, prefer using the static registry:
+    from biomni_esqlabs_tools.static_registry import register_with_agent
+
+The static registry provides:
+- Pre-computed tool schemas (no LLM calls at startup)
+- Lazy tool loading (tools imported only when first used)
+- Startup profiling and metrics
+
+This dynamic registry is maintained for backward compatibility.
+"""
 from __future__ import annotations
 
+import warnings
 from typing import Callable, Dict, Iterable, Iterator, List, Sequence
 
 ToolCallable = Callable[..., object]
@@ -33,14 +46,20 @@ def _pbpk_tools() -> list[ToolCallable]:
     from .pbpk.pbpk_workflow import (
         create_pbpk_snapshot,
         run_pbpk_simulation,
+        run_pbpk_workflow,
         get_drug_pk_parameters,
+        analyze_pbpk_simulation_results,
+        plot_pbpk_simulation_results,
     )
 
     return [
         run_pksim_snapshot,
         create_pbpk_snapshot,
         run_pbpk_simulation,
+        run_pbpk_workflow,
         get_drug_pk_parameters,
+        analyze_pbpk_simulation_results,
+        plot_pbpk_simulation_results,
     ]
 
 

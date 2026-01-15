@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Tab Switching ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
+    const tabContent = document.getElementById('tab-content');
 
     function switchTab(tabId) {
         tabBtns.forEach(btn => {
@@ -121,11 +122,17 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((res) => res.json())
         .then((payload) => {
             populateTools(payload?.tools || []);
+            // Backend always provides all tools now; disable UI toggles for simplicity.
+            const toolsContainer = document.querySelector('.tools-container');
+            if (toolsContainer) {
+                toolsContainer.classList.add('hidden');
+            }
         })
         .catch((err) => {
             console.error('Failed to load tools metadata:', err);
-            if (primaryToolsContainer) {
-                primaryToolsContainer.innerHTML = '<div class="tool-placeholder">Unable to load tools</div>';
+            const toolsContainer = document.querySelector('.tools-container');
+            if (toolsContainer) {
+                toolsContainer.classList.add('hidden');
             }
         });
 
@@ -184,9 +191,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const thoughtsLog = document.getElementById('thoughts-log');
     const variablesView = document.getElementById('variables-view');
 
+    const AUTOSCROLL_THRESHOLD_PX = 120;
+
+    function isNearBottom(container) {
+        if (!container) return true;
+        const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+        return distance <= AUTOSCROLL_THRESHOLD_PX;
+    }
+
+    function scrollToBottom(container, behavior = 'auto') {
+        if (!container) return;
+        container.scrollTo({ top: container.scrollHeight, behavior });
+    }
+
+    let chatAutoScrollEnabled = true;
+    let thoughtsAutoScrollEnabled = true;
+
     if (!messagesContainer || !thoughtsLog || !variablesView) {
         console.error('Chat containers are missing from the DOM.');
         return;
+    }
+
+    // Disable autoscroll when the user scrolls up, re-enable when back near the bottom.
+    messagesContainer.addEventListener('scroll', () => {
+        chatAutoScrollEnabled = isNearBottom(messagesContainer);
+    });
+
+    thoughtsLog.addEventListener('scroll', () => {
+        thoughtsAutoScrollEnabled = isNearBottom(thoughtsLog);
+    });
+
+    if (tabContent) {
+        tabContent.addEventListener('scroll', () => {
+            const activeTabBtn = document.querySelector('.tab-btn.active');
+            const active = activeTabBtn?.dataset?.tab;
+            if (active === 'thoughts') {
+                thoughtsAutoScrollEnabled = isNearBottom(tabContent);
+            } else if (active === 'answer') {
+                chatAutoScrollEnabled = isNearBottom(tabContent);
+            }
+        });
     }
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
@@ -208,6 +252,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- File Upload ---
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-upload');
+
+    // --- Chat Zip Export / Import ---
+    const chatExportZipBtn = document.getElementById('chat-export-zip-btn');
+    const chatImportZipBtn = document.getElementById('chat-import-zip-btn');
+    const chatZipUpload = document.getElementById('chat-zip-upload');
+
+    if (chatExportZipBtn) {
+        chatExportZipBtn.addEventListener('click', () => {
+            const chatId = ensureChatId();
+            window.open(withRootPath(`/files/chat/${chatId}/export_zip`), '_blank');
+        });
+    }
+
+    if (chatImportZipBtn && chatZipUpload) {
+        chatImportZipBtn.addEventListener('click', () => chatZipUpload.click());
+        chatZipUpload.addEventListener('change', async () => {
+            const file = chatZipUpload.files?.[0];
+            chatZipUpload.value = '';
+            if (!file) return;
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch(withRootPath('/files/chat/import_zip'), {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!res.ok) throw new Error('Import failed');
+                const payload = await res.json();
+                const newChatId = payload?.chat_id;
+                if (!newChatId) throw new Error('Import returned no chat_id');
+                loadHistoryFromStorage();
+                setTimeout(() => loadChat(newChatId), 200);
+            } catch (err) {
+                console.error('Chat zip import error:', err);
+            }
+        });
+    }
 
     dropZone.addEventListener('click', () => fileInput.click());
 
@@ -678,13 +759,13 @@ document.addEventListener('DOMContentLoaded', () => {
         thoughtsLog.appendChild(turnMarker);
 
         // 3. Call API
-        const tools = gatherSelectedTools();
+        const tools = null;
 
         try {
             const response = await fetch(withRootPath('/api/chat_stream'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     prompt: text,
                     tools: tools,
                     chat_id: chatId
@@ -706,18 +787,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const data = JSON.parse(dataLine.slice(6));
                     if (data.type === 'log') {
+                        // Append to thoughts
                         const logDiv = document.createElement('div');
                         logDiv.className = 'log-entry';
                         logDiv.textContent = data.content;
                         thoughtsLog.appendChild(logDiv);
-                        thoughtsLog.scrollTop = thoughtsLog.scrollHeight;
+                        if (thoughtsAutoScrollEnabled) {
+                            scrollToBottom(tabContent);
+                        }
                     } else if (data.type === 'solution') {
                         if (!botMessageDiv) {
                             botMessageDiv = appendMessage('bot', '');
                         }
                         currentSolution += data.content;
                         botMessageDiv.innerHTML = marked.parse(currentSolution);
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        if (chatAutoScrollEnabled) {
+                            scrollToBottom(messagesContainer);
+                        }
                     } else if (data.type === 'tool_call') {
                         const pre = document.createElement('pre');
                         pre.textContent = JSON.stringify(data.content, null, 2);
@@ -727,7 +813,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         logDiv.className = 'log-entry';
                         logDiv.textContent = `Snapshot saved: ${data.content?.filename || 'unknown file'}`;
                         thoughtsLog.appendChild(logDiv);
-                        thoughtsLog.scrollTop = thoughtsLog.scrollHeight;
+                        if (thoughtsAutoScrollEnabled) {
+                            scrollToBottom(tabContent || thoughtsLog);
+                        }
                         if (chatId) {
                             fetchFiles(chatId);
                         }
@@ -775,7 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = `message ${role === 'user' ? 'user-message' : 'bot-message'}`;
         div.textContent = text; // Initial text, for bot will be updated with HTML
         messagesContainer.appendChild(div);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if (chatAutoScrollEnabled) {
+            scrollToBottom(messagesContainer);
+        }
         return div;
     }
 });

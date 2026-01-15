@@ -329,6 +329,35 @@ body, html {
     background: var(--bg-subtle);
 }
 
+ .files-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+ }
+
+ .files-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+ }
+
+ .files-action-btn {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: 500;
+ }
+
+ .files-action-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+ }
+
 #files-list {
     flex: 1;
     overflow-y: auto;

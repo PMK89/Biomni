@@ -6,11 +6,10 @@ import contextlib
 import shutil
 import re
 import gradio as gr
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from biomni.agent.a1 import A1
-from . import auth
 from .config import settings
 from .upload import router as upload_router
 
@@ -23,8 +22,6 @@ app.add_middleware(
     max_age=3600  # Session expires after 1 hour
 )
 
-# Mount the authentication routes (e.g., /login, /callback, /logout)
-app.include_router(auth.router)
 app.include_router(upload_router)
 
 # Initialize the Biomni agent once when the application starts.
@@ -347,5 +344,4 @@ async def root(request: Request):
 chat_interface = create_chat_interface()
 
 # Mount the Gradio app on the FastAPI app at the /gradio path.
-# The auth_dependency ensures that only authenticated users can access it.
-app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=auth.get_current_user)
+app = gr.mount_gradio_app(app, chat_interface, path="/gradio")

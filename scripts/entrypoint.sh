@@ -44,10 +44,10 @@ attr = ${attr@Q}
 try:
     mod = importlib.import_module(module)
 except ModuleNotFoundError as exc:
-    print(f"Skipping {candidate}: {exc}", file=sys.stderr)
+    print(f"Skipping {module}{(':'+attr) if attr else ''}: {exc}", file=sys.stderr)
     sys.exit(1)
 except Exception as exc:
-    print(f"Error importing {candidate}: {exc}", file=sys.stderr)
+    print(f"Error importing {module}{(':'+attr) if attr else ''}: {exc}", file=sys.stderr)
     import traceback
     traceback.print_exc()
     sys.exit(1)

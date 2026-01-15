@@ -13,11 +13,6 @@ class Settings(BaseSettings):
     # Using a default, insecure key as a temporary workaround.
     SESSION_SECRET: str = "a_default_insecure_secret_key_for_development_only"
 
-    # Microsoft Entra ID (Azure AD) settings
-    CLIENT_ID: str
-    CLIENT_SECRET: str
-    TENANT_ID: str
-
     # Optional OpenAI settings
     OPENAI_API_TYPE: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None

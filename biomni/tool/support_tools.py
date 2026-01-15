@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import sys
 from io import StringIO
 
@@ -81,6 +82,12 @@ def _capture_matplotlib_plots():
 def _apply_matplotlib_patches():
     """Apply simple monkey patches to matplotlib functions to automatically capture plots."""
     try:
+        os.environ.setdefault("MPLBACKEND", "Agg")
+        import matplotlib
+        try:
+            matplotlib.use("Agg", force=True)
+        except Exception:
+            pass
         import matplotlib.pyplot as plt
 
         # Only patch if matplotlib is available and not already patched

@@ -2,13 +2,16 @@
 fastapi
 uvicorn[standard]
 pydantic-settings
-msal
-python-jose[cryptography]
 python-dotenv
+python-multipart
+jinja2
+httpx
 gradio
 pypdf
 PyPDF2
 googlesearch-python
+pymed
+scholarly
 
 # Biomni Dependencies (from environment.yml)
 numpy==2.1

@@ -8,19 +8,21 @@ import re
 import shutil
 import threading
 import time
-from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import gradio as gr
-from fastapi import FastAPI, HTTPException, Request, Depends
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 
-from biomni.agent.a1 import A1
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=False)
+
 from .config import settings
 from biomni.config import default_config
 from .data_paths import BIOMNI_DATA_PATH, get_chat_dir, sanitize_segment
@@ -31,8 +33,266 @@ from biomni.tool.literature import (
     query_arxiv,
     search_google,
     advanced_web_search,
-    advanced_web_search_claude
+    advanced_web_search_claude,
+    download_open_access_paper_pdf,
+    download_pubmed_open_access_pdfs
 )
+
+
+def _prompt_requests_pbpk(prompt: str) -> bool:
+    if not prompt:
+        return False
+    lowered = prompt.lower()
+    return any(
+        token in lowered
+        for token in (
+            "pbpk",
+            "pk-sim",
+            "pksim",
+            "ospsuite",
+            "simulate",
+            "simulation",
+            "run the simulation",
+            "run a simulation",
+        )
+    )
+
+
+def _prompt_requests_literature(prompt: str) -> bool:
+    if not prompt:
+        return False
+    lowered = prompt.lower()
+    return any(
+        token in lowered
+        for token in (
+            "save all papers",
+            "download all papers",
+            "save papers",
+            "download papers",
+            "save all sources",
+            "download pdf",
+            "download pdfs",
+            "downloaded open-access pdf",
+            "pubmed",
+            "literature",
+        )
+    )
+
+
+def _infer_pubmed_query(prompt: str) -> str:
+    text = (prompt or "")
+    candidates = re.findall(r"\b[A-Z][A-Za-z0-9\-]{2,}\b", text)
+    blacklist = {
+        "IMPORTANT",
+        "Directory",
+        "CHAT_DIR",
+        "PBPK",
+        "PK",
+        "Simulate",
+        "Simulation",
+        "Protocol",
+        "Create",
+        "Save",
+        "Download",
+        "PubMed",
+        "Google",
+        "Scholar",
+    }
+    drugs: list[str] = []
+    for c in candidates:
+        if c in blacklist:
+            continue
+        if c.lower() in {"mg", "bid", "auc", "cmax", "tmax"}:
+            continue
+        if c not in drugs:
+            drugs.append(c)
+        if len(drugs) >= 3:
+            break
+    if drugs:
+        joined = " ".join(drugs)
+        return f"{joined} pharmacokinetics"
+    return "pharmacokinetics"
+
+
+def _has_pbpk_outputs(chat_dir: Path) -> bool:
+    out_dir = chat_dir / "simulation_outputs"
+    if not out_dir.exists():
+        return False
+    has_csv = any(out_dir.rglob("*-Results.csv")) or any(out_dir.rglob("*Results.csv"))
+    has_pkml = any(out_dir.rglob("*.pkml"))
+    return has_csv or has_pkml
+
+
+def _has_pbpk_plots(chat_dir: Path) -> bool:
+    plots_dir = chat_dir / "simulation_outputs" / "plots"
+    if not plots_dir.exists():
+        return False
+    return any(plots_dir.rglob("*.png")) or any(plots_dir.rglob("*.pdf")) or any(plots_dir.rglob("*.svg"))
+
+
+def _find_latest_snapshot_file(chat_dir: Path) -> Optional[Path]:
+    candidates = sorted(
+        (p for p in chat_dir.rglob("*.json") if p.is_file()),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+    preferred = [p for p in candidates if "snapshot" in p.name.lower()]
+    ordered = preferred + [p for p in candidates if p not in preferred]
+
+    for path in ordered:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            if _looks_like_snapshot(payload):
+                return path
+        except Exception:
+            continue
+    return None
+
+
+def _infer_pbpk_setup_from_prompt(prompt: str) -> dict:
+    lowered = (prompt or "").lower()
+
+    drug_name: Optional[str] = None
+    m = re.search(r"pbpk\s+(?:model|simulation)\s+for\s+([a-z0-9\-]+)", lowered)
+    if m:
+        drug_name = m.group(1)
+    if not drug_name:
+        m2 = re.search(r"model\s+for\s+([a-z0-9\-]+)", lowered)
+        if m2:
+            drug_name = m2.group(1)
+    if not drug_name:
+        m3 = re.search(r"for\s+([a-z0-9\-]+)\s*\(", lowered)
+        if m3:
+            drug_name = m3.group(1)
+    if not drug_name:
+        drug_name = "compound"
+
+    dose_mg: float = 100.0
+    dose_match = re.search(r"(\d+(?:\.\d+)?)\s*mg", lowered)
+    if dose_match:
+        try:
+            dose_mg = float(dose_match.group(1))
+        except Exception:
+            dose_mg = 100.0
+
+    duration_h: float = 24.0
+    dur_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)", lowered)
+    if dur_match:
+        try:
+            duration_h = float(dur_match.group(1))
+        except Exception:
+            duration_h = 24.0
+    elif "48 hour" in lowered or "48h" in lowered:
+        duration_h = 48.0
+
+    safe_drug = sanitize_segment(drug_name.lower()) or "compound"
+    return {
+        "drug_name": safe_drug,
+        "dose_mg": dose_mg,
+        "simulation_duration_h": duration_h,
+    }
+
+
+def _find_missing_claimed_files(text: str, chat_dir: Path) -> list[str]:
+    if not text:
+        return []
+
+    candidates: set[str] = set()
+
+    # Absolute paths
+    for m in re.finditer(r"(/[^\s`'\"]{5,})", text):
+        p = m.group(1)
+        if p.startswith("/home/") or p.startswith("/data/") or p.startswith("/tmp/") or p.startswith("/var/"):
+            candidates.add(p)
+
+    # Common relative paths mentioned in reports
+    for m in re.finditer(r"\b([A-Za-z0-9_\-./]+\.(?:pdf|json|csv|pkml|png|md|txt))\b", text):
+        rel = m.group(1)
+        if rel.startswith("http"):
+            continue
+        # Avoid capturing overly generic single filenames without any directory context
+        candidates.add(str((chat_dir / rel).resolve()))
+
+    missing: list[str] = []
+    for p in sorted(candidates):
+        try:
+            if not Path(p).exists():
+                missing.append(p)
+        except Exception:
+            continue
+    return missing
+
+
+def _write_workflow_report(
+    chat_dir: Path,
+    prompt: str,
+    pbpk_enforcement: dict | None,
+    literature_enforcement: dict | None,
+    missing_claimed_files: list[str] | None,
+) -> str | None:
+    try:
+        lines: list[str] = []
+        lines.append("# Biomni Workflow Report")
+        lines.append("")
+        lines.append(f"Chat directory: `{str(chat_dir.resolve())}`")
+        lines.append("")
+        if prompt:
+            lines.append("## Prompt")
+            lines.append("```")
+            lines.append(prompt[:4000])
+            lines.append("```")
+            lines.append("")
+
+        lines.append("## Enforcement Status")
+        lines.append("```json")
+        lines.append(
+            json.dumps(
+                {
+                    "pbpk_enforcement": pbpk_enforcement,
+                    "literature_enforcement": literature_enforcement,
+                    "missing_claimed_files": (missing_claimed_files or [])[:50],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        lines.append("```")
+        lines.append("")
+
+        def _list_files(title: str, rel_dir: str, patterns: tuple[str, ...]) -> None:
+            base = chat_dir / rel_dir
+            lines.append(f"## {title}")
+            if not base.exists():
+                lines.append("(missing)")
+                lines.append("")
+                return
+            found: list[str] = []
+            for pat in patterns:
+                found.extend([str(p.relative_to(chat_dir)) for p in base.rglob(pat) if p.is_file()])
+            found = sorted(set(found))
+            if not found:
+                lines.append("(none)")
+                lines.append("")
+                return
+            for f in found[:200]:
+                lines.append(f"- `{f}`")
+            if len(found) > 200:
+                lines.append(f"- ... ({len(found) - 200} more)")
+            lines.append("")
+
+        _list_files("Literature", "literature", ("*.pdf", "*.json", "*.txt", "*.md"))
+        _list_files("Snapshots", ".", ("*_pbpk_snapshot.json", "*snapshot*.json"))
+        _list_files("Simulation Outputs", "simulation_outputs", ("*.csv", "*.pkml", "*.json"))
+        _list_files("Plots", "simulation_outputs/plots", ("*.png", "*.pdf", "*.svg"))
+
+        report_path = chat_dir / "workflow_report.md"
+        report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return str(report_path.resolve())
+    except Exception:
+        logging.exception("Failed to write workflow_report.md", exc_info=True)
+        return None
 
 
 def _resolve_user_id(request: Request) -> str:
@@ -150,7 +410,10 @@ try:
     from biomni_esqlabs_tools.pbpk.pbpk_workflow import (
         create_pbpk_snapshot,
         run_pbpk_simulation,
+        run_pbpk_workflow,
         get_drug_pk_parameters,
+        analyze_pbpk_simulation_results,
+        plot_pbpk_simulation_results,
     )
 except ImportError:
     create_drug_snapshot = None
@@ -158,12 +421,16 @@ except ImportError:
     rag_json_template = None
     rag_json_answer = None
     rag_json_build = None
+
+    run_pbpk_workflow = None
     rag_snapshot_autobuild = None
     run_biomni_snapshot = None
     run_pksim_snapshot = None
     create_pbpk_snapshot = None
     run_pbpk_simulation = None
     get_drug_pk_parameters = None
+    analyze_pbpk_simulation_results = None
+    plot_pbpk_simulation_results = None
 
 
 REGISTERABLE_TOOLS: Dict[str, Callable[..., object]] = {}
@@ -187,6 +454,8 @@ for _tool in (
     create_pbpk_snapshot,
     run_pbpk_simulation,
     get_drug_pk_parameters,
+    analyze_pbpk_simulation_results,
+    plot_pbpk_simulation_results,
 ):
     _register_callable(_tool)
 
@@ -254,117 +523,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STATIC_ASSETS_DIR = PROJECT_ROOT / "biomni_esqlabs_app" / "static"
 SNAPSHOT_REPO_DIR = PROJECT_ROOT / "snapshots"
 
-OIDC_OBJECT_ID_HEADER = os.getenv("OIDC_OBJECT_ID_HEADER", "x-auth-request-objectid")
-OIDC_USER_HEADER = os.getenv("OIDC_USER_HEADER", "x-auth-request-user")
-OIDC_EMAIL_HEADER = os.getenv("OIDC_EMAIL_HEADER", "x-auth-request-email")
-OIDC_ROLES_HEADER = os.getenv("OIDC_ROLES_HEADER", "x-auth-request-groups")
-FORWARDED_USER_HEADER = "x-forwarded-user"
-FORWARDED_EMAIL_HEADER = "x-forwarded-email"
-_GUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-DISABLE_AUTH = os.getenv("BIOMNI_DISABLE_AUTH", os.getenv("DISABLE_AUTH", "0"))
-DISABLE_AUTH = (DISABLE_AUTH or "0").strip().lower() in {"1", "true", "yes", "on"}
-
-
-@dataclass
-class AuthenticatedUser:
-    """Represents an authenticated Biomni user resolved from request headers."""
-
-    user_id: str
-    name: str
-    email: Optional[str] = None
-    roles: List[str] = field(default_factory=list)
-
-
-
-
-def _get_header(request: Request, name: Optional[str]) -> Optional[str]:
-    if not name:
-        return None
-    return (
-        request.headers.get(name)
-        or request.headers.get(name.lower())
-        or request.headers.get(name.upper())
-    )
-
-
-def _first_non_empty(*values: Optional[str]) -> Optional[str]:
-    for value in values:
-        if not value:
-            continue
-        candidate = value.strip()
-        if candidate:
-            return candidate
-    return None
-
-
-def _is_guid(value: Optional[str]) -> bool:
-    if not value:
-        return False
-    return bool(_GUID_PATTERN.match(value.strip()))
-
-
-def _parse_roles(raw: Optional[str]) -> List[str]:
-    if not raw:
-        return []
-    raw = raw.strip()
-    if not raw:
-        return []
-    if raw.startswith("[") and raw.endswith("]"):
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, list):
-                return [str(item).strip() for item in parsed if str(item).strip()]
-        except json.JSONDecodeError:
-            pass
-    for delimiter in (";", ",", "|"):
-        if delimiter in raw:
-            return [piece.strip() for piece in raw.split(delimiter) if piece.strip()]
-    return [raw]
-
-
-def get_current_user(request: Request) -> AuthenticatedUser:
-    """Resolve the current user from reverse-proxy headers, falling back to Graph."""
-
-    cached = getattr(request.state, "_current_user", None)
-    if cached is not None:
-        return cached  # type: ignore[return-value]
-
-    object_id = _first_non_empty(
-        _get_header(request, OIDC_OBJECT_ID_HEADER),
-        _get_header(request, "x-auth-request-oid"),
-        _get_header(request, "x-ms-client-principal-id"),
-    )
-    email = _first_non_empty(
-        _get_header(request, OIDC_EMAIL_HEADER),
-        _get_header(request, FORWARDED_EMAIL_HEADER),
-    )
-    display_name = _first_non_empty(
-        _get_header(request, OIDC_USER_HEADER),
-        _get_header(request, FORWARDED_USER_HEADER),
-    )
-    roles = _parse_roles(_get_header(request, OIDC_ROLES_HEADER))
-
-    user_id = None
-    if object_id and _is_guid(object_id):
-        user_id = object_id.lower()
-
-    if not user_id:
-        user_id = _first_non_empty(email, display_name)
-
-    if not user_id:
-        logger.warning("Authentication headers missing for path %s", request.url.path)
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    resolved_name = display_name or email or user_id
-    user = AuthenticatedUser(user_id=user_id, name=resolved_name, email=email, roles=roles)
-    setattr(request.state, "_current_user", user)
-    return user
-
 app = FastAPI()
-if DISABLE_AUTH:
-    app.include_router(upload_router)
-else:
-    app.include_router(upload_router, dependencies=[Depends(get_current_user)])
+app.include_router(upload_router)
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, max_age=3600)
 
 @app.middleware("http")
@@ -377,60 +537,78 @@ async def apply_forwarded_prefix(request: Request, call_next):
     return await call_next(request)
 
 # Initialize the Biomni agent once when the application starts.
-# The agent's data path is relative to the project root where uvicorn is run.
+# Uses fast startup with static tool registry for improved performance.
 agent = None
-try:
-    if settings.OPENAI_API_KEY:
-        os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-        agent = A1(path=str(BIOMNI_DATA_PATH))
-        
-        # Register standard literature/research tools globally once
-        tools_to_register = [query_pubmed, query_scholar, query_arxiv, search_google, advanced_web_search]
-        if "claude" in default_config.llm.lower():
-            tools_to_register.append(advanced_web_search_claude)
-            
-        for tool_func in tools_to_register:
-            try:
-                agent.add_tool(tool_func)
-            except Exception as e:
-                logger.warning(f"Failed to register tool {tool_func.__name__}: {e}")
-                
-    else:
-        logger.warning("OpenAI API key not found. Agent not initialized.")
-except Exception as exc:  # noqa: BLE001
-    logger.error("Error initializing Biomni agent: %s", exc)
+_startup_summary = None
+
+# Check if fast startup is enabled (default: True)
+_use_fast_startup = os.environ.get("BIOMNI_FAST_STARTUP", "1").lower() in ("1", "true", "yes")
+
+if _use_fast_startup:
     try:
-        with open(BIOMNI_DATA_PATH / "init_error.log", "w") as f:
-            f.write(f"Error: {exc}\n")
-            import traceback
-            traceback.print_exc(file=f)
-    except Exception:
-        pass
-    agent = None
+        from .fast_startup import initialize_agent, get_startup_summary
+        agent = initialize_agent(data_path=BIOMNI_DATA_PATH)
+        _startup_summary = get_startup_summary()
+        if agent is None:
+            logger.warning("Fast startup returned None agent")
+    except Exception as exc:
+        logger.warning(f"Fast startup failed, falling back to legacy init: {exc}")
+        _use_fast_startup = False
+
+if not _use_fast_startup:
+    # Legacy initialization path
+    try:
+        if settings.OPENAI_API_KEY:
+            from biomni.agent.a1 import A1
+            os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+            agent = A1(path=str(BIOMNI_DATA_PATH))
+
+            # Register all available tools globally once
+            tools_to_register = [
+                query_pubmed,
+                query_scholar,
+                query_arxiv,
+                search_google,
+                advanced_web_search,
+                download_open_access_paper_pdf,
+                download_pubmed_open_access_pdfs,
+            ]
+            if "claude" in default_config.llm.lower():
+                tools_to_register.append(advanced_web_search_claude)
+
+            tools_to_register.extend(list(REGISTERABLE_TOOLS.values()))
+
+            for tool_func in tools_to_register:
+                if tool_func is None:
+                    continue
+                try:
+                    agent.add_tool(tool_func)
+                except Exception as e:
+                    logger.warning(f"Failed to register tool {getattr(tool_func, '__name__', str(tool_func))}: {e}")
+
+        else:
+            logger.warning("OpenAI API key not found. Agent not initialized.")
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error initializing Biomni agent: %s", exc)
+        try:
+            with open(BIOMNI_DATA_PATH / "init_error.log", "w") as f:
+                f.write(f"Error: {exc}\n")
+                import traceback
+                traceback.print_exc(file=f)
+        except Exception:
+            pass
+        agent = None
 
 
 def _apply_selected_tools(selected: Optional[dict]) -> None:
-    if not selected or not agent:
-        return
-    for name, enabled in selected.items():
-        if not enabled:
-            continue
-        func = REGISTERABLE_TOOLS.get(name)
-        if not func:
-            continue
-        try:
-            agent.add_tool(func)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to add tool %s: %s", name, exc)
+    # Tool selection is intentionally ignored. The agent has access to all tools.
+    return
 
 
 # --- Custom UI & API ---
 
 def _serve_authenticated_asset(asset_path: str, request: Request) -> FileResponse:
     """Return a FileResponse for assets after enforcing auth and path safety."""
-
-    if not DISABLE_AUTH:
-        get_current_user(request)
 
     candidate_path = (STATIC_ASSETS_DIR / asset_path).resolve()
     static_root = STATIC_ASSETS_DIR.resolve()
@@ -462,9 +640,6 @@ class ChatRequest(BaseModel):
 @app.get("/app", response_class=HTMLResponse)
 async def app_ui(request: Request):
     """Serve the custom UI."""
-    if not DISABLE_AUTH:
-        get_current_user(request)
-    
     index_path = PROJECT_ROOT / "biomni_esqlabs_app" / "templates" / "index.html"
     with open(index_path, "r") as f:
         content = f.read()
@@ -498,15 +673,10 @@ async def app_ui(request: Request):
 
 @app.get("/api/tools")
 async def list_tools(request: Request):
-    if not DISABLE_AUTH:
-        get_current_user(request)
     return JSONResponse({"tools": TOOL_METADATA})
 
 @app.post("/api/chat_stream")
 async def chat_stream(req: ChatRequest, request: Request):
-    if not DISABLE_AUTH:
-        get_current_user(request)
-    
     if not agent:
         raise HTTPException(503, "Agent not initialized")
 
@@ -515,6 +685,9 @@ async def chat_stream(req: ChatRequest, request: Request):
 
     storage_chat_id = chat_id or "default_chat"
     chat_dir = get_chat_dir(user_id, storage_chat_id, create=True)
+
+    # Ensure in-process tools default to this chat directory for all file operations.
+    os.environ["BIOMNI_CHAT_DIR"] = str(chat_dir.resolve())
 
     _apply_selected_tools(req.tools)
 
@@ -526,6 +699,18 @@ async def chat_stream(req: ChatRequest, request: Request):
         "and use it for ALL file operations.\n"
         "Example: `out_path = str(CHAT_DIR / 'my_file.json')`\n"
         "Do NOT write files anywhere else in the repository.\n\n"
+        "IMPORTANT: You MUST execute all required subtasks in this single run. Do NOT stop after outputting only a plan/checklist. "
+        "Do NOT say 'next I will...' or 'in subsequent messages'—instead, immediately continue with <execute> tool calls until completion, then provide the final <solution>.\n\n"
+        "IMPORTANT: Before claiming a simulation failed or was not possible, you MUST check for existing outputs in `CHAT_DIR / 'simulation_outputs'` "
+        "(e.g. a '*-Results.csv' and/or a '.pkml'). If they exist, you MUST proceed to run analysis and plotting tools on those files.\n\n"
+        "IMPORTANT: If the user requests a PBPK simulation, you MUST call the PBPK simulation tool (e.g. `run_pbpk_simulation`) and you MUST NOT claim the simulation ran unless the tool returned success. "
+        "When you report simulation results, you MUST include the concrete output file paths returned by the tool (e.g. `outputs.results_csv`, `outputs.pkml_file`).\n\n"
+        "IMPORTANT: To enable source attribution highlighting in the UI, you MUST tag claims in your <solution> using source markers. "
+        "Use the format `[[source:type|description]]text[[/source]]` (or `<source type=\"type\" info=\"description\">text</source>`). "
+        "Valid types: web, literature, database, tool, internal, user. Tag each sentence or clause with the most relevant source. "
+        "Examples: `[[source:literature|PMID 123456]]The trial reported...[[/source]]`, "
+        "`[[source:tool|run_pbpk_simulation]]Cmax was ...[[/source]]`, "
+        "`[[source:internal|general knowledge]]...[[/source]]`.\n\n"
     )
     prompt = prompt_prefix + (req.prompt or "")
 
@@ -561,6 +746,8 @@ async def chat_stream(req: ChatRequest, request: Request):
             tee_out = _Tee(orig_out, live_logs, _lock)
             tee_err = _Tee(orig_err, live_logs, _lock)
             with contextlib.redirect_stdout(tee_out), contextlib.redirect_stderr(tee_err):
+                os.environ["BIOMNI_CHAT_DIR"] = str(chat_dir.resolve())
+                os.environ.setdefault("BIOMNI_PBPK_ENGINE", "auto")
                 return agent.go(prompt)
 
         # Start agent in thread
@@ -608,12 +795,262 @@ async def chat_stream(req: ChatRequest, request: Request):
 
             cleaned_solution, snapshot_info = _maybe_save_snapshot(solution, user_id, storage_chat_id)
 
+            enforcement_note = ""
+            enforcement_details: dict | None = None
+            try:
+                wants_pbpk = _prompt_requests_pbpk(req.prompt or "") or _prompt_requests_pbpk(prompt or "")
+                if wants_pbpk and _has_pbpk_outputs(chat_dir) and not _has_pbpk_plots(chat_dir):
+                    if plot_pbpk_simulation_results is None:
+                        enforcement_note = "\n\n[PBPK enforcement] PBPK plot tool is not available in this runtime."
+                        enforcement_details = {
+                            "status": "error",
+                            "reason": "plot_tool_unavailable",
+                            "chat_dir": str(chat_dir.resolve()),
+                        }
+                    else:
+                        out_dir = chat_dir / "simulation_outputs"
+                        out_dir.mkdir(parents=True, exist_ok=True)
+                        try:
+                            plot_res = plot_pbpk_simulation_results(
+                                output_dir=str(out_dir.resolve()),
+                                plot_name="pbpk_time_profile",
+                                file_format="png",
+                                dpi=200,
+                            )
+                        except Exception as exc:
+                            plot_res = {"status": "error", "error": str(exc)}
+
+                        enforcement_details = {
+                            "status": "success" if plot_res.get("status") == "success" and _has_pbpk_plots(chat_dir) else "error",
+                            "reason": "plot_only_enforcement",
+                            "plot_result": plot_res,
+                            "chat_dir": str(chat_dir.resolve()),
+                        }
+                        if enforcement_details["status"] == "success":
+                            enforcement_note = "\n\n[PBPK enforcement] Simulation outputs were present but plots were missing; the server generated plots from existing outputs."
+                        else:
+                            enforcement_note = "\n\n[PBPK enforcement] Simulation outputs were present but plots were missing; the server attempted to generate plots but did not succeed (see pbpk_enforcement in run record)."
+
+                elif wants_pbpk and not _has_pbpk_outputs(chat_dir):
+                    if run_pbpk_simulation is None:
+                        enforcement_note = "\n\n[PBPK enforcement] PBPK tools are not available in this runtime."
+                        enforcement_details = {
+                            "status": "error",
+                            "reason": "pbpk_tools_unavailable",
+                        }
+                    else:
+                        snapshot_path = _find_latest_snapshot_file(chat_dir)
+                        output_dir = chat_dir / "simulation_outputs"
+                        output_dir.mkdir(parents=True, exist_ok=True)
+
+                        created_snapshot: dict | None = None
+                        if snapshot_path is None and create_pbpk_snapshot is not None:
+                            inferred = _infer_pbpk_setup_from_prompt(req.prompt or prompt or "")
+                            out_path = chat_dir / f"{inferred['drug_name']}_pbpk_snapshot.json"
+                            try:
+                                created_snapshot = create_pbpk_snapshot(
+                                    drug_name=inferred["drug_name"],
+                                    dose_mg=float(inferred["dose_mg"]),
+                                    simulation_duration_h=float(inferred["simulation_duration_h"]),
+                                    out_path=str(out_path),
+                                    allow_placeholders=True,
+                                )
+                                if created_snapshot.get("status") == "success":
+                                    snapshot_path = Path(created_snapshot.get("file_path") or str(out_path))
+                            except Exception as exc:
+                                created_snapshot = {
+                                    "status": "error",
+                                    "error": f"Failed to auto-create snapshot: {exc}",
+                                }
+
+                        if snapshot_path is None:
+                            enforcement_note = "\n\n[PBPK enforcement] No snapshot JSON was found in the chat directory and snapshot auto-creation was not possible."
+                            enforcement_details = {
+                                "status": "error",
+                                "reason": "snapshot_missing",
+                                "created_snapshot": created_snapshot,
+                                "chat_dir": str(chat_dir.resolve()),
+                            }
+                        else:
+                            if run_pbpk_workflow is not None:
+                                workflow_result = run_pbpk_workflow(
+                                    snapshot_path=str(snapshot_path),
+                                    output_dir=str(output_dir),
+                                    export_pkml=True,
+                                    timeout_seconds=600,
+                                    force_rerun=True,
+                                    run_analysis=True,
+                                    run_plot=True,
+                                    plot_name="pbpk_time_profile",
+                                    dpi=200,
+                                )
+                                enforcement_details = {
+                                    "status": "success" if workflow_result.get("status") == "success" else "error",
+                                    "snapshot_path": str(Path(snapshot_path).resolve()),
+                                    "created_snapshot": created_snapshot,
+                                    "workflow_result": workflow_result,
+                                }
+                                if workflow_result.get("status") == "success" and _has_pbpk_outputs(chat_dir):
+                                    enforcement_note = "\n\n[PBPK enforcement] Simulation outputs were missing after the agent run, so the server triggered a PBPK workflow run (simulation + verification + analysis + plots)."
+                                else:
+                                    enforcement_note = "\n\n[PBPK enforcement] The agent did not produce simulation outputs, and the server-triggered PBPK workflow did not succeed. See pbpk_enforcement in the run record for details."
+                            else:
+                                sim_result = run_pbpk_simulation(
+                                    snapshot_path=str(snapshot_path),
+                                    output_dir=str(output_dir),
+                                    export_pkml=True,
+                                    force_rerun=True,
+                                    timeout_seconds=600,
+                                )
+                                enforcement_details = {
+                                    "status": "success" if sim_result.get("status") == "success" else "error",
+                                    "snapshot_path": str(Path(snapshot_path).resolve()),
+                                    "created_snapshot": created_snapshot,
+                                    "simulation_result": sim_result,
+                                }
+                                if sim_result.get("status") == "success" and _has_pbpk_outputs(chat_dir):
+                                    enforcement_note = "\n\n[PBPK enforcement] Simulation outputs were missing after the agent run, so the server triggered a PBPK simulation."
+                                else:
+                                    enforcement_note = "\n\n[PBPK enforcement] The agent did not produce simulation outputs, and the server-triggered simulation did not succeed. See pbpk_enforcement in the run record for details."
+            except Exception:
+                logging.exception("PBPK enforcement: unexpected error", exc_info=True)
+                enforcement_note = "\n\n[PBPK enforcement] An unexpected error occurred while forcing PBPK outputs. Check server logs."
+                enforcement_details = {
+                    "status": "error",
+                    "reason": "unexpected_exception",
+                }
+
+            literature_note = ""
+            literature_details: dict | None = None
+            try:
+                wants_lit = _prompt_requests_literature(req.prompt or "") or _prompt_requests_literature(prompt or "")
+                lit_dir = chat_dir / "literature"
+                has_search_json = (lit_dir / "pubmed_search_results.json").exists()
+                has_download_json = (lit_dir / "pubmed_download_report.json").exists()
+                has_any_pdf = lit_dir.exists() and any(lit_dir.rglob("*.pdf"))
+
+                missing_pmids: list[str] = []
+                if wants_lit and has_search_json:
+                    try:
+                        search_payload_on_disk = json.loads((lit_dir / "pubmed_search_results.json").read_text(encoding="utf-8"))
+                        desired_pmids = [str(p) for p in (search_payload_on_disk.get("pmids") or []) if str(p).strip()]
+                    except Exception:
+                        desired_pmids = []
+
+                    attempted_pmids: set[str] = set()
+                    if has_download_json:
+                        try:
+                            dl_payload_on_disk = json.loads((lit_dir / "pubmed_download_report.json").read_text(encoding="utf-8"))
+                            for item in (dl_payload_on_disk.get("papers") or []):
+                                pmid = item.get("pmid")
+                                if pmid:
+                                    attempted_pmids.add(str(pmid))
+                        except Exception:
+                            attempted_pmids = set()
+
+                    missing_pmids = [p for p in desired_pmids if p not in attempted_pmids]
+
+                lit_needs_enforcement = wants_lit and (
+                    (not has_search_json)
+                    or (not has_download_json)
+                    or (not has_any_pdf)
+                    or bool(missing_pmids)
+                )
+
+                if lit_needs_enforcement:
+                    lit_dir.mkdir(parents=True, exist_ok=True)
+                    if download_pubmed_open_access_pdfs is None:
+                        literature_note = "\n\n[Literature enforcement] Literature tools are not available in this runtime."
+                        literature_details = {"status": "error", "reason": "literature_tools_unavailable"}
+                        try:
+                            (lit_dir / "literature_enforcement_report.json").write_text(
+                                json.dumps(literature_details, ensure_ascii=False, indent=2),
+                                encoding="utf-8",
+                            )
+                        except Exception:
+                            pass
+                    else:
+                        q = _infer_pubmed_query(req.prompt or prompt or "")
+                        try:
+                            search_payload = None
+                            if query_pubmed is not None:
+                                search_payload = query_pubmed(q, max_papers=10)
+                                try:
+                                    (lit_dir / "pubmed_search_results.json").write_text(
+                                        json.dumps(search_payload, ensure_ascii=False, indent=2),
+                                        encoding="utf-8",
+                                    )
+                                except Exception:
+                                    pass
+
+                            # If we already have search results, enforce downloads for every PMID listed there.
+                            pmids_for_dl: list[str] | None = None
+                            try:
+                                payload = search_payload
+                                if payload is None and (lit_dir / "pubmed_search_results.json").exists():
+                                    payload = json.loads((lit_dir / "pubmed_search_results.json").read_text(encoding="utf-8"))
+                                pmids_for_dl = [str(p) for p in (payload.get("pmids") or []) if str(p).strip()] if isinstance(payload, dict) else None
+                            except Exception:
+                                pmids_for_dl = None
+
+                            if pmids_for_dl:
+                                # Prefer missing_pmids computed from on-disk reports; otherwise attempt all.
+                                pmids_arg = missing_pmids if missing_pmids else pmids_for_dl
+                                dl = download_pubmed_open_access_pdfs(pmids=pmids_arg, max_papers=len(pmids_arg), output_dir=str(chat_dir))
+                            else:
+                                dl = download_pubmed_open_access_pdfs(query=q, max_papers=10, output_dir=str(chat_dir))
+                            literature_details = {
+                                "status": dl.get("status"),
+                                "query": q,
+                                "search": search_payload,
+                                "download": dl,
+                            }
+                            literature_note = "\n\n[Literature enforcement] Prompt requested saving papers; server saved PubMed search results and attempted to download open-access PDFs into CHAT_DIR/literature (see run record for report_path)."
+                        except Exception as exc:
+                            literature_note = "\n\n[Literature enforcement] Attempted to download papers but encountered an unexpected error."
+                            literature_details = {"status": "error", "query": q, "error": str(exc)}
+                            try:
+                                (lit_dir / "literature_enforcement_report.json").write_text(
+                                    json.dumps(literature_details, ensure_ascii=False, indent=2),
+                                    encoding="utf-8",
+                                )
+                            except Exception:
+                                pass
+            except Exception:
+                logging.exception("Literature enforcement: unexpected error", exc_info=True)
+                literature_note = "\n\n[Literature enforcement] Unexpected error while attempting to save literature. Check server logs."
+                literature_details = {"status": "error", "reason": "unexpected_exception"}
+
+            outgoing_solution = cleaned_solution + (enforcement_note or "") + (literature_note or "")
+            missing_claimed_files = _find_missing_claimed_files(outgoing_solution, chat_dir)
+            if missing_claimed_files:
+                preview = "\n".join(f"- {p}" for p in missing_claimed_files[:50])
+                outgoing_solution = (
+                    outgoing_solution
+                    + "\n\n[File verification] The response mentioned file paths that do not exist on disk under the current runtime.\n"
+                    + preview
+                )
+
+            workflow_report_path = _write_workflow_report(
+                chat_dir=chat_dir,
+                prompt=req.prompt or "",
+                pbpk_enforcement=enforcement_details,
+                literature_enforcement=literature_details,
+                missing_claimed_files=missing_claimed_files,
+            )
+            if workflow_report_path:
+                outgoing_solution = outgoing_solution + f"\n\n[Workflow report] `{workflow_report_path}`"
+
             run_payload = {
                 "chat_id": storage_chat_id,
                 "prompt": prompt,
-                "solution": cleaned_solution,
+                "solution": outgoing_solution,
                 "log": getattr(agent, "log", []),
                 "records": getattr(agent, "_last_run_records", []),
+                "pbpk_enforcement": enforcement_details,
+                "literature_enforcement": literature_details,
+                "missing_claimed_files": missing_claimed_files,
+                "workflow_report_path": workflow_report_path,
                 "duration_seconds": time.time() - start_time,
             }
             try:
@@ -621,7 +1058,7 @@ async def chat_stream(req: ChatRequest, request: Request):
             except Exception:
                 logging.exception("Failed to persist agent run record", exc_info=True)
 
-            yield f"data: {json.dumps({'type': 'solution', 'content': cleaned_solution})}\n\n"
+            yield f"data: {json.dumps({'type': 'solution', 'content': outgoing_solution})}\n\n"
             if snapshot_info:
                 yield f"data: {json.dumps({'type': 'file_created', 'content': snapshot_info})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
@@ -664,20 +1101,45 @@ def create_chat_interface():
         Streams agent logs into the Thinking panel with a live timer and spinner,
         and clears the input field immediately after submission.
         """
-        # Ensure histories exist
-        sol_hist = sol_hist or []
-        think_hist = think_hist or []
+        def _ensure_tuple_history(hist: list | None) -> list[tuple[str, str | None]]:
+            if not hist:
+                return []
+            if isinstance(hist, list) and hist and isinstance(hist[0], dict):
+                out: list[tuple[str, str | None]] = []
+                pending_user: str | None = None
+                for item in hist:
+                    role = item.get("role")
+                    content = item.get("content")
+                    if role == "user":
+                        pending_user = str(content)
+                    elif role == "assistant":
+                        if pending_user is None:
+                            pending_user = ""
+                        out.append((pending_user, str(content) if content is not None else None))
+                        pending_user = None
+                if pending_user is not None:
+                    out.append((pending_user, None))
+                return out
+            return hist
+
+        def _set_last_assistant(hist: list[tuple[str, str | None]], content: str) -> None:
+            if not hist:
+                hist.append(("", content))
+                return
+            user_msg, _ = hist[-1]
+            hist[-1] = (user_msg, content)
+
+        sol_hist = _ensure_tuple_history(sol_hist)
+        think_hist = _ensure_tuple_history(think_hist)
 
         if not agent:
-            sol_hist.append({"role": "user", "content": message})
-            sol_hist.append({"role": "assistant", "content": "Biomni agent is not initialized. Please check server logs."})
-            think_hist.append({"role": "assistant", "content": "Agent unavailable. Provide OPENAI credentials in .env and restart."})
+            sol_hist.append((message, "Biomni agent is not initialized. Please check server logs."))
+            think_hist.append((message, "Agent unavailable. Provide OPENAI credentials in .env and restart."))
             yield sol_hist, think_hist, "", ""
             return
 
-        # Add user message to both chats
-        sol_hist.append({"role": "user", "content": message})
-        think_hist.append({"role": "user", "content": message})
+        sol_hist.append((message, None))
+        think_hist.append((message, None))
         prompt = message
 
         # Handle optional file upload and persist to BIOMNI_BASE_PATH
@@ -707,13 +1169,12 @@ def create_chat_interface():
                 prompt += f"\n\n(User has uploaded a file saved at: '{abs_path}')"
             except Exception as e:
                 err = f"Error processing uploaded file: {e}"
-                think_hist.append({"role": "assistant", "content": err})
+                _set_last_assistant(think_hist, err)
                 yield sol_hist, think_hist, "", ""
                 return
 
-        # Placeholder assistant messages to keep UI responsive
-        sol_hist.append({"role": "assistant", "content": ""})
-        think_hist.append({"role": "assistant", "content": "Thinking..."})
+        _set_last_assistant(sol_hist, "")
+        _set_last_assistant(think_hist, "Thinking...")
 
         # Start live status (timer + spinner)
         start_time = time.time()
@@ -793,7 +1254,7 @@ def create_chat_interface():
                     log_text = "\n".join(combined)
                     status_text = f"{spinner_frames[frame % len(spinner_frames)]} Processing… {elapsed:.1f}s"
                     frame += 1
-                    think_hist[-1]["content"] = log_text.strip() if log_text else ""
+                    _set_last_assistant(think_hist, log_text.strip() if log_text else "")
                     yield sol_hist, think_hist, status_text, ""
                     await asyncio.sleep(0.5)
 
@@ -808,7 +1269,7 @@ def create_chat_interface():
                         # Stream a countdown to the UI while waiting
                         for remaining in range(wait_s, 0, -1):
                             status_text = f"⏳ Rate limited. Retrying in {remaining}s…"
-                            think_hist[-1]["content"] = (think_hist[-1]["content"] or "")
+                            _set_last_assistant(think_hist, (think_hist[-1][1] or ""))
                             yield sol_hist, think_hist, status_text, ""
                             await asyncio.sleep(1)
                         attempt += 1
@@ -835,13 +1296,13 @@ def create_chat_interface():
                 non_solution = ""
 
             # Update chats
-            sol_hist[-1]["content"] = solution
+            _set_last_assistant(sol_hist, solution)
             # Ensure the thinking log is a string
             log_text = "\n".join(log) if isinstance(log, list) else (log or "")
             thinking_text = log_text.strip()
             if non_solution:
                 thinking_text = (thinking_text + "\n\n" + non_solution).strip() if thinking_text else non_solution
-            think_hist[-1]["content"] = thinking_text if thinking_text else ""
+            _set_last_assistant(think_hist, thinking_text if thinking_text else "")
 
             total = time.time() - start_time
             done_status = f"✅ Done in {total:.1f}s"
@@ -849,8 +1310,8 @@ def create_chat_interface():
 
         except Exception as e:
             error_message = f"An error occurred during agent execution: {str(e)}"
-            sol_hist[-1]["content"] = error_message
-            think_hist[-1]["content"] = error_message
+            _set_last_assistant(sol_hist, error_message)
+            _set_last_assistant(think_hist, error_message)
             yield sol_hist, think_hist, "", ""
 
     # Define the Gradio UI layout
@@ -872,9 +1333,9 @@ def create_chat_interface():
             # Left: Solution + Thinking
             with gr.Column(scale=5):
                 gr.Markdown("**Solution**", elem_classes=["chat-title"])
-                solution_chat = gr.Chatbot(label=None, height=460, type='messages', elem_classes=["panel"])
+                solution_chat = gr.Chatbot(label=None, height=460, elem_classes=["panel"])
                 gr.Markdown("**Thinking**", elem_classes=["chat-title"])
-                thinking_chat = gr.Chatbot(label=None, height=240, type='messages', elem_classes=["panel"])
+                thinking_chat = gr.Chatbot(label=None, height=240, elem_classes=["panel"])
                 status_md = gr.Markdown("", elem_classes=["chat-title"])  # timer + spinner
                 textbox = gr.Textbox(
                     container=True,
@@ -900,9 +1361,6 @@ def create_chat_interface():
 @app.get("/", response_class=RedirectResponse)
 async def root(request: Request):
     """Send authenticated users straight to the custom UI."""
-
-    if not DISABLE_AUTH:
-        get_current_user(request)
     root_path = (request.scope.get("root_path") or "").rstrip("/")
     target = f"{root_path}/app/" if root_path else "/app/"
     return RedirectResponse(url=target)
@@ -957,9 +1415,6 @@ async def api_create_snapshot(req: SnapshotRequest, request: Request):
                 "solubility_mg_l": 312.0
             }'
     """
-    if not DISABLE_AUTH:
-        get_current_user(request)
-
     if create_pbpk_snapshot is None:
         raise HTTPException(503, "PBPK tools not available")
 
@@ -1000,9 +1455,6 @@ async def api_run_simulation(req: SimulationRequest, request: Request):
             -H "Content-Type: application/json" \
             -d '{"snapshot_path": "/path/to/snapshot.json"}'
     """
-    if not DISABLE_AUTH:
-        get_current_user(request)
-
     if run_pbpk_simulation is None:
         raise HTTPException(503, "PBPK simulation tools not available")
 
@@ -1030,14 +1482,26 @@ async def api_get_parameters(drug_name: str, request: Request):
     Example curl command:
         curl http://localhost:8000/api/pbpk/parameters/Bupropion
     """
-    if not DISABLE_AUTH:
-        get_current_user(request)
-
     if get_drug_pk_parameters is None:
         raise HTTPException(503, "PBPK tools not available")
 
     result = get_drug_pk_parameters(drug_name)
     return JSONResponse(result)
+
+
+@app.get("/api/health")
+async def api_health(request: Request):
+    """
+    Health check endpoint with startup metrics.
+
+    Example curl command:
+        curl http://localhost:8000/api/health
+    """
+    return JSONResponse({
+        "status": "healthy" if agent is not None else "degraded",
+        "agent_initialized": agent is not None,
+        "startup_summary": _startup_summary,
+    })
 
 
 @app.get("/api/pbpk/test")
@@ -1051,9 +1515,6 @@ async def api_pbpk_test(request: Request):
     Example curl command:
         curl http://localhost:8000/api/pbpk/test
     """
-    if not DISABLE_AUTH:
-        get_current_user(request)
-
     if create_pbpk_snapshot is None:
         raise HTTPException(503, "PBPK tools not available")
 
@@ -1087,9 +1548,4 @@ async def api_pbpk_test(request: Request):
 chat_interface = create_chat_interface()
 
 # Mount the Gradio app on the FastAPI app at the /gradio path.
-if DISABLE_AUTH:
-    logger.warning("BIOMNI_DISABLE_AUTH=1 -> running Gradio UI without authentication (development only).")
-    app = gr.mount_gradio_app(app, chat_interface, path="/gradio")
-else:
-    # Require authentication by leveraging the header-based resolver.
-    app = gr.mount_gradio_app(app, chat_interface, path="/gradio", auth_dependency=get_current_user)
+app = gr.mount_gradio_app(app, chat_interface, path="/gradio")

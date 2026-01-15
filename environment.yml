@@ -11,6 +11,22 @@ dependencies:
   - scipy
   - statsmodels
   - scikit-learn
+  - r-base
+  - r-jsonlite
+  - r-pak
+  - r-data.table
+  - dotnet-runtime=8.0
+  - libcurl
+  - openssl
+  - libxml2
+  - fontconfig
+  - harfbuzz
+  - fribidi
+  - freetype
+  - libpng
+  - libtiff
+  - jpeg
+  - zlib
   - gradio
   - fastapi
   - uvicorn
@@ -36,10 +52,11 @@ dependencies:
   - pip:
       - uvicorn[standard]
       - orjson
-      - msal
       - python-multipart
       - itsdangerous
       - starlette
+      - pymed
+      - scholarly
       - langchain
       - langgraph==0.3.18
       - langchain-openai

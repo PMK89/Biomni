@@ -1466,6 +1466,21 @@ Each library is listed with its description to help you understand its functiona
             execute_match = re.search(r"<execute>(.*?)</execute>", msg, re.DOTALL | re.IGNORECASE)
             answer_match = re.search(r"<solution>(.*?)</solution>", msg, re.DOTALL | re.IGNORECASE)
 
+            def _is_premature_solution(text: str) -> bool:
+                lower = (text or "").lower()
+                if "in subsequent messages" in lower:
+                    return True
+                if "next i will" in lower or "now i will" in lower:
+                    return True
+                if "i will start" in lower and "step" in lower:
+                    return True
+                # If the message still contains unchecked checklist items, it's not a final solution.
+                if re.search(r"\n\s*\d+\.\s*\[\s\]", text):
+                    return True
+                if "[ ]" in text:
+                    return True
+                return False
+
             # Alternative patterns for OpenAI models that might use different formatting
             if not execute_match:
                 # Try to find code blocks that might be intended as execute blocks
@@ -1478,7 +1493,28 @@ Each library is listed with its description to help you understand its functiona
             state["messages"].append(AIMessage(content=msg.strip()))
             
             if answer_match:
-                state["next_step"] = "end"
+                if _is_premature_solution(msg):
+                    correction_count = sum(
+                        1
+                        for m in state["messages"]
+                        if isinstance(m, HumanMessage)
+                        and "Do not stop after producing only a plan" in str(m.content)
+                    )
+                    if correction_count < 3:
+                        state["messages"].append(
+                            HumanMessage(
+                                content=(
+                                    "Do not stop after producing only a plan. You MUST execute the plan now by calling the tools and running code. "
+                                    "Only output <solution> when ALL required subtasks are finished and outputs (files/plots) are produced. "
+                                    "Continue immediately with an <execute> block."
+                                )
+                            )
+                        )
+                        state["next_step"] = "generate"
+                    else:
+                        state["next_step"] = "end"
+                else:
+                    state["next_step"] = "end"
             elif execute_match:
                 state["next_step"] = "execute"
             elif think_match:

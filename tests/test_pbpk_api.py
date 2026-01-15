@@ -59,6 +59,61 @@ def test_create_pbpk_snapshot():
         return False
 
 
+def test_run_pbpk_simulation_ospsuite():
+    print("\n" + "=" * 60)
+    print("TEST: run_pbpk_simulation (OSPSuite-R backend)")
+    print("=" * 60)
+
+    try:
+        import os
+        from biomni_esqlabs_tools.pbpk.pbpk_workflow import create_pbpk_snapshot, run_pbpk_simulation
+
+        snapshot_path = project_root / "tests" / "test_bupropion_snapshot_ospsuite.json"
+        output_dir = project_root / "tests" / "test_bupropion_sim_output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        snap = create_pbpk_snapshot(
+            drug_name="Bupropion",
+            dose_mg=150.0,
+            molecular_weight=239.74,
+            log_p=3.6,
+            fraction_unbound=0.16,
+            solubility_mg_l=312.0,
+            out_path=str(snapshot_path),
+        )
+        if snap.get("status") != "success":
+            print(f"FAILED: Could not create snapshot: {snap}")
+            return False
+
+        os.environ["BIOMNI_PBPK_ENGINE"] = "ospsuite"
+        result = run_pbpk_simulation(
+            snapshot_path=str(snapshot_path),
+            output_dir=str(output_dir),
+            export_pkml=False,
+            timeout_seconds=600,
+        )
+
+        print(f"Status: {result.get('status')}")
+        if result.get("status") != "success":
+            print(f"FAILED: {result}")
+            return False
+
+        produced = list(output_dir.rglob("*"))
+        produced = [p for p in produced if p.is_file()]
+        if not produced:
+            print("FAILED: No output files produced")
+            return False
+
+        print(f"SUCCESS: Produced {len(produced)} output file(s)")
+        return True
+
+    except Exception as e:
+        print(f"FAILED: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def test_missing_parameters():
     """Test that missing parameters are handled correctly."""
     print("\n" + "=" * 60)
@@ -201,6 +256,7 @@ def main():
     results.append(("create_pbpk_snapshot", test_create_pbpk_snapshot()))
     results.append(("missing_parameters", test_missing_parameters()))
     results.append(("get_drug_pk_parameters", test_get_drug_pk_parameters()))
+    results.append(("run_pbpk_simulation_ospsuite", test_run_pbpk_simulation_ospsuite()))
 
     # Run API tests if server URL provided
     if args.server:

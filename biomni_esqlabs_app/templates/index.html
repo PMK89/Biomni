@@ -118,7 +118,14 @@
 
     <div id="right-panel">
         <div id="files-section">
-            <div class="panel-header">Files</div>
+            <div class="panel-header files-header">
+                <span>Files</span>
+                <div class="files-header-actions">
+                    <button id="chat-export-zip-btn" type="button" class="files-action-btn" title="Download all chat files as zip">Download zip</button>
+                    <button id="chat-import-zip-btn" type="button" class="files-action-btn" title="Import a chat zip">Import zip</button>
+                    <input type="file" id="chat-zip-upload" style="display: none;" accept=".zip" />
+                </div>
+            </div>
             <div id="drop-zone">
                 Drag & drop files here<br>or click to upload
                 <input type="file" id="file-upload" style="display: none;" multiple>

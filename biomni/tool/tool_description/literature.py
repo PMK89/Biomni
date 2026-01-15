@@ -158,4 +158,29 @@ description = [
             }
         ],
     },
+    {
+        "description": "Download an open-access paper PDF either from a DOI (resolved via Unpaywall) or from a direct PDF URL. Saves into BIOMNI_CHAT_DIR/papers by default.",
+        "name": "download_open_access_paper_pdf",
+        "optional_parameters": [
+            {"default": None, "description": "Direct PDF URL (if provided, DOI is optional)", "name": "url", "type": "str"},
+            {"default": None, "description": "Output directory (defaults to BIOMNI_CHAT_DIR/papers)", "name": "output_dir", "type": "str"},
+            {"default": None, "description": "Filename for the saved PDF", "name": "filename", "type": "str"},
+            {"default": 60, "description": "Download timeout in seconds", "name": "timeout", "type": "int"},
+        ],
+        "required_parameters": [
+            {"default": None, "description": "Paper DOI (resolved via Unpaywall; requires UNPAYWALL_EMAIL)", "name": "doi", "type": "str"}
+        ],
+    },
+    {
+        "description": "Query PubMed and download open-access PDFs (via DOI/Unpaywall) into BIOMNI_CHAT_DIR/papers by default.",
+        "name": "download_pubmed_open_access_pdfs",
+        "optional_parameters": [
+            {"default": 5, "description": "Maximum number of PubMed papers to consider", "name": "max_papers", "type": "int"},
+            {"default": None, "description": "Output directory (defaults to BIOMNI_CHAT_DIR/papers)", "name": "output_dir", "type": "str"},
+            {"default": 60, "description": "Timeout in seconds", "name": "timeout", "type": "int"},
+        ],
+        "required_parameters": [
+            {"default": None, "description": "PubMed query string", "name": "query", "type": "str"}
+        ],
+    },
 ]

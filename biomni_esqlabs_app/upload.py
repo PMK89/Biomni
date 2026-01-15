@@ -4,10 +4,12 @@ import os
 import time
 import shutil
 import json
+import zipfile
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, Body
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, Body, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -99,6 +101,35 @@ def _load_agent_runs(user_id: str, chat_id: str) -> List[Dict[str, Any]]:
         except Exception:
             continue
     return runs
+
+
+def _safe_zip_members(zf: zipfile.ZipFile) -> List[zipfile.ZipInfo]:
+    members: List[zipfile.ZipInfo] = []
+    for info in zf.infolist():
+        name = info.filename
+        if not name or name.endswith("/"):
+            continue
+        if name.startswith("/") or name.startswith("\\"):
+            raise HTTPException(status_code=400, detail="Invalid zip: absolute paths are not allowed")
+        parts = Path(name).parts
+        if any(p == ".." for p in parts):
+            raise HTTPException(status_code=400, detail="Invalid zip: path traversal is not allowed")
+        members.append(info)
+    return members
+
+
+def _load_json_if_exists(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def _new_chat_id() -> str:
+    return f"chat_{int(time.time() * 1000)}"
 
 # --- Chat Persistence Endpoints ---
 
@@ -223,6 +254,121 @@ async def get_chat_runs(request: Request, chat_id: str) -> Dict[str, List[Dict[s
     user_id = _get_user_id(request)
     runs = _load_agent_runs(user_id, chat_id)
     return {"runs": runs}
+
+
+@router.get("/chat/{chat_id}/export_zip")
+async def export_chat_zip(request: Request, chat_id: str, background_tasks: BackgroundTasks):
+    user_id = _get_user_id(request)
+    chat_dir = _get_chat_dir(user_id, chat_id, create=False)
+    if not chat_dir.exists():
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    meta = _load_json_if_exists(chat_dir / "metadata.json", {"id": chat_id, "title": "(untitled)"})
+    history = _load_json_if_exists(chat_dir / "history.json", [])
+    runs = _load_agent_runs(user_id, chat_id)
+    files = list_chat_files(user_id, chat_id)
+
+    export_payload = {
+        "schema_version": 1,
+        "exported_at": time.time(),
+        "user_id": user_id,
+        "chat_id": chat_id,
+        "metadata": meta,
+        "history": history,
+        "runs": runs,
+        "files": files,
+    }
+
+    fd, tmp_zip_path_str = tempfile.mkstemp(prefix=f"biomni_{chat_id}_", suffix=".zip")
+    os.close(fd)
+    tmp_zip_path = Path(tmp_zip_path_str)
+
+    try:
+        with zipfile.ZipFile(tmp_zip_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("chat_export.json", json.dumps(export_payload, ensure_ascii=False, indent=2))
+            for item in chat_dir.rglob("*"):
+                if not item.is_file():
+                    continue
+                rel = item.relative_to(chat_dir)
+                zf.write(item, arcname=str(rel))
+    except Exception as e:
+        try:
+            tmp_zip_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"Failed to export chat: {str(e)}")
+
+    background_tasks.add_task(lambda p=str(tmp_zip_path): Path(p).unlink(missing_ok=True))
+    filename = f"{chat_id}.zip"
+    return FileResponse(path=tmp_zip_path, filename=filename, media_type="application/zip")
+
+
+@router.post("/chat/import_zip")
+async def import_chat_zip(
+    request: Request,
+    file: UploadFile = File(...),
+    chat_id: Optional[str] = Form(None),
+    overwrite: bool = Form(False),
+) -> Dict[str, Any]:
+    user_id = _get_user_id(request)
+    if file.size is not None and file.size > 250 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Zip too large (limit 250MB)")
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="biomni_import_"))
+    try:
+        tmp_zip = tmp_dir / "upload.zip"
+        with tmp_zip.open("wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        with zipfile.ZipFile(tmp_zip, "r") as zf:
+            members = _safe_zip_members(zf)
+            zf.extractall(tmp_dir, members=[m for m in members])
+
+        inferred_id: Optional[str] = None
+        export_info_path = tmp_dir / "chat_export.json"
+        if export_info_path.exists():
+            try:
+                export_info = _load_json_if_exists(export_info_path, {})
+                inferred_id = export_info.get("chat_id") if isinstance(export_info, dict) else None
+            except Exception:
+                inferred_id = None
+
+        target_chat_id = (chat_id or inferred_id or _new_chat_id()).strip()
+        if not target_chat_id:
+            target_chat_id = _new_chat_id()
+
+        dest_dir = _get_chat_dir(user_id, target_chat_id, create=True)
+        if dest_dir.exists() and any(dest_dir.iterdir()) and not overwrite:
+            raise HTTPException(status_code=409, detail="Chat already exists. Set overwrite=true or choose another chat_id")
+        if overwrite and dest_dir.exists():
+            shutil.rmtree(dest_dir)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+        for item in tmp_dir.rglob("*"):
+            if not item.is_file():
+                continue
+            rel = item.relative_to(tmp_dir)
+            if rel.parts and rel.parts[0].startswith("upload"):
+                continue
+            out_path = dest_dir / rel
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(item, out_path)
+
+        meta_path = dest_dir / "metadata.json"
+        if not meta_path.exists():
+            with open(meta_path, "w", encoding="utf-8") as f:
+                json.dump({"id": target_chat_id, "title": "Imported chat", "created": time.time(), "updated": time.time()}, f)
+
+        return {"status": "ok", "chat_id": target_chat_id}
+    finally:
+        try:
+            await file.close()
+        except Exception:
+            pass
+        try:
+            shutil.rmtree(tmp_dir)
+        except Exception:
+            pass
 
 @router.delete("/chat/{chat_id}")
 async def delete_chat(request: Request, chat_id: str):

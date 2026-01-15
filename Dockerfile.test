@@ -1,0 +1,66 @@
+# syntax=docker/dockerfile:1.7
+# Quick test Dockerfile to validate R package installation step
+ARG MAMBA_VERSION=1.5.8
+FROM mambaorg/micromamba:${MAMBA_VERSION}
+
+ARG ENV_NAME=biomni_e1
+ARG USERNAME=appuser
+ARG UID=1000
+ARG GID=1000
+ENV ENV_NAME=${ENV_NAME}
+
+USER root
+# Install system dependencies for R packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpng-dev \
+    libxml2-dev \
+    libfreetype6-dev \
+    libfontconfig1-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -g ${GID} ${USERNAME} && \
+    useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} && \
+    mkdir -p /workspace && chown -R ${USERNAME}:${USERNAME} /workspace
+
+WORKDIR /workspace
+USER ${USERNAME}
+
+ENV TMPDIR=/workspace/.tmp
+RUN mkdir -p "${TMPDIR}"
+
+# Ensure R installs packages into a writable user library path
+ENV R_LIBS_USER=/workspace/.R/library
+RUN mkdir -p "${R_LIBS_USER}"
+
+# Cache-friendly: copy env spec first
+COPY --chown=${USERNAME}:${USERNAME} environment.yml /workspace/
+
+# Single-shot env solve (must include Web UI deps)
+RUN micromamba create -y -n ${ENV_NAME} -f /workspace/environment.yml && \
+    micromamba clean --all --yes
+
+SHELL ["bash", "-lc"]
+ENV MAMBA_DOCKERFILE_ACTIVATE=1
+RUN echo "micromamba activate ${ENV_NAME}" >> ~/.bashrc
+
+# Test only the R package installation
+RUN micromamba run -n ${ENV_NAME} Rscript -e "options(repos=c(CRAN='https://cloud.r-project.org')); dir.create(Sys.getenv('R_LIBS_USER'), recursive=TRUE, showWarnings=FALSE); .libPaths(c(Sys.getenv('R_LIBS_USER'), .libPaths())); \
+    cran_deps <- c('cli', 'crayon', 'data.table', 'dplyr', 'ggplot2', 'ggtext', 'glue', 'jsonlite', 'lifecycle', 'logger', 'openxlsx', 'patchwork', 'purrr', 'R6', 'readr', 'rlang', 'showtext', 'stringi', 'stringr', 'tidyr', 'xml2'); \
+    install.packages(cran_deps, lib=Sys.getenv('R_LIBS_USER'), quiet=FALSE); \
+    download.file('https://github.com/Open-Systems-Pharmacology/rSharp/releases/download/v1.1.2/rSharp_1.1.2_R_x86_64-pc-linux-gnu.tar.gz', destfile='/tmp/rSharp.tar.gz', quiet=FALSE); \
+    download.file('https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.9.0/ospsuite.utils_1.9.0_R_x86_64-pc-linux-gnu.tar.gz', destfile='/tmp/ospsuite.utils.tar.gz', quiet=FALSE); \
+    download.file('https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.6.2/tlf_1.6.2_R_x86_64-pc-linux-gnu.tar.gz', destfile='/tmp/tlf.tar.gz', quiet=FALSE); \
+    download.file('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v12.4.0/ospsuite_12.4.0_R_x86_64-pc-linux-gnu.tar.gz', destfile='/tmp/ospsuite.tar.gz', quiet=FALSE); \
+    install.packages('/tmp/rSharp.tar.gz', repos=NULL, lib=Sys.getenv('R_LIBS_USER')); \
+    install.packages('/tmp/ospsuite.utils.tar.gz', repos=NULL, lib=Sys.getenv('R_LIBS_USER')); \
+    install.packages('/tmp/tlf.tar.gz', repos=NULL, lib=Sys.getenv('R_LIBS_USER')); \
+    install.packages('/tmp/ospsuite.tar.gz', repos=NULL, lib=Sys.getenv('R_LIBS_USER')); \
+    library(ospsuite); \
+    cat('ospsuite version:', as.character(packageVersion('ospsuite')), '\\\\n')"
+
+RUN micromamba run -n ${ENV_NAME} Rscript -e "suppressPackageStartupMessages(library(ospsuite)); cat(as.character(packageVersion('ospsuite')))"
+
+CMD ["/bin/bash"]
