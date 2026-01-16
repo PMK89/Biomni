@@ -32,7 +32,7 @@ ENV TMPDIR=/workspace/.tmp
 RUN mkdir -p "${TMPDIR}"
 
 # Ensure R installs packages into a writable user library path
-ENV R_LIBS_USER=/workspace/.R/library
+ENV R_LIBS_USER=/home/${USERNAME}/.R/library
 RUN mkdir -p "${R_LIBS_USER}"
 
 # Cache-friendly: copy env spec first

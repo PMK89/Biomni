@@ -55,7 +55,7 @@ This document tracks the differences between `upstream/main` and `origin/osp_rag
 
 ## Target module structure
 
-To keep the Stanford codebase authoritative, upstream directories (e.g., `biomni/agent`, `biomni/model`, `deploy/`) stay in place, while ESQlabs layers its tooling through optional namespaces and registries. The structure below highlights the new modules and where Type A/B/C artifacts land.
+To keep the Stanford codebase authoritative, upstream directories (e.g., `biomni/agent`, `biomni/model`) stay in place, while ESQlabs layers its tooling through optional namespaces and registries. The structure below highlights the new modules and where Type A/B/C artifacts land.
 
 ### Package layout
 

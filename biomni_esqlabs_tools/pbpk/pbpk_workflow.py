@@ -50,20 +50,36 @@ def _get_rscript_and_env() -> tuple[Optional[str], dict[str, str]]:
 
 
 def _infer_results_csv_from_dir(output_dir: Path) -> Optional[Path]:
-    candidates: list[Path] = []
-    candidates.extend(sorted(output_dir.glob("*-Results.csv")))
-    candidates.extend(sorted(output_dir.glob("*Results.csv")))
-    candidates.extend(sorted(output_dir.glob("*.csv")))
-    for cand in candidates:
-        if cand.name.lower() == "simulation_outputs.csv":
-            continue
-        if cand.is_file():
-            return cand
-    return None
+    def _scan(globber: callable, patterns: tuple[str, ...]) -> Optional[Path]:
+        candidates: list[Path] = []
+        for pat in patterns:
+            candidates.extend(sorted(globber(pat)))
+        for cand in candidates:
+            if cand.name.lower() == "simulation_outputs.csv":
+                continue
+            if cand.is_file():
+                return cand
+        return None
+
+    preferred = ("*-Results.csv", "*Results.csv")
+    found = _scan(output_dir.glob, preferred)
+    if found:
+        return found
+    found = _scan(output_dir.rglob, preferred)
+    if found:
+        return found
+    found = _scan(output_dir.glob, ("*.csv",))
+    if found:
+        return found
+    return _scan(output_dir.rglob, ("*.csv",))
 
 
 def _infer_pkml_from_dir(output_dir: Path) -> Optional[Path]:
     candidates = sorted(output_dir.glob("*.pkml"))
+    for cand in candidates:
+        if cand.is_file():
+            return cand
+    candidates = sorted(output_dir.rglob("*.pkml"))
     for cand in candidates:
         if cand.is_file():
             return cand
